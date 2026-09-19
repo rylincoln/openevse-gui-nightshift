@@ -2,11 +2,11 @@
 <script>
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
-  import { createConfigForm } from '../../lib/config/configForm.svelte.js'
+  import { createConfigForm } from '../../lib/config/configForm.svelte'
   import { serialQueue } from '../../lib/queue'
   import { httpAPI } from '../../lib/api/httpAPI'
   import { showWriteError } from '../../lib/alerts'
-  import { hasTeslaCredentials } from '../../lib/config/tesla.js'
+  import { hasTeslaCredentials } from '../../lib/config/tesla'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
   import FormField from '../../lib/components/config/FormField.svelte'

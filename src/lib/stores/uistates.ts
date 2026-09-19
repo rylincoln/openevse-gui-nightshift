@@ -1,4 +1,5 @@
 import { writable, derived, get, type Writable } from 'svelte/store'
+import type { WifiNetwork } from '../config/wifi'
 
 export interface AlertBox {
   title?: string
@@ -63,7 +64,7 @@ export interface UiStates {
   rfid_waiting: number
   elapsed: number
   alertbox: AlertBox
-  networks: unknown[]
+  networks: WifiNetwork[]
 }
 
 const model: UiStates = {

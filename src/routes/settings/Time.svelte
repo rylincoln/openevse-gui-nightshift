@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
-  import { createConfigForm } from '../../lib/config/configForm.svelte.js'
+  import { createConfigForm } from '../../lib/config/configForm.svelte'
   import { serialQueue } from '../../lib/queue'
   import { showWriteError } from '../../lib/alerts'
   import { httpAPI } from '../../lib/api/httpAPI'

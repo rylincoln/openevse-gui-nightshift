@@ -1,6 +1,6 @@
 // src/lib/config/__tests__/pages.test.js
 import { describe, it, expect } from 'vitest'
-import { SETTINGS_PAGES, SECTIONS, pagesBySection } from '../pages.js'
+import { SETTINGS_PAGES, SECTIONS, pagesBySection } from '../pages'
 
 describe('SETTINGS_PAGES', () => {
   it('lists all 18 config pages', () => {

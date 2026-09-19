@@ -1,23 +1,31 @@
-// src/lib/config/saveState.js
 // Per-field save-status state. createSaveState() returns a Svelte store
 // mapping field name -> 'saving' | 'saved' | 'error'. A name absent from the
 // map is 'idle'. succeed() lingers on 'saved' then auto-clears to 'idle'.
-import { writable, get } from 'svelte/store'
+import { writable, get, type Readable } from 'svelte/store'
 
 export const SAVED_LINGER_MS = 2000
 
-export function createSaveState() {
-  const store = writable({})
-  const { subscribe, update } = store
-  const timers = {}
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
-  function clearTimer(name) {
+export interface SaveStateStore extends Readable<Record<string, SaveStatus>> {
+  begin(name: string): void
+  succeed(name: string): void
+  fail(name: string): void
+  statusOf(name: string): SaveStatus
+}
+
+export function createSaveState(): SaveStateStore {
+  const store = writable<Record<string, SaveStatus>>({})
+  const { subscribe, update } = store
+  const timers: Record<string, ReturnType<typeof setTimeout>> = {}
+
+  function clearTimer(name: string): void {
     if (timers[name]) {
       clearTimeout(timers[name])
       delete timers[name]
     }
   }
-  function setStatus(name, status) {
+  function setStatus(name: string, status: SaveStatus): void {
     update((m) => ({ ...m, [name]: status }))
   }
 

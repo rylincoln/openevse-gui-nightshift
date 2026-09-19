@@ -1,6 +1,6 @@
 // src/lib/config/__tests__/validate.test.js
 import { describe, it, expect } from 'vitest'
-import { isRequired, inRange, isPort, isHostname, isDummyPassword } from '../validate.js'
+import { isRequired, inRange, isPort, isHostname, isDummyPassword } from '../validate'
 
 describe('isRequired', () => {
   it('fails on empty / whitespace / null / undefined', () => {

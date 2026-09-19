@@ -3,7 +3,7 @@
   import { hardMaxCurrent } from '../../lib/utils'
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
-  import { createConfigForm } from '../../lib/config/configForm.svelte.js'
+  import { createConfigForm } from '../../lib/config/configForm.svelte'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
   import FormField from '../../lib/components/config/FormField.svelte'

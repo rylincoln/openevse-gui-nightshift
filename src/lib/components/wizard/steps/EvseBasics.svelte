@@ -9,7 +9,7 @@
   import { hardMaxCurrent } from '../../../utils'
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../../stores/config'
-  import { createConfigForm } from '../../../config/configForm.svelte.js'
+  import { createConfigForm } from '../../../config/configForm.svelte'
   import FormField from '../../config/FormField.svelte'
   import Slider from '../../ui/Slider.svelte'
   import Select from '../../ui/Select.svelte'

@@ -1,6 +1,6 @@
 // src/lib/config/__tests__/wifi.test.js
 import { describe, it, expect } from 'vitest'
-import { normalizeNetworks, signalIcon, signalPercent, isSecured } from '../wifi.js'
+import { normalizeNetworks, signalIcon, signalPercent, isSecured } from '../wifi'
 
 describe('normalizeNetworks', () => {
   it('dedupes by SSID keeping the strongest signal, sorts by signal', () => {

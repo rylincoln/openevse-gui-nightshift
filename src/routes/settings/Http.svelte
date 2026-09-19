@@ -5,7 +5,7 @@
   import { certificate_store } from '../../lib/stores/certificates'
   import { uisettings_store } from '../../lib/stores/uisettings'
   import { LOCALE_NAMES } from '../../lib/i18n/locales.js'
-  import { createConfigForm } from '../../lib/config/configForm.svelte.js'
+  import { createConfigForm } from '../../lib/config/configForm.svelte'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
   import FormField from '../../lib/components/config/FormField.svelte'

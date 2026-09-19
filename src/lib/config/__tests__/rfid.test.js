@@ -1,6 +1,6 @@
 // src/lib/config/__tests__/rfid.test.js
 import { describe, it, expect } from 'vitest'
-import { parseTags, serializeTags, addTag, removeTag } from '../rfid.js'
+import { parseTags, serializeTags, addTag, removeTag } from '../rfid'
 
 describe('parseTags', () => {
   it('splits a comma-separated string, trimming blanks', () => {

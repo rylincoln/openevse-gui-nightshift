@@ -1,6 +1,6 @@
 // src/lib/config/__tests__/backup.test.js
 import { describe, it, expect } from 'vitest'
-import { sanitizeConfig } from '../backup.js'
+import { sanitizeConfig } from '../backup'
 
 describe('sanitizeConfig', () => {
   it('drops device-identity and capability fields', () => {

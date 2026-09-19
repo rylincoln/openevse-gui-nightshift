@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { allRequiredSafetyChecksOn, REQUIRED_SAFETY_CHECKS } from '../safety.js'
+import { allRequiredSafetyChecksOn, REQUIRED_SAFETY_CHECKS } from '../safety'
 
 const ALL_REQUIRED = { ground_check: true, relay_check: true, diode_check: true, vent_check: true }
 

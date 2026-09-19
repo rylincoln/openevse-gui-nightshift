@@ -1,6 +1,6 @@
 // src/lib/config/__tests__/firmware.test.js
 import { describe, it, expect } from 'vitest'
-import { classifyReleases, findAsset, updateAvailable } from '../firmware.js'
+import { classifyReleases, findAsset, updateAvailable } from '../firmware'
 
 const RELEASES = [
   { tag_name: 'v5.1.2', name: 'v5.1.2', prerelease: false, assets: [

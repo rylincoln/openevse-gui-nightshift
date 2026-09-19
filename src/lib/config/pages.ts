@@ -1,10 +1,27 @@
-// src/lib/config/pages.js
+// src/lib/config/pages.ts
 // The single source of truth for the Settings page catalogue.
 // The hub, the nav, the placeholder route, and tests all read from here.
 
-export const SECTIONS = ['connectivity', 'charger', 'energy', 'system']
+export type Section = 'connectivity' | 'charger' | 'energy' | 'system'
 
-export const SETTINGS_PAGES = [
+export const SECTIONS: Section[] = ['connectivity', 'charger', 'energy', 'system']
+
+export interface SettingsPage {
+  key: string
+  route: string
+  icon: string
+  labelKey: string
+  section: Section
+  // A `/config` key (or any one of several) that must be present for this
+  // page to show. Not `keyof Config`: capability-gated fields like
+  // `tft_theme`/`lcd_type` below are real wire keys the device.ts `Config`
+  // interface doesn't yet enumerate.
+  requires?: string | string[]
+  /** Gated on the client-side OpenEVSE Labs switch (uisettings.dev_features). */
+  labs?: boolean
+}
+
+export const SETTINGS_PAGES: SettingsPage[] = [
   // Connectivity
   { key: 'network', route: '/settings/network', icon: 'mdi:wifi', labelKey: 'config.pages.network', section: 'connectivity' },
   { key: 'http', route: '/settings/http', icon: 'mdi:web', labelKey: 'config.pages.http', section: 'connectivity' },
@@ -40,13 +57,24 @@ export const SETTINGS_PAGES = [
 // of keys; `labs` gates on the client-side OpenEVSE Labs switch
 // (uisettings.dev_features), passed in via opts so this stays a pure function
 // of its inputs.
-function hasCapability(config, requires) {
+function hasCapability(
+  config: Record<string, unknown> | undefined | null,
+  requires: SettingsPage['requires'],
+): boolean {
   if (!requires) return true
   const keys = Array.isArray(requires) ? requires : [requires]
   return !!config && keys.some((k) => config[k])
 }
 
-export function pagesBySection(config, { dev_features = false } = {}) {
+export interface PageGroup {
+  section: Section
+  pages: SettingsPage[]
+}
+
+export function pagesBySection(
+  config: Record<string, unknown> | undefined | null,
+  { dev_features = false }: { dev_features?: boolean } = {},
+): PageGroup[] {
   return SECTIONS.map((section) => ({
     section,
     pages: SETTINGS_PAGES.filter(

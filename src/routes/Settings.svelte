@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n'
   import Card from '../lib/components/ui/Card.svelte'
   import Icon from '../lib/icons/Icon.svelte'
-  import { pagesBySection } from '../lib/config/pages.js'
+  import { pagesBySection } from '../lib/config/pages'
   import { config_store } from '../lib/stores/config'
   import { uisettings_store } from '../lib/stores/uisettings'
   import { redirect } from '../lib/router'

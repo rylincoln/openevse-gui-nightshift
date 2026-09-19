@@ -2,7 +2,7 @@
 <script>
   import { untrack } from 'svelte'
   import Icon from '../../icons/Icon.svelte'
-  import { isDummyPassword } from '../../config/validate.js'
+  import { isDummyPassword } from '../../config/validate'
 
   let {
     value = '',

@@ -1,6 +1,6 @@
 // src/lib/config/__tests__/divert.test.js
 import { describe, it, expect } from 'vitest'
-import { DIVERT_PRESETS, matchPreset, presetValues } from '../divert.js'
+import { DIVERT_PRESETS, matchPreset, presetValues } from '../divert'
 
 describe('DIVERT_PRESETS', () => {
   it('has the three named presets', () => {

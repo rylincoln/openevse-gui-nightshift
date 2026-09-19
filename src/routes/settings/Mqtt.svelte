@@ -4,7 +4,7 @@
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
   import { certificate_store } from '../../lib/stores/certificates'
-  import { createConfigForm } from '../../lib/config/configForm.svelte.js'
+  import { createConfigForm } from '../../lib/config/configForm.svelte'
   import { httpAPI } from '../../lib/api/httpAPI'
   import { serialQueue } from '../../lib/queue'
   import { formatDuration, formatAgo } from '../../lib/format/duration'
