@@ -453,4 +453,16 @@ describe('hardMaxCurrent', () => {
     expect(hardMaxCurrent(undefined, 48)).toBe(48)
     expect(hardMaxCurrent({ max_current_hard: 'x' })).toBe(32)
   })
+  it('never guesses a ceiling below the soft limit the device already accepted', () => {
+    // The mock fixture (and a real charger before $GC is answered): hard is
+    // 0 but soft is 48, so a 32 A guess put the Charge Manager slider's
+    // thumb past its own end label.
+    expect(hardMaxCurrent({ max_current_hard: 0, max_current_soft: 48 })).toBe(48)
+    expect(hardMaxCurrent({ max_current_hard: 0, max_current_soft: 48 }, 32)).toBe(48)
+    expect(hardMaxCurrent({ max_current_soft: 60 }, 48)).toBe(60)
+    // A soft limit under the fallback does not lower the guess.
+    expect(hardMaxCurrent({ max_current_hard: 0, max_current_soft: 16 }, 32)).toBe(32)
+    // A real hardware reading always wins over the soft limit.
+    expect(hardMaxCurrent({ max_current_hard: 40, max_current_soft: 48 })).toBe(40)
+  })
 })

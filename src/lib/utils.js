@@ -217,13 +217,20 @@ export function compareVersion(last, old) {
 }
 
 /**
- * The controller's hardware current ceiling, or `fallback` when the firmware
+ * The controller's hardware current ceiling, or a guess when the firmware
  * has not learned it yet. GET /config reports max_current_hard straight from
  * evse.getMaxHardwareCurrent(), which is 0 until the ESP has read $GC from the
  * controller (and in the mock fixture) — treated as a real ceiling, that 0
  * collapses every slider and cap that uses it to nothing.
+ *
+ * The guess is `fallback`, raised to max_current_soft when that is higher:
+ * the firmware caps the soft limit at the hardware ceiling, so a soft limit
+ * it has already accepted is proof the hardware allows at least that much.
+ * Without this the Charge Manager slider showed 48 A on a 0–32 A track.
  */
 export function hardMaxCurrent(config, fallback = 32) {
-  const n = Number(config?.max_current_hard)
-  return Number.isFinite(n) && n > 0 ? n : fallback
+  const hard = Number(config?.max_current_hard)
+  if (Number.isFinite(hard) && hard > 0) return hard
+  const soft = Number(config?.max_current_soft)
+  return Number.isFinite(soft) && soft > fallback ? soft : fallback
 }
