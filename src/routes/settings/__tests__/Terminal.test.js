@@ -21,7 +21,7 @@ import { httpAPI } from '../../../lib/api/httpAPI.js'
 import { showWriteError } from '../../../lib/alerts.js'
 import { config_store } from '../../../lib/stores/config'
 import { status_store } from '../../../lib/stores/status'
-import { uisettings_store } from '../../../lib/stores/uisettings.js'
+import { uisettings_store } from '../../../lib/stores/uisettings'
 import Terminal from '../Terminal.svelte'
 
 beforeEach(() => {

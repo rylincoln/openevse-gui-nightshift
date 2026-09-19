@@ -6,7 +6,7 @@ vi.mock('../../queue.js', () => ({
   serialQueue: { add: vi.fn((fn) => fn()) },
 }))
 
-import { rfid_users_store } from '../rfid_users.js'
+import { rfid_users_store } from '../rfid_users'
 import { httpAPI } from '../../api/httpAPI.js'
 
 describe('rfid_users_store', () => {

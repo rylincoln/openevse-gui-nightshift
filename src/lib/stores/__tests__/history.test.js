@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI.js', () => ({
+vi.mock('../../api/httpAPI.js', async (importOriginal) => ({
+  ...(await importOriginal()),
   httpAPI: vi.fn(),
   dedup: vi.fn((arr) => {
     const hashTable = {}
@@ -13,7 +14,7 @@ vi.mock('../../api/httpAPI.js', () => ({
   })
 }))
 
-import { history_store } from '../history.js'
+import { history_store } from '../history'
 import { httpAPI } from '../../api/httpAPI.js'
 
 describe('history_store', () => {

@@ -6,15 +6,15 @@
 import { get } from 'svelte/store'
 import { config_store } from './stores/config'
 import { status_store } from './stores/status'
-import { schedule_store } from './stores/schedule.js'
-import { plan_store } from './stores/plan.js'
+import { schedule_store } from './stores/schedule'
+import { plan_store } from './stores/plan'
 import { override_store } from './stores/override'
-import { claims_target_store } from './stores/claims_target.js'
+import { claims_target_store } from './stores/claims_target'
 import { limit_store } from './stores/limit'
-import { certificate_store } from './stores/certificates.js'
-import { uistates_store } from './stores/uistates.js'
-import { uisettings_store } from './stores/uisettings.js'
-import { theme } from './stores/theme.js'
+import { certificate_store } from './stores/certificates'
+import { uistates_store } from './stores/uistates'
+import { uisettings_store } from './stores/uisettings'
+import { theme } from './stores/theme'
 
 // Field names whose value should be replaced with a placeholder before export.
 // Substring match against the lowercased key — broad on purpose so we catch

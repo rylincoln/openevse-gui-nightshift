@@ -1,7 +1,7 @@
 <script>
   import { onMount, onDestroy } from 'svelte'
   import { DateTime } from 'luxon'
-  import { uistates_store } from '../stores/uistates.js'
+  import { uistates_store } from '../stores/uistates'
   import { status_store } from '../stores/status'
   import { JSONTryParse } from '../utils.js'
 

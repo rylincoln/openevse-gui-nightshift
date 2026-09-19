@@ -4,7 +4,7 @@
 // and reassigning a physical input's source is a two-step read-modify-write
 // (unassign whatever source was on that pin, then assign the new one) rather
 // than a single field write.
-import { cabletemp_store } from '../stores/cabletemp.js'
+import { cabletemp_store } from '../stores/cabletemp'
 import { serialQueue } from '../queue.js'
 import { showWriteError } from '../alerts.js'
 import { createSaveState } from './saveState.js'

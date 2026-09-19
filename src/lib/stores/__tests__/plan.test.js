@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('../../api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../api/httpAPI.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  httpAPI: vi.fn(),
+}))
 
-import { plan_store } from '../plan.js'
+import { plan_store } from '../plan'
 import { httpAPI } from '../../api/httpAPI.js'
 
 describe('plan_store', () => {

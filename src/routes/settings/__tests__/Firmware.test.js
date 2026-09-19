@@ -13,7 +13,7 @@ vi.mock('../../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.res
 import { httpAPI } from '../../../lib/api/httpAPI.js'
 import { config_store } from '../../../lib/stores/config'
 import { status_store } from '../../../lib/stores/status'
-import { uistates_store } from '../../../lib/stores/uistates.js'
+import { uistates_store } from '../../../lib/stores/uistates'
 import Firmware from '../Firmware.svelte'
 
 beforeEach(() => {

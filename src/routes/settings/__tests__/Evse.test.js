@@ -12,8 +12,8 @@ vi.mock('../../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.res
 
 import { httpAPI } from '../../../lib/api/httpAPI.js'
 import { config_store } from '../../../lib/stores/config'
-import { uistates_store } from '../../../lib/stores/uistates.js'
-import { uisettings_store } from '../../../lib/stores/uisettings.js'
+import { uistates_store } from '../../../lib/stores/uistates'
+import { uisettings_store } from '../../../lib/stores/uisettings'
 import Evse from '../Evse.svelte'
 
 const BASE = {

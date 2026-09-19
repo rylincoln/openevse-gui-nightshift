@@ -6,13 +6,16 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
-vi.mock('../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../lib/api/httpAPI.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  httpAPI: vi.fn(),
+}))
 
 import { httpAPI } from '../../lib/api/httpAPI.js'
-import { history_store } from '../../lib/stores/history.js'
+import { history_store } from '../../lib/stores/history'
 import { config_store } from '../../lib/stores/config'
-import { uisettings_store } from '../../lib/stores/uisettings.js'
-import { rfid_users_store } from '../../lib/stores/rfid_users.js'
+import { uisettings_store } from '../../lib/stores/uisettings'
+import { rfid_users_store } from '../../lib/stores/rfid_users'
 import History from '../History.svelte'
 
 const LOGS = [

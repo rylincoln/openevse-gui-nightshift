@@ -1,6 +1,7 @@
-import { writable } from 'svelte/store'
-import { httpAPI } from '../api/httpAPI.js'
+import { writable, type Writable } from 'svelte/store'
+import { httpAPI } from '../api/httpAPI'
 import { normalizeNotifications } from '../notifications/notifications.js'
+import type { Notification } from '../api/device'
 
 // Advisory list. Seeded and refreshed from GET /notifications only — the
 // websocket carries the two badge fields and nothing else, so there is no
@@ -9,13 +10,25 @@ import { normalizeNotifications } from '../notifications/notifications.js'
 //
 // The model matches normalizeNotifications(): `count`/`severity` are the
 // unmuted badge figures, `items` is everything including muted entries.
-const model = { count: 0, severity: 'info', items: [] }
+export interface NotificationState {
+  count: number
+  severity: string
+  items: Notification[]
+}
 
-function createNotificationStore() {
-  const P = writable(model)
+const model: NotificationState = { count: 0, severity: 'info', items: [] }
+
+export interface NotificationStore extends Writable<NotificationState> {
+  download(): Promise<boolean>
+  ack(id: string): Promise<boolean>
+  reset(): boolean
+}
+
+function createNotificationStore(): NotificationStore {
+  const P = writable<NotificationState>(model)
   const { subscribe, set, update } = P
 
-  async function download() {
+  async function download(): Promise<boolean> {
     const res = await httpAPI('GET', '/notifications')
     // Firmware without the advisory engine has no such route, so the SPA index
     // comes back and httpAPI's response.json() throws → 'error'. DataManager's
@@ -27,7 +40,7 @@ function createNotificationStore() {
     return true
   }
 
-  async function ack(id) {
+  async function ack(id: string): Promise<boolean> {
     if (!id) return false
     // Form-encoded body rather than a query string: ArduinoMongoose's
     // getParam() reads the query string only on a GET and the body on
@@ -52,7 +65,7 @@ function createNotificationStore() {
     return ok
   }
 
-  function reset() {
+  function reset(): boolean {
     P.set(model)
     return true
   }

@@ -6,7 +6,7 @@
   // thing the feature does short of the fault screen, so it has to be right
   // every time it appears or the owner learns to scroll past it.
   import { _ } from 'svelte-i18n'
-  import { notification_store } from '../../stores/notifications.js'
+  import { notification_store } from '../../stores/notifications'
   import { criticalItems, advisoryRoute, isKnownAdvisory } from '../../notifications/notifications.js'
 
   let items = $derived(criticalItems($notification_store.items))

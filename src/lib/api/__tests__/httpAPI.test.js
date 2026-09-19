@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('../../stores/uistates.js', () => ({
+vi.mock('../../stores/uistates', () => ({
   uistates_store: { update: vi.fn((fn) => fn({ has_fetched: true })) },
 }))
 vi.mock('svelte/store', async () => {

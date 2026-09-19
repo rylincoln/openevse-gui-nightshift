@@ -3,7 +3,7 @@
   import { onMount } from 'svelte'
   import { _ } from 'svelte-i18n'
   import { httpAPI } from '../../lib/api/httpAPI.js'
-  import { uisettings_store } from '../../lib/stores/uisettings.js'
+  import { uisettings_store } from '../../lib/stores/uisettings'
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
   import { serialQueue } from '../../lib/queue.js'

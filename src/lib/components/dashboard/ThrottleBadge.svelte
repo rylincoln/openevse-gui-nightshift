@@ -1,6 +1,6 @@
 <script>
   import { _ } from 'svelte-i18n'
-  import { claims_target_store } from '../../stores/claims_target.js'
+  import { claims_target_store } from '../../stores/claims_target'
   import { EvseClients } from '../../vars.js'
   import Icon from '../../icons/Icon.svelte'
 

@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n'
   import IconButton from '../ui/IconButton.svelte'
   import NotificationPanel from './NotificationPanel.svelte'
-  import { notification_store } from '../../stores/notifications.js'
+  import { notification_store } from '../../stores/notifications'
 
   let open = $state(false)
 

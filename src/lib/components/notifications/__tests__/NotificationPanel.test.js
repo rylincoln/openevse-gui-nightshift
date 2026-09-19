@@ -13,8 +13,8 @@ vi.mock('svelte-i18n', () => {
 vi.mock('../../../api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
 
 import { httpAPI } from '../../../api/httpAPI.js'
-import { notification_store } from '../../../stores/notifications.js'
-import { uistates_store } from '../../../stores/uistates.js'
+import { notification_store } from '../../../stores/notifications'
+import { uistates_store } from '../../../stores/uistates'
 import NotificationPanel from '../NotificationPanel.svelte'
 
 function item(id, over = {}) {

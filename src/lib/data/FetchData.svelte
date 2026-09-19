@@ -1,14 +1,14 @@
 <script>
   import { onMount } from 'svelte'
   import { status_store } from '../stores/status'
-  import { schedule_store } from '../stores/schedule.js'
-  import { plan_store } from '../stores/plan.js'
+  import { schedule_store } from '../stores/schedule'
+  import { plan_store } from '../stores/plan'
   import { config_store } from '../stores/config'
   import { override_store } from '../stores/override'
-  import { claims_target_store } from '../stores/claims_target.js'
-  import { claims_store } from '../stores/claims.js'
-  import { certificate_store } from '../stores/certificates.js'
-  import { uistates_store } from '../stores/uistates.js'
+  import { claims_target_store } from '../stores/claims_target'
+  import { claims_store } from '../stores/claims'
+  import { certificate_store } from '../stores/certificates'
+  import { uistates_store } from '../stores/uistates'
 
   let { onProgress = () => {}, onStatus = () => {}, onLoaded = () => {}, onError = () => {} } = $props()
 

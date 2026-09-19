@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../api/httpAPI.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  httpAPI: vi.fn(),
+}))
 vi.mock('../../queue.js', () => ({
   serialQueue: { add: vi.fn((fn) => fn()) },
 }))
 
-import { energy_store } from '../energy.js'
+import { energy_store } from '../energy'
 import { httpAPI } from '../../api/httpAPI.js'
 
 describe('energy_store', () => {

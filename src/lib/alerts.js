@@ -1,6 +1,6 @@
 import { get } from 'svelte/store'
 import { _ } from 'svelte-i18n'
-import { uistates_store } from './stores/uistates.js'
+import { uistates_store } from './stores/uistates'
 
 /**
  * Surface the global AlertBox for a failed device write.

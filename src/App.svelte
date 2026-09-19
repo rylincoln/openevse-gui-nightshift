@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte'
   import { setupI18n } from './lib/i18n/index.js'
-  import { theme } from './lib/stores/theme.js'
+  import { theme } from './lib/stores/theme'
   import Loader from './lib/components/ui/Loader.svelte'
   import AppShell from './lib/components/shell/AppShell.svelte'
   import Wizard from './routes/Wizard.svelte'
@@ -12,7 +12,7 @@
   import WebSocket from './lib/data/WebSocket.svelte'
   import DataManager from './lib/data/DataManager.svelte'
   import { config_store } from './lib/stores/config'
-  import { uistates_store } from './lib/stores/uistates.js'
+  import { uistates_store } from './lib/stores/uistates'
   import { announce } from './lib/nativeHost.js'
   import { _, isLoading } from 'svelte-i18n'
 

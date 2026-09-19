@@ -2,7 +2,7 @@
   import { currentPath } from '../../router.js'
   import { routes, NotFound, LEGACY_ROUTES } from '../../routes.js'
   import { status_store } from '../../stores/status'
-  import { uistates_store } from '../../stores/uistates.js'
+  import { uistates_store } from '../../stores/uistates'
   import Router from '../Router.svelte'
   import Header from './Header.svelte'
   import BottomNav from './BottomNav.svelte'

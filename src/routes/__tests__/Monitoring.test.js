@@ -6,13 +6,16 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
-vi.mock('../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.resolve({})) }))
+vi.mock('../../lib/api/httpAPI.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  httpAPI: vi.fn(() => Promise.resolve({})),
+}))
 
 import { status_store } from '../../lib/stores/status'
 import { config_store } from '../../lib/stores/config'
-import { claims_target_store } from '../../lib/stores/claims_target.js'
-import { uistates_store } from '../../lib/stores/uistates.js'
-import { uisettings_store } from '../../lib/stores/uisettings.js'
+import { claims_target_store } from '../../lib/stores/claims_target'
+import { uistates_store } from '../../lib/stores/uistates'
+import { uisettings_store } from '../../lib/stores/uisettings'
 import Monitoring from '../Monitoring.svelte'
 
 describe('Monitoring', () => {

@@ -8,11 +8,14 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
-vi.mock('../../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../../lib/api/httpAPI.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  httpAPI: vi.fn(),
+}))
 
 import { httpAPI } from '../../../lib/api/httpAPI.js'
-import { certificate_store } from '../../../lib/stores/certificates.js'
-import { uistates_store } from '../../../lib/stores/uistates.js'
+import { certificate_store } from '../../../lib/stores/certificates'
+import { uistates_store } from '../../../lib/stores/uistates'
 import Certificates from '../Certificates.svelte'
 
 beforeEach(() => {
