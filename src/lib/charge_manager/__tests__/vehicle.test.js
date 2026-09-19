@@ -6,7 +6,7 @@ import {
 	VEHICLE_SRC_MQTT,
 	VEHICLE_SRC_HTTP,
 	VEHICLE_SRC_HOME_ASSISTANT,
-} from '../vehicle.js'
+} from '../vehicle'
 
 describe('vehicleLimitAvailability', () => {
 	it('offers nothing when no source is configured and nothing is reporting', () => {

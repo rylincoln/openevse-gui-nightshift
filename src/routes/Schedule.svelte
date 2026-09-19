@@ -3,7 +3,7 @@
   import { schedule_store } from '../lib/stores/schedule'
   import { serialQueue } from '../lib/queue'
   import { showWriteError } from '../lib/alerts'
-  import { nextTimerId } from '../lib/schedule/timers.js'
+  import { nextTimerId } from '../lib/schedule/timers'
   import Button from '../lib/components/ui/Button.svelte'
   import TimerList from '../lib/components/schedule/TimerList.svelte'
   import TimerModal from '../lib/components/schedule/TimerModal.svelte'

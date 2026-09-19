@@ -1,6 +1,6 @@
 <script>
   import { _ } from 'svelte-i18n'
-  import { socBarSegments, isCapped, socCeiling, hmsShort } from '../../dashboard/soc.js'
+  import { socBarSegments, isCapped, socCeiling, hmsShort } from '../../dashboard/soc'
 
   let {
     soc = 0,

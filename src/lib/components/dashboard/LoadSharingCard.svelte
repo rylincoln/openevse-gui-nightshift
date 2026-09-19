@@ -6,7 +6,7 @@
   import { _ } from 'svelte-i18n'
   import { formatDuration } from '../../format/duration'
 
-  /** @type {{ view: import('../../dashboard/loadsharing.js').loadSharingView extends (...a: any) => infer R ? NonNullable<R> : never }} */
+  /** @type {{ view: import('../../dashboard/loadsharing').loadSharingView extends (...a: any) => infer R ? NonNullable<R> : never }} */
   let { view } = $props()
 
   let fillPct = $derived(

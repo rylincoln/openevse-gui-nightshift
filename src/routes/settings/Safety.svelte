@@ -13,7 +13,7 @@
   } from '../../lib/cabletemp'
   import { formatTemp } from '../../lib/temperature'
   import { notification_store } from '../../lib/stores/notifications'
-  import { settingsMarkers } from '../../lib/notifications/notifications.js'
+  import { settingsMarkers } from '../../lib/notifications/notifications'
   import AdvisoryMarker from '../../lib/components/notifications/AdvisoryMarker.svelte'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'

@@ -1,4 +1,6 @@
 /** Pure helpers for the Dashboard. No store or DOM access — fully unit-tested. */
+import type { Status, Limit, Plan } from '../api/device'
+import type { ConfigState } from '../stores/config'
 
 /**
  * Hard ceiling for the user-configurable energy-limit slider max, in kWh.
@@ -14,9 +16,12 @@ export const ENERGY_LIMIT_MAX_KWH = 500
  * [1, ENERGY_LIMIT_MAX_KWH]. A 0 / blank / nullish value is treated as
  * "unset" and falls back to the 100 kWh default.
  */
-export function clampEnergyMax(kwh) {
+export function clampEnergyMax(kwh: number | null | undefined): number {
   return Math.min(ENERGY_LIMIT_MAX_KWH, Math.max(1, Math.round(kwh || 100)))
 }
+
+/** The Dashboard's mapped display states. */
+export type DisplayState = 'starting' | 'idle' | 'off' | 'charging' | 'error' | 'sleeping' | 'connected'
 
 /**
  * Map the raw OpenEVSE `state` code to a Dashboard display state.
@@ -27,24 +32,26 @@ export function clampEnergyMax(kwh) {
  * So we use mode to disambiguate: 254 + Off = 'off'; 254 + anything else
  * = 'sleeping'.
  */
-export function displayState(status, mode = 0) {
-  const s = status?.state
+export function displayState(status: Status | null | undefined, mode: number = 0): DisplayState {
+  // Widened beyond EvseState: a charger can report 0 before its state
+  // machine has initialised, which the wire type doesn't enumerate.
+  const s: number | null | undefined = status?.state
   if (s === undefined || s === null || s === 0) return 'starting'
   if (s === 1) return mode === 2 ? 'off' : 'idle'
   if (s === 3) return 'charging'
   if (s >= 4 && s <= 11) return 'error'
   if (s === 254) return mode === 2 ? 'off' : 'sleeping'
-  if (s === 255) return 'off'      // device was already disabled at boot
-  return 'connected'               // 2: car plugged in, not charging
+  if (s === 255) return 'off' // device was already disabled at boot
+  return 'connected' // 2: car plugged in, not charging
 }
 
-function clamp01(n) {
+function clamp01(n: number): number {
   if (!Number.isFinite(n)) return 0
   return Math.max(0, Math.min(1, n))
 }
 
 /** Progress (0..1) toward an active charge limit. */
-export function limitProgress(limit, status) {
+export function limitProgress(limit: Limit | null | undefined, status: Status | null | undefined): number {
   if (!limit || limit.type === 'none' || !limit.value) return 0
   if (limit.type === 'time') {
     const targetSeconds = limit.value * 60
@@ -62,13 +69,17 @@ export function limitProgress(limit, status) {
  * must triple too — otherwise the ring overflows and the "kW max" label reads a
  * third of the real ceiling (~3.8 kW instead of ~11 kW). (gui-nightshift#16)
  */
-export function maxPowerW(status, config) {
+export function maxPowerW(status: Status | null | undefined, config: ConfigState | null | undefined): number {
   const phases = config?.is_threephase ? 3 : 1
   return (config?.max_current_soft ?? 0) * (status?.voltage ?? 0) * phases
 }
 
 /** Ring fill (0..1): limit progress when a limit is active, else power vs max power. */
-export function ringFill(status, config, limit) {
+export function ringFill(
+  status: Status | null | undefined,
+  config: ConfigState | null | undefined,
+  limit: Limit | null | undefined,
+): number {
   if (limit && limit.type && limit.type !== 'none' && limit.value) {
     return limitProgress(limit, status)
   }
@@ -84,7 +95,7 @@ export function ringFill(status, config, limit) {
  * Returns an i18n key + interpolation values.
  */
 // Plan events carry HH:MM:SS but schedules only resolve to the minute.
-const hhmm = (t) => (typeof t === 'string' ? t.slice(0, 5) : t)
+const hhmm = (t: string): string => (typeof t === 'string' ? t.slice(0, 5) : t)
 
 /**
  * Is a vehicle physically plugged in?
@@ -96,7 +107,7 @@ const hhmm = (t) => (typeof t === 'string' ? t.slice(0, 5) : t)
  * the EVSE state code (2 = connected, 3 = charging) when it's absent (older
  * firmware, or before the first status load).
  */
-export function vehicleConnected(status) {
+export function vehicleConnected(status: Status | null | undefined): boolean {
   const v = status?.vehicle
   if (v === 1) return true
   if (v === 0) return false
@@ -104,9 +115,22 @@ export function vehicleConnected(status) {
   return s === 2 || s === 3
 }
 
-export function connectedReason(mode, plan, owner = '') {
-  const cur = plan?.current_event
-  const next = plan?.next_event
+/** A "why not charging" descriptor: an i18n key + interpolation values, optionally a second line. */
+export interface ConnectedReason {
+  key: string
+  values: Record<string, unknown>
+  detail?: { key: string; values: Record<string, unknown> }
+}
+
+export function connectedReason(
+  mode: number,
+  plan: Plan | null | undefined,
+  owner: string = '',
+): ConnectedReason {
+  // `false` (no event scheduled) behaves identically to absent everywhere
+  // below (only ever read through a truthiness check), so fold it into null.
+  const cur = plan?.current_event || null
+  const next = plan?.next_event || null
   if (owner === 'timer' && next?.time && next.state === 'active') {
     // The scheduler switched charging off. Spell out the window: when it
     // went off and when it comes back, or just the next flip if the device

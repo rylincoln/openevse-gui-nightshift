@@ -7,7 +7,7 @@
   // every time it appears or the owner learns to scroll past it.
   import { _ } from 'svelte-i18n'
   import { notification_store } from '../../stores/notifications'
-  import { criticalItems, advisoryRoute, isKnownAdvisory } from '../../notifications/notifications.js'
+  import { criticalItems, advisoryRoute, isKnownAdvisory } from '../../notifications/notifications'
 
   let items = $derived(criticalItems($notification_store.items))
 

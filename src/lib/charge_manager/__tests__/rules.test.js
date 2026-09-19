@@ -7,7 +7,7 @@ import {
   actionToFeatureKey,
   timerStateToAction,
   formatWindow,
-} from '../rules.js'
+} from '../rules'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 

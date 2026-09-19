@@ -4,7 +4,7 @@
   import Button from '../ui/Button.svelte'
   import SegmentedControl from '../ui/SegmentedControl.svelte'
   import DayPicker from './DayPicker.svelte'
-  import { daysToFlags, flagsToDays, hasAnyDay, DAYS } from '../../schedule/timers.js'
+  import { daysToFlags, flagsToDays, hasAnyDay, DAYS } from '../../schedule/timers'
 
   let { open = false, timer = null, busy = false, onclose = () => {}, onsave = () => {} } = $props()
 

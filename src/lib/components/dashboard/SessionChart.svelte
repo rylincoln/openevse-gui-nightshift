@@ -1,13 +1,13 @@
 <script>
   import { _ } from 'svelte-i18n'
   import UplotChart from '../charts/UplotChart.svelte'
-  import { readChartTheme } from '../charts/chartTheme.js'
+  import { readChartTheme } from '../charts/chartTheme'
   import {
     clipToSession,
     toChartData,
     kwAxisMax,
     buildSessionOpts,
-  } from '../../dashboard/sessionChart.js'
+  } from '../../dashboard/sessionChart'
 
   /** @type {{ samples: Array<{ts:number,a:number,t:number,e:number,s:number}>, voltage:number, target:number|null, sessionElapsed:number, phases:number }} */
   let { samples = [], voltage = 0, target = null, sessionElapsed = 0, phases = 1 } = $props()

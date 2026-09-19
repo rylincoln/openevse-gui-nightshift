@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { socCeiling, isCapped, effectiveStop, socBarSegments, hmsShort, estMaxRange } from '../soc.js'
+import { socCeiling, isCapped, effectiveStop, socBarSegments, hmsShort, estMaxRange } from '../soc'
 
 describe('socCeiling', () => {
   it('uses the vehicle limit when known', () => {

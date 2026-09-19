@@ -12,7 +12,7 @@
     energyMetrics, sensorMetrics, serviceMetrics, vehicleMetrics,
     showVehicle, homeBatteryMetrics, showHomeBattery, safetyData, relayHealthData,
     cableTempMetrics, showCableTemp,
-  } from '../lib/monitoring/metrics.js'
+  } from '../lib/monitoring/metrics'
   import Tabs from '../lib/components/ui/Tabs.svelte'
   import MetricsTab from '../lib/components/monitoring/MetricsTab.svelte'
   import HealthTab from '../lib/components/monitoring/HealthTab.svelte'

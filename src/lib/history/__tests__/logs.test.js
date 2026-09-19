@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   pageRange, logTypeIcon, logTypeTone, logStateInfo, logEnergyKwh, logTempC,
   logPilotAmps, logReason,
-} from '../logs.js'
+} from '../logs'
 
 describe('pageRange', () => {
   it('lists every index from min to max inclusive', () => {

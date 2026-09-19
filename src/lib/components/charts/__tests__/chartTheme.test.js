@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { readChartTheme } from '../chartTheme.js'
+import { readChartTheme } from '../chartTheme'
 
 function setVar(name, value) {
   document.documentElement.style.setProperty(name, value)

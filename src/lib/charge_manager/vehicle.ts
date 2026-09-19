@@ -5,6 +5,8 @@
 // current data would hide the limit at exactly the moment it is being set up.
 // A configured source is enough; a rule whose data never arrives simply does
 // not fire, which is the same outcome as an unplugged car.
+import type { Status } from '../api/device'
+import type { ConfigState } from '../stores/config'
 
 // vehicle_data_src values, matching the firmware's enum in app_config.h.
 export const VEHICLE_SRC_NONE = 0
@@ -13,12 +15,19 @@ export const VEHICLE_SRC_MQTT = 2
 export const VEHICLE_SRC_HTTP = 3
 export const VEHICLE_SRC_HOME_ASSISTANT = 4
 
+export interface VehicleLimitAvailability {
+	soc: boolean
+	range: boolean
+}
+
 /**
- * @param {object|null|undefined} config  /config document
- * @param {object|null|undefined} status  /status document
- * @returns {{soc: boolean, range: boolean}}
+ * @param config  /config document
+ * @param status  /status document
  */
-export function vehicleLimitAvailability(config, status) {
+export function vehicleLimitAvailability(
+	config: ConfigState | null | undefined,
+	status: Status | null | undefined,
+): VehicleLimitAvailability {
 	// Any source but "none" means telemetry is expected from somewhere. Testing
 	// the MQTT topic keys instead (the original behaviour) left SOC and range
 	// permanently unavailable for HTTP push, Tesla and Home Assistant, none of

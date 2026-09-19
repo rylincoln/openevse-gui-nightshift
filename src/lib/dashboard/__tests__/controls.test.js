@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { controlSegments, selectedSegment } from '../controls.js'
+import { controlSegments, selectedSegment } from '../controls'
 
 describe('controlSegments', () => {
   it('includes the eco segment when divert is enabled', () => {

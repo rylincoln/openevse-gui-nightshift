@@ -6,8 +6,8 @@
   import Toggle from '../ui/Toggle.svelte'
   import LimitSliderBar from '../dashboard/LimitSliderBar.svelte'
   import DayPicker from '../schedule/DayPicker.svelte'
-  import { daysToFlags, flagsToDays, DAYS } from '../../schedule/timers.js'
-  import { isNextDay } from '../../charge_manager/rules.js'
+  import { daysToFlags, flagsToDays, DAYS } from '../../schedule/timers'
+  import { isNextDay } from '../../charge_manager/rules'
 
   let {
     open = false,

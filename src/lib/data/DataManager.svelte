@@ -3,7 +3,7 @@
   import { limit_store } from '../stores/limit'
   import { boost_store } from '../stores/boost'
   import { notification_store } from '../stores/notifications'
-  import { badgeSignature } from '../notifications/notifications.js'
+  import { badgeSignature } from '../notifications/notifications'
   import { uisettings_store } from '../stores/uisettings'
   import { EvseClients } from '../vars'
   import { uistates_store } from '../stores/uistates'

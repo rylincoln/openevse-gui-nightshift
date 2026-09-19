@@ -9,21 +9,29 @@
  * Self-contained — no store, DOM or API imports. Every shape below is read
  * from the firmware's own serialiser (src/notifications.cpp), not from a spec.
  */
+import type { Status } from '../api/device'
 
 /** Severity names, weakest first. The firmware sends exactly these three. */
-export const SEVERITIES = ['info', 'warning', 'critical']
+export const SEVERITIES: string[] = ['info', 'warning', 'critical']
 
 /** 0 (info) … 2 (critical). Anything unrecognised ranks lowest. */
-export function severityRank(severity) {
-  const i = SEVERITIES.indexOf(severity)
+export function severityRank(severity: string | undefined): number {
+  const i = SEVERITIES.indexOf(severity ?? '')
   return i < 0 ? 0 : i
 }
 
 /** The strongest severity in a list, or 'info' for an empty one. */
-export function maxSeverity(items) {
+export function maxSeverity(items: { severity?: string }[] | undefined): string {
   let rank = 0
   for (const item of items ?? []) rank = Math.max(rank, severityRank(item?.severity))
   return SEVERITIES[rank]
+}
+
+/** Where one advisory id sends the reader, and the config switch (if any) it's about. */
+export interface AdvisoryInfo {
+  category: string
+  setting?: string
+  route: string
 }
 
 /**
@@ -44,7 +52,7 @@ export function maxSeverity(items) {
  * (wear.relay_life at ≤20% / ≤5% remaining, thermal.relay_thermal at watch /
  * warn), so it is read from the payload, never from a table.
  */
-export const ADVISORIES = {
+export const ADVISORIES: Record<string, AdvisoryInfo> = {
   'safety.ground_check': { category: 'safety', setting: 'ground_check', route: '/settings/safety' },
   'safety.gfci_check': { category: 'safety', setting: 'gfci_check', route: '/settings/safety' },
   'safety.relay_check': { category: 'safety', setting: 'relay_check', route: '/settings/safety' },
@@ -64,7 +72,7 @@ export const ADVISORIES = {
 }
 
 /** The ids this build has title and detail copy for. */
-export const KNOWN_ADVISORY_IDS = Object.keys(ADVISORIES)
+export const KNOWN_ADVISORY_IDS: string[] = Object.keys(ADVISORIES)
 
 /**
  * True when this build knows the id. Ids are stable and locale-independent —
@@ -72,12 +80,12 @@ export const KNOWN_ADVISORY_IDS = Object.keys(ADVISORIES)
  * no copy for. Callers fall back to the raw id rather than a missing-key
  * placeholder.
  */
-export function isKnownAdvisory(id) {
+export function isKnownAdvisory(id: string): boolean {
   return Object.prototype.hasOwnProperty.call(ADVISORIES, id)
 }
 
 /** Where the panel's link for this advisory should go; null when unknown. */
-export function advisoryRoute(id) {
+export function advisoryRoute(id: string): string | null {
   return ADVISORIES[id]?.route ?? null
 }
 
@@ -87,9 +95,33 @@ export function advisoryRoute(id) {
  * `0` means "the clock was not yet synced when this was recorded" — render it
  * as unknown, never as 1970.
  */
-export function seenAt(value) {
+export function seenAt(value: unknown): number | null {
   const n = Number(value)
   return Number.isFinite(n) && n > 0 ? n : null
+}
+
+/**
+ * One advisory after `normalizeNotifications()` — the shape `unmutedItems` /
+ * `criticalItems` / `sortNewestFirst` / `settingsMarkers` operate on. Differs
+ * from device.ts's `Notification` (the raw wire shape) in `first_seen` /
+ * `last_seen`: the wire's `0` sentinel ("clock not synced") is normalised to
+ * `null` here via `seenAt()`.
+ */
+export interface NormalizedNotification {
+  id: string
+  category: string
+  severity: string
+  sticky: boolean
+  acked: boolean
+  first_seen: number | null
+  last_seen: number | null
+}
+
+/** `normalizeNotifications()`'s return shape. */
+export interface NormalizedNotifications {
+  count: number
+  severity: string
+  items: NormalizedNotification[]
 }
 
 /**
@@ -99,42 +131,48 @@ export function seenAt(value) {
  * only; `items` lists everything, muted included. So `count: 0` beside a
  * non-empty `items` is a legitimate payload, not a bug.
  */
-export function normalizeNotifications(payload) {
+export function normalizeNotifications(payload: unknown): NormalizedNotifications {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return { count: 0, severity: 'info', items: [] }
   }
-  const raw = Array.isArray(payload.notifications) ? payload.notifications : []
-  const items = raw
-    .filter((n) => n && typeof n === 'object' && typeof n.id === 'string' && n.id !== '')
+  const body = payload as Record<string, unknown>
+  const raw = Array.isArray(body.notifications) ? (body.notifications as unknown[]) : []
+  const items: NormalizedNotification[] = raw
+    .filter((n): n is Record<string, unknown> => {
+      if (!n || typeof n !== 'object') return false
+      const id = (n as Record<string, unknown>).id
+      return typeof id === 'string' && id !== ''
+    })
     .map((n) => ({
-      id: n.id,
+      id: n.id as string,
       category: typeof n.category === 'string' ? n.category : '',
-      severity: SEVERITIES.includes(n.severity) ? n.severity : 'info',
+      severity: typeof n.severity === 'string' && SEVERITIES.includes(n.severity) ? n.severity : 'info',
       sticky: !!n.sticky,
       acked: !!n.acked,
       first_seen: seenAt(n.first_seen),
       last_seen: seenAt(n.last_seen),
     }))
   const live = unmutedItems(items)
-  const count = Number(payload.count)
+  const count = Number(body.count)
   return {
     // Prefer the firmware's own figures; recompute only when they are missing
     // or unusable, so the badge never disagrees with the LCD.
     count: Number.isFinite(count) && count >= 0 ? count : live.length,
-    severity: SEVERITIES.includes(payload.max_severity)
-      ? payload.max_severity
-      : maxSeverity(live),
+    severity:
+      typeof body.max_severity === 'string' && SEVERITIES.includes(body.max_severity)
+        ? body.max_severity
+        : maxSeverity(live),
     items,
   }
 }
 
 /** The entries that drive the badge and the LCD — everything not acked. */
-export function unmutedItems(items) {
+export function unmutedItems(items: NormalizedNotification[] | undefined): NormalizedNotification[] {
   return (items ?? []).filter((n) => n && !n.acked)
 }
 
 /** Unmuted criticals, in display order. What the status-page strip shows. */
-export function criticalItems(items) {
+export function criticalItems(items: NormalizedNotification[] | undefined): NormalizedNotification[] {
   return sortNewestFirst(unmutedItems(items).filter((n) => n.severity === 'critical'))
 }
 
@@ -150,7 +188,7 @@ export function criticalItems(items) {
  * would otherwise put it; severity then id break the ties so the order is
  * stable across re-fetches.
  */
-export function sortNewestFirst(items) {
+export function sortNewestFirst(items: NormalizedNotification[] | undefined): NormalizedNotification[] {
   return [...(items ?? [])].sort((a, b) => {
     const at = a?.first_seen ?? a?.last_seen
     const bt = b?.first_seen ?? b?.last_seen
@@ -165,6 +203,13 @@ export function sortNewestFirst(items) {
   })
 }
 
+/** One `settingsMarkers()` entry — the marker `AdvisoryMarker.svelte` takes as `marker`. */
+export interface Marker {
+  id: string
+  severity: string
+  acked: boolean
+}
+
 /**
  * Config key → the advisory sitting on it, for the settings-page inline
  * markers.
@@ -173,8 +218,8 @@ export function sortNewestFirst(items) {
  * hides the state. The owner who muted "ground check is off" still sees it
  * beside the switch, so the charger's configuration is never secret.
  */
-export function settingsMarkers(items) {
-  const out = {}
+export function settingsMarkers(items: NormalizedNotification[] | undefined): Record<string, Marker> {
+  const out: Record<string, Marker> = {}
   for (const item of items ?? []) {
     const setting = ADVISORIES[item?.id]?.setting
     if (!setting) continue
@@ -194,14 +239,10 @@ export function settingsMarkers(items) {
  * `{count: 0, severity: "info"}`, which is every bit as much a yes as a
  * charger with six advisories.
  */
-export function hasNotifications(status) {
-  return !!(
-    status &&
-    typeof status === 'object' &&
-    status.notifications &&
-    typeof status.notifications === 'object' &&
-    !Array.isArray(status.notifications)
-  )
+export function hasNotifications(status: unknown): boolean {
+  if (!status || typeof status !== 'object') return false
+  const n = (status as Record<string, unknown>).notifications
+  return !!n && typeof n === 'object' && !Array.isArray(n)
 }
 
 /**
@@ -216,9 +257,10 @@ export function hasNotifications(status) {
  * set without moving either number. DataManager pairs this with the arrival
  * nonce from WebSocket.svelte for that reason.
  */
-export function badgeSignature(status) {
+export function badgeSignature(status: Status | undefined): string | null {
   if (!hasNotifications(status)) return null
-  const n = status.notifications
+  const n = status?.notifications
+  if (!n) return null
   const count = Number(n.count)
   return (Number.isFinite(count) ? count : 0) + ':' + String(n.severity ?? 'info')
 }

@@ -15,7 +15,7 @@ import {
   settingsMarkers,
   hasNotifications,
   badgeSignature,
-} from '../notifications.js'
+} from '../notifications'
 
 // A payload shaped exactly like Notifications::serialize() builds it.
 function payload(items, extra = {}) {
