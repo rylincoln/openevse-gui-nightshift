@@ -38,7 +38,7 @@ export async function httpAPI<T = unknown>(
   if (import.meta.env.DEV) {
     if (!url.includes('http', 0)) url = '/api' + url
   }
-  const res: ApiResult<T> = await (fetch(url, data)
+  const res: ApiResult<T> = await fetch(url, data)
     .then((response): Promise<T | 'error'> => {
       // Session expired / not logged in: send the user to the login page.
       // Login.svelte posts to /login with a bare fetch (not httpAPI), so this
@@ -52,8 +52,7 @@ export async function httpAPI<T = unknown>(
     .catch((error: unknown) => {
       console.log(error)
       return 'error' as const
-    }) as Promise<ApiResult<T>>
-  )
+    })
   uistates_store.update((x) => {
     x.has_fetched = true
     return x
