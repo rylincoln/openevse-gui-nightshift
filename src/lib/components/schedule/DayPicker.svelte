@@ -1,6 +1,6 @@
 <script>
   import { _ } from 'svelte-i18n'
-  import { DAYS } from '../../schedule/timers.js'
+  import { DAYS } from '../../schedule/timers'
 
   let { flags = [false, false, false, false, false, false, false], onchange = () => {} } = $props()
 

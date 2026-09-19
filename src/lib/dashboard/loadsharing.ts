@@ -1,4 +1,4 @@
-// src/lib/dashboard/loadsharing.js
+// src/lib/dashboard/loadsharing.ts
 // View-model for the Home page's load-sharing line/card. Pure — no stores,
 // DOM or i18n — so every branch is unit-testable.
 //
@@ -10,34 +10,57 @@
 // tell an allocation from a lost controller, which is the distinction the
 // card has to get right.
 import { EvseClients } from '../vars'
+import type { Status, LoadSharingStatus } from '../api/device'
+import type { ConfigState } from '../stores/config'
+import type { ClaimsTargetModel } from '../stores/claims_target'
 
-const LIMIT_CLIENTS = [EvseClients.shaper.id, EvseClients.loadsharing.id]
+const LIMIT_CLIENTS: number[] = [EvseClients.shaper.id, EvseClients.loadsharing.id]
 
-function num(v) {
+/** Coerce an untrusted numeric-ish value to a finite number, or null. */
+function num(v: unknown): number | null {
   const n = Number(v)
   return Number.isFinite(n) ? n : null
 }
 
+/** The Home page's load-sharing line/card view-model, or null when load sharing is off. */
+export interface LoadSharingView {
+  role: 'controller' | 'member' | ''
+  state: 'sharing' | 'limited' | 'failsafe'
+  limit: number | null
+  localMax: number
+  pilot: number
+  others: number | null
+  online: number | null
+  groupTotal: number | null
+  groupMax: number | null
+  controller: string
+  safeLimit: number | null
+  unreachableFor: number | null
+}
+
 /**
- * @param {object} args
- * @param {object} args.config        /config (loadsharing_* keys)
- * @param {object} args.status        /status (pilot, uptime, loadsharing_joined_peers, loadsharing_group_current_total)
- * @param {object} args.claimsTarget  /claims/target
- * @param {object|null} args.lsStatus GET /loadsharing/status, or null when not fetched yet
- * @param {number} args.localMax      this charger's own ceiling (soft max), amps
- * @returns {null | {
- *   role: 'controller'|'member'|'',
- *   state: 'sharing'|'limited'|'failsafe',
- *   limit: number|null, localMax: number, pilot: number,
- *   others: number|null, online: number|null,
- *   groupTotal: number|null, groupMax: number|null,
- *   controller: string, safeLimit: number|null, unreachableFor: number|null,
- * }}
+ * @param args.config        /config (loadsharing_* keys)
+ * @param args.status        /status (pilot, uptime, loadsharing_joined_peers, loadsharing_group_current_total)
+ * @param args.claimsTarget  /claims/target
+ * @param args.lsStatus      GET /loadsharing/status, or null when not fetched yet
+ * @param args.localMax      this charger's own ceiling (soft max), amps
  */
-export function loadSharingView({ config, status, claimsTarget, lsStatus, localMax }) {
-  const c = config ?? {}
+export function loadSharingView({
+  config,
+  status,
+  claimsTarget,
+  lsStatus,
+  localMax,
+}: {
+  config: ConfigState | undefined
+  status: Status | undefined
+  claimsTarget: ClaimsTargetModel | undefined
+  lsStatus: LoadSharingStatus | null | undefined
+  localMax: number | undefined
+}): LoadSharingView | null {
+  const c: Partial<ConfigState> = config ?? {}
   if (!c.loadsharing_enabled) return null
-  const s = status ?? {}
+  const s: Partial<Status> = status ?? {}
   const role = c.loadsharing_role === 'controller' || c.loadsharing_role === 'member' ? c.loadsharing_role : ''
   const controller = c.loadsharing_controller_host ?? ''
 
@@ -45,15 +68,19 @@ export function loadSharingView({ config, status, claimsTarget, lsStatus, localM
   // and a firmware that reports max_current_hard as 0 (unset) drags that to
   // 0 — so fall back through the soft max and the live max before giving
   // up. With no ceiling at all, any allocation counts as a limit.
+  const localMaxNum = num(localMax)
+  const softMaxNum = num(c.max_current_soft)
+  const liveMaxNum = num(s.max_current)
   const ceiling =
-    num(localMax) > 0 ? num(localMax)
-    : num(c.max_current_soft) > 0 ? num(c.max_current_soft)
-    : num(s.max_current) > 0 ? num(s.max_current)
+    localMaxNum !== null && localMaxNum > 0 ? localMaxNum
+    : softMaxNum !== null && softMaxNum > 0 ? softMaxNum
+    : liveMaxNum !== null && liveMaxNum > 0 ? liveMaxNum
     : null
 
   // The allocation the group actually imposed: the shaper/load-sharing claim
   // on max_current. Anything else claiming max_current is not load sharing.
-  const claimed = LIMIT_CLIENTS.includes(claimsTarget?.claims?.max_current)
+  const claimedMaxCurrent = claimsTarget?.claims?.max_current
+  const claimed = claimedMaxCurrent != null && LIMIT_CLIENTS.includes(claimedMaxCurrent)
   const applied = claimed ? num(claimsTarget?.properties?.max_current) : null
   const limit = applied !== null && applied >= 0 && (ceiling === null || applied < ceiling) ? applied : null
 
@@ -70,9 +97,8 @@ export function loadSharingView({ config, status, claimsTarget, lsStatus, localM
   // Seconds since the controller last answered. last_seen is the peer
   // poller's millis()-based stamp in seconds, so it is on the same clock as
   // /status uptime; 0 / absent means it has not answered since startup.
-  const peer = Array.isArray(lsStatus?.peers)
-    ? lsStatus.peers.find((p) => p && (p.host === controller || p.hostname === controller))
-    : null
+  const peers = lsStatus?.peers
+  const peer = Array.isArray(peers) ? peers.find((p) => p && (p.host === controller || p.hostname === controller)) : null
   const lastSeen = num(peer?.last_seen)
   const uptime = num(s.uptime)
   const unreachableFor =

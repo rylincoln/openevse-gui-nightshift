@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DAYS, nextTimerId, daysToFlags, flagsToDays, hasAnyDay, formatDayChips } from '../timers.js'
+import { DAYS, nextTimerId, daysToFlags, flagsToDays, hasAnyDay, formatDayChips } from '../timers'
 
 describe('DAYS', () => {
   it('is the seven days, Monday-first', () => {

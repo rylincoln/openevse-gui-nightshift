@@ -1,23 +1,38 @@
 /** Pure helpers for the Charge Manager. No store or DOM access — fully unit-tested. */
 
-import { nextTimerId } from '../schedule/timers.js'
+import { nextTimerId } from '../schedule/timers'
+import type { Timer } from '../schedule/timers'
+import type { LimitType } from '../api/device'
 
 /** All supported global feature keys, in display order. */
-export const GLOBAL_FEATURE_KEYS = [
-  'session_limit',
-  'eco_divert',
-  'shaping',
-  'rfid',
-  'ocpp',
-]
+export const GLOBAL_FEATURE_KEYS: string[] = ['session_limit', 'eco_divert', 'shaping', 'rfid', 'ocpp']
+
+/** The `{ type, value }` a Rule carries when a session/energy/time/SOC/range limit is set. */
+export interface RuleLimit {
+  type: LimitType
+  value: number
+}
+
+/** The Charge Manager's rule model — a scheduled window or an Always-On global feature. */
+export interface Rule {
+  id: string | null
+  alwaysOn: boolean
+  action: string
+  days: string[]
+  startTime: string
+  stopTime: string | null
+  chargeCurrent: number | null
+  limit: RuleLimit | null
+  _startEventId: number | null
+  _stopEventId: number | null
+}
 
 /**
  * Maps a Rule action to the timer `state` string the firmware expects.
  * EvseState::fromString only recognises 'a'→active and 'd'→disabled, so every
  * feature-enabled action (including 'eco') must use 'active' + the feature field.
- * @param {string} action
  */
-export function actionToTimerState(action) {
+export function actionToTimerState(action: string): 'active' | 'disabled' {
   if (action === 'disable') return 'disabled'
   return 'active'
 }
@@ -26,12 +41,9 @@ export function actionToTimerState(action) {
  * Maps a Rule action to the firmware `feature` field value.
  * 'eco' is treated as an alias for 'eco_divert' because the firmware has no
  * native Eco EvseState — divert's eco mode is the correct implementation.
- * @param {string} action
- * @returns {string|null}
  */
-function actionToTimerFeature(action) {
-  /** @type {Record<string,string>} */
-  const map = { eco: 'divert', eco_divert: 'divert', shaper: 'shaper', rfid: 'rfid', ocpp: 'ocpp' }
+function actionToTimerFeature(action: string): string | null {
+  const map: Record<string, string> = { eco: 'divert', eco_divert: 'divert', shaper: 'shaper', rfid: 'rfid', ocpp: 'ocpp' }
   return map[action] ?? null
 }
 
@@ -39,10 +51,8 @@ function actionToTimerFeature(action) {
  * Maps a Rule action to the global "Always Active" feature key it corresponds
  * to, or null for actions (charge / disable) that have no on/off global feature.
  * Used to keep a feature mutually exclusive between Always-On and Scheduled.
- * @param {string} action
- * @returns {string|null}
  */
-export function actionToFeatureKey(action) {
+export function actionToFeatureKey(action: string): string | null {
   switch (action) {
     case 'eco_divert': return 'eco_divert'
     case 'shaper':     return 'shaping'
@@ -55,10 +65,8 @@ export function actionToFeatureKey(action) {
 /**
  * Maps a timer `state` + optional `feature` back to a Rule action.
  * `state === 'eco'` handles old-format timers stored before this format change.
- * @param {string} state
- * @param {string|null} [feature]
  */
-export function timerStateToAction(state, feature = null) {
+export function timerStateToAction(state: string, feature: string | null = null): string {
   if (state === 'disabled') return 'disable'
   if (state === 'eco') return 'eco_divert'   // old-format backward compat
   if (feature === 'divert') return 'eco_divert'
@@ -71,24 +79,20 @@ export function timerStateToAction(state, feature = null) {
 /**
  * Returns true when stopTime wraps past midnight relative to startTime.
  * e.g. start=23:00, stop=01:00 → true (stop is next calendar day).
- * @param {string} startTime
- * @param {string} stopTime
  */
-export function isNextDay(startTime, stopTime) {
+export function isNextDay(startTime: string | null | undefined, stopTime: string | null | undefined): boolean {
   if (!startTime || !stopTime) return false
-  const toMins = (/** @type {string} */ t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
+  const toMins = (t: string): number => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
   return toMins(stopTime) <= toMins(startTime)
 }
 
 /**
  * Shift each day name forward by one calendar day.
  * Used so stop-timer days align correctly when a window wraps past midnight.
- * @param {string[]} days
- * @returns {string[]}
  */
-function shiftDaysForward(days) {
+function shiftDaysForward(days: string[]): string[] {
   const order = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-  return days.map((/** @type {string} */ d) => { const i = order.indexOf(d); return i === -1 ? d : order[(i + 1) % 7] })
+  return days.map((d) => { const i = order.indexOf(d); return i === -1 ? d : order[(i + 1) % 7] })
 }
 
 /**
@@ -106,28 +110,27 @@ function shiftDaysForward(days) {
  * A stop written for a feature rule carries the same feature (feature_value 0)
  * while a charge rule's stop is plain ('current' lives only on the start), so
  * candidates must also match on feature or they belong to another rule.
- * @param {any[]} timers
  */
-export function timersToRules(timers) {
+export function timersToRules(timers: Timer[] | undefined): Rule[] {
   if (!Array.isArray(timers) || timers.length === 0) return []
 
-  const sorted   = [...timers].sort((a, b) => a.time.localeCompare(b.time))
-  const actives  = sorted.filter((t) => t.state !== 'disabled')
+  const sorted    = [...timers].sort((a, b) => a.time.localeCompare(b.time))
+  const actives   = sorted.filter((t) => t.state !== 'disabled')
   const disableds = sorted.filter((t) => t.state === 'disabled')
-  const usedIds  = new Set()
-  const stopFor  = new Map() // active timer id → its stop timer
-  const rules    = []
+  const usedIds   = new Set<number>()
+  const stopFor   = new Map<number, Timer>() // active timer id → its stop timer
+  const rules: Rule[] = []
 
-  const stopFeature = (/** @type {any} */ A) =>
+  const stopFeature = (A: Timer): string | null =>
     A.feature && A.feature !== 'current' ? A.feature : null
 
-  const matchers = (/** @type {any} */ A) => {
+  const matchers = (A: Timer) => {
     const daysKey    = daysSetKey(A.days)
     const shiftedKey = daysSetKey(shiftDaysForward(A.days ?? []))
     const feat       = stopFeature(A)
-    const usable  = (/** @type {any} */ B) => !usedIds.has(B.id) && (B.feature ?? null) === feat
-    const sameDay = (/** @type {any} */ B) => daysSetKey(B.days) === daysKey && B.time > A.time
-    const nextDay = (/** @type {any} */ B) => daysSetKey(B.days) === shiftedKey && B.time <= A.time
+    const usable  = (B: Timer) => !usedIds.has(B.id) && (B.feature ?? null) === feat
+    const sameDay = (B: Timer) => daysSetKey(B.days) === daysKey && B.time > A.time
+    const nextDay = (B: Timer) => daysSetKey(B.days) === shiftedKey && B.time <= A.time
     return { usable, sameDay, nextDay }
   }
 
@@ -152,8 +155,8 @@ export function timersToRules(timers) {
 
     const action        = timerStateToAction(A.state, A.feature ?? null)
     const chargeCurrent = A.feature === 'current' ? (A.feature_value ?? null) : null
-    const limit         = (A.limit && A.limit !== 'none' && A.limit_value != null)
-                            ? { type: A.limit, value: A.limit_value } : null
+    const limit: RuleLimit | null =
+      A.limit && A.limit !== 'none' && A.limit_value != null ? { type: A.limit, value: A.limit_value } : null
     rules.push({
       id:            `r_${A.id}`,
       alwaysOn:      false,
@@ -195,21 +198,19 @@ export function timersToRules(timers) {
  *
  * For a new rule: _startEventId and _stopEventId are null — new IDs are assigned.
  * For an edited rule: existing IDs are reused.
- * @param {any} rule
- * @param {any[]} existingTimers
  */
-export function rulesToTimers(rule, existingTimers) {
+export function rulesToTimers(
+  rule: Rule,
+  existingTimers: Timer[] | undefined,
+): { add: Timer[]; remove: number[] } {
   const timers = Array.isArray(existingTimers) ? existingTimers : []
-  const add = []
-  const remove = []
+  const add: Timer[] = []
+  const remove: number[] = []
 
   // Determine IDs
-  let startId = rule._startEventId
+  const isNew = rule._startEventId == null
+  const startId: number = rule._startEventId ?? nextTimerId(timers)
   let stopId = rule._stopEventId
-
-  const isNew = startId == null
-
-  if (isNew) startId = nextTimerId(timers)
 
   // If the rule now has no stop time but previously had a stop event, delete it
   if (!isNew && rule.stopTime == null && stopId != null) {
@@ -219,18 +220,19 @@ export function rulesToTimers(rule, existingTimers) {
 
   // Build start timer
   const feature = actionToTimerFeature(rule.action)
-  const hasLimit = rule.limit && rule.limit.type && rule.limit.type !== 'none' && rule.limit.value > 0
-  const startTimer = {
+  const limit = rule.limit
+  const hasLimit = !!(limit && limit.type && limit.type !== 'none' && limit.value > 0)
+  const startTimer: Timer = {
     id: startId,
     time: rule.startTime,
     state: actionToTimerState(rule.action),
     days: rule.days,
     ...(feature
       ? { feature, feature_value: 1 }
-      : rule.chargeCurrent > 0
+      : rule.chargeCurrent !== null && rule.chargeCurrent > 0
         ? { feature: 'current', feature_value: rule.chargeCurrent }
         : {}),
-    ...(hasLimit ? { limit: rule.limit.type, limit_value: rule.limit.value } : {}),
+    ...(hasLimit && limit ? { limit: limit.type, limit_value: limit.value } : {}),
   }
   add.push(startTimer)
 
@@ -257,10 +259,9 @@ export function rulesToTimers(rule, existingTimers) {
 
 /**
  * IDs to DELETE when a rule is removed entirely.
- * @param {any} rule
  */
-export function ruleDeleteIds(rule) {
-  const ids = []
+export function ruleDeleteIds(rule: Rule): number[] {
+  const ids: number[] = []
   if (rule._startEventId != null) ids.push(rule._startEventId)
   if (rule._stopEventId != null) ids.push(rule._stopEventId)
   return ids
@@ -268,20 +269,17 @@ export function ruleDeleteIds(rule) {
 
 /**
  * Stable key for comparing two days arrays as sets (order-independent).
- * @param {string[]} days
  */
-function daysSetKey(days) {
+function daysSetKey(days: string[] | undefined): string {
   if (!Array.isArray(days)) return ''
   return [...days].sort().join(',')
 }
 
 /**
  * Format a window time string: "1:00 PM – 6:00 PM", "from 1:00 PM", or with "(next day)" suffix.
- * @param {string} startTime
- * @param {string|null} stopTime
  */
-export function formatWindow(startTime, stopTime) {
-  const fmt = (/** @type {string|null} */ t) => {
+export function formatWindow(startTime: string, stopTime: string | null | undefined): string {
+  const fmt = (t: string | null): string => {
     if (!t) return ''
     const [h, m] = t.split(':').map(Number)
     const period = h >= 12 ? 'PM' : 'AM'

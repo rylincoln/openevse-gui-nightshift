@@ -2,7 +2,7 @@
   import { _ } from 'svelte-i18n'
   import uPlot from 'uplot'
   import UplotChart from './UplotChart.svelte'
-  import { readChartTheme } from './chartTheme.js'
+  import { readChartTheme } from './chartTheme'
 
   /**
    * @typedef {Object} Row

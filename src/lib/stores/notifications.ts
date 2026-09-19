@@ -1,7 +1,7 @@
 import { writable, type Writable } from 'svelte/store'
 import { httpAPI } from '../api/httpAPI'
-import { normalizeNotifications } from '../notifications/notifications.js'
-import type { Notification } from '../api/device'
+import { normalizeNotifications } from '../notifications/notifications'
+import type { NormalizedNotification } from '../notifications/notifications'
 
 // Advisory list. Seeded and refreshed from GET /notifications only — the
 // websocket carries the two badge fields and nothing else, so there is no
@@ -10,10 +10,14 @@ import type { Notification } from '../api/device'
 //
 // The model matches normalizeNotifications(): `count`/`severity` are the
 // unmuted badge figures, `items` is everything including muted entries.
+// `items` holds normalizeNotifications()'s output shape, not device.ts's raw
+// `Notification` — first_seen/last_seen are seenAt()-normalised to
+// `number | null` (device.ts's `Notification` describes the wire body,
+// where 0 stands in for "clock not synced").
 export interface NotificationState {
   count: number
   severity: string
-  items: Notification[]
+  items: NormalizedNotification[]
 }
 
 const model: NotificationState = { count: 0, severity: 'info', items: [] }

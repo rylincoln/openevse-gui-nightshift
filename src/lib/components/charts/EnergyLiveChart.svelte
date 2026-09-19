@@ -2,8 +2,8 @@
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../stores/config'
   import UplotChart from './UplotChart.svelte'
-  import { readChartTheme } from './chartTheme.js'
-  import { socOrNull } from '../../dashboard/sessionChart.js'
+  import { readChartTheme } from './chartTheme'
+  import { socOrNull } from '../../dashboard/sessionChart'
   import { cToF } from '../../temperature'
 
   /** @type {{ samples: Array<{ts:number,a:number,t:number,e:number,s:number}> }} */

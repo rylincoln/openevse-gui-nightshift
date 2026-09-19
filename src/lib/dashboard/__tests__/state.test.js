@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { displayState, ringFill, limitProgress, connectedReason, maxPowerW, vehicleConnected, clampEnergyMax, ENERGY_LIMIT_MAX_KWH } from '../state.js'
+import { displayState, ringFill, limitProgress, connectedReason, maxPowerW, vehicleConnected, clampEnergyMax, ENERGY_LIMIT_MAX_KWH } from '../state'
 
 describe('clampEnergyMax', () => {
   it('keeps a sensible value untouched', () => {

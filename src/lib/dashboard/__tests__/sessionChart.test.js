@@ -6,7 +6,7 @@ import {
   toChartData,
   kwAxisMax,
   fmtSessionTime,
-} from '../sessionChart.js'
+} from '../sessionChart'
 
 const S = (ts, a, s) => ({ ts, a, t: 0, e: 0, s })
 
@@ -98,7 +98,7 @@ describe('fmtSessionTime', () => {
   })
 })
 
-import { buildSessionOpts, limitLinePlugin, liveDotPlugin } from '../sessionChart.js'
+import { buildSessionOpts, limitLinePlugin, liveDotPlugin } from '../sessionChart'
 
 const theme = { accent: '#3cc6bd', charging: '#3cc6bd', warning: '#e7a948', axisText: '#6b7585', grid: '#1c2230' }
 

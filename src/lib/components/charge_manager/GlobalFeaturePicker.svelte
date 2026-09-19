@@ -1,7 +1,7 @@
 <script>
   import { _ } from 'svelte-i18n'
   import Modal from '../ui/Modal.svelte'
-  import { GLOBAL_FEATURE_KEYS } from '../../charge_manager/rules.js'
+  import { GLOBAL_FEATURE_KEYS } from '../../charge_manager/rules'
 
   let {
     open = false,

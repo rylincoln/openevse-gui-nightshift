@@ -3,8 +3,8 @@
   import Card from '../ui/Card.svelte'
   import IconButton from '../ui/IconButton.svelte'
   import Icon from '../../icons/Icon.svelte'
-  import { formatDayChips } from '../../schedule/timers.js'
-  import { formatWindow } from '../../charge_manager/rules.js'
+  import { formatDayChips } from '../../schedule/timers'
+  import { formatWindow } from '../../charge_manager/rules'
 
   let { rule, active = false, removing = false, disabled = false, onedit = () => {}, ondelete = () => {} } = $props()
 

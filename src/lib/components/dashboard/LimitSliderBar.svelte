@@ -1,8 +1,8 @@
 <!-- src/lib/components/dashboard/LimitSliderBar.svelte -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { hmsShort } from '../../dashboard/soc.js'
-  import { clampEnergyMax } from '../../dashboard/state.js'
+  import { hmsShort } from '../../dashboard/soc'
+  import { clampEnergyMax } from '../../dashboard/state'
 
   let {
     kind = 'time', // 'time' | 'energy'

@@ -1,6 +1,6 @@
 <script>
   import { _ } from 'svelte-i18n'
-  import { controlSegments } from '../../dashboard/controls.js'
+  import { controlSegments } from '../../dashboard/controls'
 
   let {
     segment = 'auto',

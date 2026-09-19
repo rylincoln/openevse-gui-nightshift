@@ -1,10 +1,24 @@
 /** Pure helpers for the Schedule screen. No store or DOM access — fully unit-tested. */
+import type { ScheduleEvent, LimitType } from '../api/device'
 
 /** The seven weekdays in the device's order (Monday-first). Single source of truth. */
-export const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+export const DAYS: string[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+/**
+ * A raw device timer event (`GET`/`POST /schedule` entry) — `ScheduleEvent`
+ * plus the optional feature/limit fields the firmware uses to express
+ * charge-manager rules (src/lib/charge_manager/rules.ts). This is also the
+ * view-model `TimerRow`/`TimerModal` consume.
+ */
+export interface Timer extends ScheduleEvent {
+  feature?: string
+  feature_value?: number
+  limit?: LimitType
+  limit_value?: number
+}
 
 /** Next free timer id: highest existing id + 1, or 1 when the list is empty. */
-export function nextTimerId(timers) {
+export function nextTimerId(timers: Timer[] | undefined): number {
   if (!Array.isArray(timers) || timers.length === 0) return 1
   let max = 0
   for (const t of timers) {
@@ -15,24 +29,24 @@ export function nextTimerId(timers) {
 }
 
 /** A `days` name array → a Monday-first boolean[7]. */
-export function daysToFlags(days) {
+export function daysToFlags(days: string[] | undefined): boolean[] {
   const set = new Set(Array.isArray(days) ? days : [])
   return DAYS.map((d) => set.has(d))
 }
 
 /** A Monday-first boolean[7] → a `days` name array. */
-export function flagsToDays(flags) {
+export function flagsToDays(flags: boolean[] | undefined): string[] {
   const f = Array.isArray(flags) ? flags : []
   return DAYS.filter((_, i) => f[i] === true)
 }
 
 /** True when at least one day flag is set (the save-validation rule). */
-export function hasAnyDay(flags) {
+export function hasAnyDay(flags: boolean[] | undefined): boolean {
   return Array.isArray(flags) && flags.some((x) => x === true)
 }
 
 /** All seven days as `{ day, on }`, in order, for the TimerRow chip strip. */
-export function formatDayChips(days) {
+export function formatDayChips(days: string[] | undefined): { day: string; on: boolean }[] {
   const set = new Set(Array.isArray(days) ? days : [])
   return DAYS.map((d) => ({ day: d, on: set.has(d) }))
 }

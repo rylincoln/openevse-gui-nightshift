@@ -3,7 +3,7 @@ import {
   round, energyMetrics, sensorMetrics, serviceMetrics, vehicleMetrics,
   showVehicle, countSeverity, safetyData, claimRows,
   homeBatteryMetrics, showHomeBattery, cableTempMetrics, showCableTemp,
-} from '../metrics.js'
+} from '../metrics'
 
 describe('round', () => {
   it('rounds to the given precision', () => {

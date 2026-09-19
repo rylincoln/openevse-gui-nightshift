@@ -11,8 +11,8 @@
   import {
     pageRange, logTypeIcon, logTypeTone, logStateInfo, logEnergyKwh, logTempC,
     logPilotAmps, logReason,
-  } from '../lib/history/logs.js'
-  import { isKnownAdvisory } from '../lib/notifications/notifications.js'
+  } from '../lib/history/logs'
+  import { isKnownAdvisory } from '../lib/notifications/notifications'
   import { formatTemp } from '../lib/temperature'
   import { formatCost } from '../lib/cost'
   import Card from '../lib/components/ui/Card.svelte'

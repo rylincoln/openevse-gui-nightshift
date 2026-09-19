@@ -11,7 +11,7 @@
   import Modal from '../ui/Modal.svelte'
   import IconButton from '../ui/IconButton.svelte'
   import { notification_store } from '../../stores/notifications'
-  import { sortNewestFirst, advisoryRoute, isKnownAdvisory } from '../../notifications/notifications.js'
+  import { sortNewestFirst, advisoryRoute, isKnownAdvisory } from '../../notifications/notifications'
   import { formatDuration } from '../../format/duration'
   import { serialQueue } from '../../queue'
   import { showWriteError } from '../../alerts'
