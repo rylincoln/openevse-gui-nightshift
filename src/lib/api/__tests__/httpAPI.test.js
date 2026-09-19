@@ -8,7 +8,7 @@ vi.mock('svelte/store', async () => {
   return { ...actual, get: vi.fn(() => ({ has_fetched: true })) }
 })
 
-import { httpAPI } from '../httpAPI.js'
+import { httpAPI } from '../httpAPI'
 
 describe('httpAPI', () => {
   beforeEach(() => { vi.clearAllMocks() })
