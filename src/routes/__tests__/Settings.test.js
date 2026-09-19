@@ -10,7 +10,7 @@ vi.mock('svelte-i18n', () => {
 
 import Settings from '../Settings.svelte'
 import { SETTINGS_PAGES } from '../../lib/config/pages.js'
-import { config_store } from '../../lib/stores/config.js'
+import { config_store } from '../../lib/stores/config'
 import { uisettings_store } from '../../lib/stores/uisettings.js'
 
 const SUPPORT_LINKS = [

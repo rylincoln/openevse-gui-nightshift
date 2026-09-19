@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte'
   import { DateTime } from 'luxon'
   import { uistates_store } from '../stores/uistates.js'
-  import { status_store } from '../stores/status.js'
+  import { status_store } from '../stores/status'
   import { JSONTryParse } from '../utils.js'
 
   let socket

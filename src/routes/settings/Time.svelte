@@ -1,8 +1,8 @@
 <!-- src/routes/settings/Time.svelte -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { config_store } from '../../lib/stores/config.js'
-  import { status_store } from '../../lib/stores/status.js'
+  import { config_store } from '../../lib/stores/config'
+  import { status_store } from '../../lib/stores/status'
   import { createConfigForm } from '../../lib/config/configForm.svelte.js'
   import { serialQueue } from '../../lib/queue.js'
   import { showWriteError } from '../../lib/alerts.js'

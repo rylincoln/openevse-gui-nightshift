@@ -12,8 +12,8 @@
 <script>
   import { onMount } from 'svelte'
   import { _ } from 'svelte-i18n'
-  import { config_store } from '../../../stores/config.js'
-  import { status_store } from '../../../stores/status.js'
+  import { config_store } from '../../../stores/config'
+  import { status_store } from '../../../stores/status'
   import { serialQueue } from '../../../queue.js'
   import { httpAPI } from '../../../api/httpAPI.js'
   import { showWriteError } from '../../../alerts.js'

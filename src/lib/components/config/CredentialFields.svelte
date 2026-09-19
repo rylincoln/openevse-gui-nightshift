@@ -18,7 +18,7 @@
 -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { config_store } from '../../stores/config.js'
+  import { config_store } from '../../stores/config'
   import { createConfigForm } from '../../config/configForm.svelte.js'
   import FormField from './FormField.svelte'
   import TextInput from '../ui/TextInput.svelte'

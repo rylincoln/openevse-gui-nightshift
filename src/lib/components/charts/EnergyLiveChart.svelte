@@ -1,6 +1,6 @@
 <script>
   import { _ } from 'svelte-i18n'
-  import { config_store } from '../../stores/config.js'
+  import { config_store } from '../../stores/config'
   import UplotChart from './UplotChart.svelte'
   import { readChartTheme } from './chartTheme.js'
   import { socOrNull } from '../../dashboard/sessionChart.js'

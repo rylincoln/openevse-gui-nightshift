@@ -2,7 +2,7 @@
 // Per-field save machinery shared by every config page. createConfigForm()
 // returns a saveState store, a `revert` counter (bumped on failure so
 // controlled inputs resync to the confirmed store value), and the save fns.
-import { config_store } from '../stores/config.js'
+import { config_store } from '../stores/config'
 import { serialQueue } from '../queue.js'
 import { showWriteError } from '../alerts.js'
 import { createSaveState } from './saveState.js'

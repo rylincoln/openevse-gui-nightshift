@@ -5,7 +5,7 @@ vi.mock('../../api/httpAPI.js', () => ({
   httpAPI: vi.fn()
 }))
 
-import { boost_store } from '../boost.js'
+import { boost_store } from '../boost'
 import { httpAPI } from '../../api/httpAPI.js'
 
 describe('boost_store', () => {

@@ -2,11 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
 
 // Mock httpAPI before importing config store
-vi.mock('../../api/httpAPI.js', () => ({
+vi.mock('../../api/httpAPI.js', async (importOriginal) => ({
+  ...(await importOriginal()),
   httpAPI: vi.fn()
 }))
 
-import { config_store } from '../config.js'
+import { config_store } from '../config'
 import { httpAPI } from '../../api/httpAPI.js'
 
 describe('config_store', () => {

@@ -19,7 +19,7 @@ vi.mock('uplot', () => ({
 }))
 
 import EnergyLiveChart from '../EnergyLiveChart.svelte'
-import { config_store } from '../../../stores/config.js'
+import { config_store } from '../../../stores/config'
 
 const samplesWithSoc = [
   { ts: 1, a: 10, t: 250, e: 0, s: 40 },

@@ -9,7 +9,7 @@ vi.mock('svelte-i18n', () => {
 })
 
 import { uistates_store } from '../../../stores/uistates.js'
-import { status_store } from '../../../stores/status.js'
+import { status_store } from '../../../stores/status'
 import DisconnectOverlay from '../DisconnectOverlay.svelte'
 
 // Grace period before the blocking modal escalates (must match the component).

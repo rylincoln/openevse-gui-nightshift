@@ -5,7 +5,7 @@ vi.mock('../../api/httpAPI.js', () => ({
   httpAPI: vi.fn()
 }))
 
-import { limit_store } from '../limit.js'
+import { limit_store } from '../limit'
 import { httpAPI } from '../../api/httpAPI.js'
 
 describe('limit_store', () => {

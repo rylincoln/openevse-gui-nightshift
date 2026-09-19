@@ -8,8 +8,8 @@ vi.mock('svelte-i18n', () => {
 })
 vi.mock('../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.resolve({})) }))
 
-import { status_store } from '../../lib/stores/status.js'
-import { config_store } from '../../lib/stores/config.js'
+import { status_store } from '../../lib/stores/status'
+import { config_store } from '../../lib/stores/config'
 import { claims_target_store } from '../../lib/stores/claims_target.js'
 import { uistates_store } from '../../lib/stores/uistates.js'
 import { uisettings_store } from '../../lib/stores/uisettings.js'

@@ -4,8 +4,8 @@
   // UI's status footer: house load + available current when the current
   // shaper is enabled, production (or grid I/E) + charge rate when divert is.
   import { _ } from 'svelte-i18n'
-  import { status_store } from '../../stores/status.js'
-  import { config_store } from '../../stores/config.js'
+  import { status_store } from '../../stores/status'
+  import { config_store } from '../../stores/config'
   import { round } from '../../utils.js'
   import StatChip from '../ui/StatChip.svelte'
 

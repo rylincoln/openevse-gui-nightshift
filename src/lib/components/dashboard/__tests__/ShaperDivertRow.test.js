@@ -6,8 +6,8 @@ const { status, config } = vi.hoisted(() => {
   return { status: writable({}), config: writable({}) }
 })
 
-vi.mock('../../../stores/status.js', () => ({ status_store: status }))
-vi.mock('../../../stores/config.js', () => ({ config_store: config }))
+vi.mock('../../../stores/status', () => ({ status_store: status }))
+vi.mock('../../../stores/config', () => ({ config_store: config }))
 
 vi.mock('svelte-i18n', () => {
   const t = (k) => k

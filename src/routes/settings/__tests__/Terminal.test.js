@@ -7,7 +7,10 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
-vi.mock('../../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../../lib/api/httpAPI.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  httpAPI: vi.fn()
+}))
 // Only the error toast is stubbed; the rest of the alert helpers stay real.
 vi.mock('../../../lib/alerts.js', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -16,8 +19,8 @@ vi.mock('../../../lib/alerts.js', async (importOriginal) => ({
 
 import { httpAPI } from '../../../lib/api/httpAPI.js'
 import { showWriteError } from '../../../lib/alerts.js'
-import { config_store } from '../../../lib/stores/config.js'
-import { status_store } from '../../../lib/stores/status.js'
+import { config_store } from '../../../lib/stores/config'
+import { status_store } from '../../../lib/stores/status'
 import { uisettings_store } from '../../../lib/stores/uisettings.js'
 import Terminal from '../Terminal.svelte'
 

@@ -11,7 +11,7 @@ vi.mock('svelte-i18n', () => {
 vi.mock('../../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.resolve({ msg: 'done' })) }))
 
 import { httpAPI } from '../../../lib/api/httpAPI.js'
-import { config_store } from '../../../lib/stores/config.js'
+import { config_store } from '../../../lib/stores/config'
 import { certificate_store } from '../../../lib/stores/certificates.js'
 import { uistates_store } from '../../../lib/stores/uistates.js'
 import Http from '../Http.svelte'

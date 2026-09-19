@@ -11,7 +11,7 @@
   import FetchData from './lib/data/FetchData.svelte'
   import WebSocket from './lib/data/WebSocket.svelte'
   import DataManager from './lib/data/DataManager.svelte'
-  import { config_store } from './lib/stores/config.js'
+  import { config_store } from './lib/stores/config'
   import { uistates_store } from './lib/stores/uistates.js'
   import { announce } from './lib/nativeHost.js'
   import { _, isLoading } from 'svelte-i18n'

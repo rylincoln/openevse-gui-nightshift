@@ -1,7 +1,7 @@
 <!-- src/routes/settings/Display.svelte -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { config_store } from '../../lib/stores/config.js'
+  import { config_store } from '../../lib/stores/config'
   import { createConfigForm } from '../../lib/config/configForm.svelte.js'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'

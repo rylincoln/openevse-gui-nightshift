@@ -1,10 +1,10 @@
 <script>
   import { onMount } from 'svelte'
-  import { status_store } from '../stores/status.js'
+  import { status_store } from '../stores/status'
   import { schedule_store } from '../stores/schedule.js'
   import { plan_store } from '../stores/plan.js'
-  import { config_store } from '../stores/config.js'
-  import { override_store } from '../stores/override.js'
+  import { config_store } from '../stores/config'
+  import { override_store } from '../stores/override'
   import { claims_target_store } from '../stores/claims_target.js'
   import { claims_store } from '../stores/claims.js'
   import { certificate_store } from '../stores/certificates.js'

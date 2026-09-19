@@ -6,7 +6,10 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
-vi.mock('../../../api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.resolve({ msg: 'done' })) }))
+vi.mock('../../../api/httpAPI.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  httpAPI: vi.fn(() => Promise.resolve({ msg: 'done' }))
+}))
 
 import { httpAPI } from '../../../api/httpAPI.js'
 import HealthTab from '../HealthTab.svelte'
