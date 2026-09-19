@@ -3,7 +3,7 @@ import { get } from 'svelte/store'
 
 vi.mock('../../api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
 
-import { notification_store } from '../notifications.js'
+import { notification_store } from '../notifications'
 import { httpAPI } from '../../api/httpAPI.js'
 
 const LIST = {

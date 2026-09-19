@@ -7,7 +7,7 @@ vi.mock('../../api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.resolve('e
 
 import WebSocket from '../WebSocket.svelte'
 import DataManager from '../DataManager.svelte'
-import { uistates_store } from '../../stores/uistates.js'
+import { uistates_store } from '../../stores/uistates'
 
 afterEach(() => cleanup())
 

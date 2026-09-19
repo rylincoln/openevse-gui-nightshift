@@ -5,7 +5,7 @@
   import Icon from '../lib/icons/Icon.svelte'
   import { pagesBySection } from '../lib/config/pages.js'
   import { config_store } from '../lib/stores/config'
-  import { uisettings_store } from '../lib/stores/uisettings.js'
+  import { uisettings_store } from '../lib/stores/uisettings'
   import { redirect } from '../lib/router.js'
 
   let groups = $derived(

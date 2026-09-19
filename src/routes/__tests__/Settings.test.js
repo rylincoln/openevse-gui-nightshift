@@ -11,7 +11,7 @@ vi.mock('svelte-i18n', () => {
 import Settings from '../Settings.svelte'
 import { SETTINGS_PAGES } from '../../lib/config/pages.js'
 import { config_store } from '../../lib/stores/config'
-import { uisettings_store } from '../../lib/stores/uisettings.js'
+import { uisettings_store } from '../../lib/stores/uisettings'
 
 const SUPPORT_LINKS = [
   { labelKey: 'config.support.knowledge_base', url: 'https://openev.freshdesk.com/support/solutions' },

@@ -15,7 +15,7 @@ vi.mock('svelte-i18n', () => {
   return { _: t }
 })
 
-vi.mock('../../../stores/energy.js', async () => {
+vi.mock('../../../stores/energy', async () => {
   const { writable } = await import('svelte/store')
   const store = writable({
     raw: { samples: [], historical: false, noOlder: false, before: 0 },
@@ -65,7 +65,7 @@ describe('EnergyTab', () => {
   })
 
   it('Newer pages forward and Current returns to live when viewing history', async () => {
-    const { __store } = await import('../../../stores/energy.js')
+    const { __store } = await import('../../../stores/energy')
     __store.update((s) => ({ ...s, raw: { samples: [{ ts: 1 }], historical: true, noOlder: false, before: 100 } }))
     render(EnergyTab)
     loadRaw.mockClear()

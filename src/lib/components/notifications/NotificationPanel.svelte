@@ -10,7 +10,7 @@
   import { _ } from 'svelte-i18n'
   import Modal from '../ui/Modal.svelte'
   import IconButton from '../ui/IconButton.svelte'
-  import { notification_store } from '../../stores/notifications.js'
+  import { notification_store } from '../../stores/notifications'
   import { sortNewestFirst, advisoryRoute, isKnownAdvisory } from '../../notifications/notifications.js'
   import { formatDuration } from '../../format/duration.js'
   import { serialQueue } from '../../queue.js'

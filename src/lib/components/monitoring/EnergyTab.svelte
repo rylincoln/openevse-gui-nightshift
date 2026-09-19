@@ -1,7 +1,7 @@
 <script>
   import { _ } from 'svelte-i18n'
   import { onMount } from 'svelte'
-  import { energy_store } from '../../stores/energy.js'
+  import { energy_store } from '../../stores/energy'
   import Tabs from '../ui/Tabs.svelte'
   import EnergyLiveChart from '../charts/EnergyLiveChart.svelte'
   import EnergySummaryChart from '../charts/EnergySummaryChart.svelte'

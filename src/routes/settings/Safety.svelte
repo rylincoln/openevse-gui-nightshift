@@ -2,7 +2,7 @@
 <script>
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
-  import { cabletemp_store } from '../../lib/stores/cabletemp.js'
+  import { cabletemp_store } from '../../lib/stores/cabletemp'
   import { createConfigForm } from '../../lib/config/configForm.svelte.js'
   import { createCableTempForm } from '../../lib/config/cableTempForm.svelte.js'
   import { allRequiredSafetyChecksOn } from '../../lib/config/safety.js'
@@ -12,7 +12,7 @@
     cToUnit, c10ToUnit, unitToC10,
   } from '../../lib/cabletemp.js'
   import { formatTemp } from '../../lib/temperature.js'
-  import { notification_store } from '../../lib/stores/notifications.js'
+  import { notification_store } from '../../lib/stores/notifications'
   import { settingsMarkers } from '../../lib/notifications/notifications.js'
   import AdvisoryMarker from '../../lib/components/notifications/AdvisoryMarker.svelte'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'

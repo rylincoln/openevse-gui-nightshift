@@ -1,10 +1,10 @@
 <script>
   import { _ } from 'svelte-i18n'
   import { onMount } from 'svelte'
-  import { history_store } from '../lib/stores/history.js'
+  import { history_store } from '../lib/stores/history'
   import { config_store } from '../lib/stores/config'
-  import { uisettings_store } from '../lib/stores/uisettings.js'
-  import { rfid_users_store } from '../lib/stores/rfid_users.js'
+  import { uisettings_store } from '../lib/stores/uisettings'
+  import { rfid_users_store } from '../lib/stores/rfid_users'
   import { httpAPI } from '../lib/api/httpAPI.js'
   import { serialQueue } from '../lib/queue.js'
   import { formatDate, getStateDesc } from '../lib/utils.js'

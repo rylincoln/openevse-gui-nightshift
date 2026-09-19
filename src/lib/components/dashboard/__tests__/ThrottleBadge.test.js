@@ -11,7 +11,7 @@ const { claims } = vi.hoisted(() => {
   return { claims }
 })
 
-vi.mock('../../../stores/claims_target.js', () => ({ claims_target_store: claims }))
+vi.mock('../../../stores/claims_target', () => ({ claims_target_store: claims }))
 
 vi.mock('svelte-i18n', () => {
   // Return a string that appends serialised values so assertions can find them.

@@ -11,8 +11,8 @@ vi.mock('../../api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
 import { httpAPI } from '../../api/httpAPI.js'
 import DataManager from '../DataManager.svelte'
 import { status_store } from '../../stores/status'
-import { uistates_store } from '../../stores/uistates.js'
-import { notification_store } from '../../stores/notifications.js'
+import { uistates_store } from '../../stores/uistates'
+import { notification_store } from '../../stores/notifications'
 
 const LIST = {
   count: 1,

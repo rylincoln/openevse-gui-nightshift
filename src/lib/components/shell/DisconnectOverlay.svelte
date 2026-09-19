@@ -1,7 +1,7 @@
 <script>
   import { _ } from 'svelte-i18n'
   import { DateTime } from 'luxon'
-  import { uistates_store } from '../../stores/uistates.js'
+  import { uistates_store } from '../../stores/uistates'
   import { status_store } from '../../stores/status'
   import { signalPercent } from '../../config/wifi.js'
   import Modal from '../ui/Modal.svelte'

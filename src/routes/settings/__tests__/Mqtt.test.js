@@ -13,8 +13,8 @@ vi.mock('../../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.res
 import { httpAPI } from '../../../lib/api/httpAPI.js'
 import { config_store } from '../../../lib/stores/config'
 import { status_store } from '../../../lib/stores/status'
-import { certificate_store } from '../../../lib/stores/certificates.js'
-import { uistates_store } from '../../../lib/stores/uistates.js'
+import { certificate_store } from '../../../lib/stores/certificates'
+import { uistates_store } from '../../../lib/stores/uistates'
 import Mqtt from '../Mqtt.svelte'
 
 beforeEach(() => {

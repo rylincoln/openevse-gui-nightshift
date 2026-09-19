@@ -5,7 +5,7 @@ vi.mock('../../api/httpAPI.js', () => ({
   httpAPI: vi.fn()
 }))
 
-import { cabletemp_store } from '../cabletemp.js'
+import { cabletemp_store } from '../cabletemp'
 import { httpAPI } from '../../api/httpAPI.js'
 
 const RESPONSE = {

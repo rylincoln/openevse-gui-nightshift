@@ -1,5 +1,5 @@
 import { get } from 'svelte/store'
-import { uistates_store } from '../stores/uistates.js'
+import { uistates_store } from '../stores/uistates'
 import { redirect } from '../router.js'
 import type { ErrorBody } from './device'
 

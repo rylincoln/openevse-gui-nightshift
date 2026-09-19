@@ -7,11 +7,14 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
-vi.mock('../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.resolve({})) }))
+vi.mock('../../lib/api/httpAPI.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  httpAPI: vi.fn(() => Promise.resolve({})),
+}))
 
 import { httpAPI } from '../../lib/api/httpAPI.js'
-import { schedule_store } from '../../lib/stores/schedule.js'
-import { uistates_store } from '../../lib/stores/uistates.js'
+import { schedule_store } from '../../lib/stores/schedule'
+import { uistates_store } from '../../lib/stores/uistates'
 import Schedule from '../Schedule.svelte'
 
 describe('Schedule', () => {

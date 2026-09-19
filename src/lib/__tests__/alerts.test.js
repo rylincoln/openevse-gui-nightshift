@@ -7,7 +7,7 @@ vi.mock('svelte-i18n', () => {
   return { _: t }
 })
 
-import { uistates_store } from '../stores/uistates.js'
+import { uistates_store } from '../stores/uistates'
 import { showWriteError } from '../alerts.js'
 
 describe('showWriteError', () => {

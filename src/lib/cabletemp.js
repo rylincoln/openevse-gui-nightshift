@@ -1,7 +1,7 @@
 // src/lib/cabletemp.js
 // Pure helpers for cable-temperature-monitoring (NTC thermistors in the EV/
 // input cables, RAPI $SN/$GN). No store/DOM/i18n imports — see
-// src/lib/stores/cabletemp.js for the /cabletemp GET/POST wrapper and
+// src/lib/stores/cabletemp for the /cabletemp GET/POST wrapper and
 // src/lib/config/cableTempForm.svelte.js for the write orchestration.
 //
 // The GUI is pin-centric (2 physical inputs, each picks one of 4 logical

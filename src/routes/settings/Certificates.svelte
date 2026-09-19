@@ -1,7 +1,7 @@
 <!-- src/routes/settings/Certificates.svelte -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { certificate_store } from '../../lib/stores/certificates.js'
+  import { certificate_store } from '../../lib/stores/certificates'
   import { serialQueue } from '../../lib/queue.js'
   import { showWriteError } from '../../lib/alerts.js'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'

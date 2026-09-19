@@ -2,8 +2,8 @@
 <script>
   import { _, locales } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
-  import { certificate_store } from '../../lib/stores/certificates.js'
-  import { uisettings_store } from '../../lib/stores/uisettings.js'
+  import { certificate_store } from '../../lib/stores/certificates'
+  import { uisettings_store } from '../../lib/stores/uisettings'
   import { LOCALE_NAMES } from '../../lib/i18n/locales.js'
   import { createConfigForm } from '../../lib/config/configForm.svelte.js'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'

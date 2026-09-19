@@ -10,9 +10,9 @@ vi.mock('../../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.res
 
 import { httpAPI } from '../../../lib/api/httpAPI.js'
 import { config_store } from '../../../lib/stores/config'
-import { claims_target_store } from '../../../lib/stores/claims_target.js'
-import { loadsharing_store } from '../../../lib/stores/loadsharing.js'
-import { uisettings_store } from '../../../lib/stores/uisettings.js'
+import { claims_target_store } from '../../../lib/stores/claims_target'
+import { loadsharing_store } from '../../../lib/stores/loadsharing'
+import { uisettings_store } from '../../../lib/stores/uisettings'
 import { EvseClients } from '../../../lib/vars.js'
 import LoadSharing from '../LoadSharing.svelte'
 

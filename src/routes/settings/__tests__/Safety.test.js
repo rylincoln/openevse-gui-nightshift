@@ -12,10 +12,10 @@ vi.mock('../../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.res
 
 import { httpAPI } from '../../../lib/api/httpAPI.js'
 import { config_store } from '../../../lib/stores/config'
-import { cabletemp_store } from '../../../lib/stores/cabletemp.js'
+import { cabletemp_store } from '../../../lib/stores/cabletemp'
 import { status_store } from '../../../lib/stores/status'
-import { uistates_store } from '../../../lib/stores/uistates.js'
-import { notification_store } from '../../../lib/stores/notifications.js'
+import { uistates_store } from '../../../lib/stores/uistates'
+import { notification_store } from '../../../lib/stores/notifications'
 import Safety from '../Safety.svelte'
 
 const UNASSIGNED_SOURCES = [
