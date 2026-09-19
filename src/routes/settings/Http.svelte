@@ -1,7 +1,7 @@
 <!-- src/routes/settings/Http.svelte -->
 <script>
   import { _, locales } from 'svelte-i18n'
-  import { config_store } from '../../lib/stores/config.js'
+  import { config_store } from '../../lib/stores/config'
   import { certificate_store } from '../../lib/stores/certificates.js'
   import { uisettings_store } from '../../lib/stores/uisettings.js'
   import { LOCALE_NAMES } from '../../lib/i18n/locales.js'

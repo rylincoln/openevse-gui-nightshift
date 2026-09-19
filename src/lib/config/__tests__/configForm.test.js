@@ -11,7 +11,7 @@ vi.mock('svelte-i18n', () => {
 vi.mock('../../api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
 
 import { httpAPI } from '../../api/httpAPI.js'
-import { config_store } from '../../stores/config.js'
+import { config_store } from '../../stores/config'
 import { uistates_store } from '../../stores/uistates.js'
 import { createConfigForm } from '../configForm.svelte.js'
 

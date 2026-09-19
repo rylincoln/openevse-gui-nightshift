@@ -1,8 +1,8 @@
 <!-- src/routes/settings/Shaper.svelte -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { config_store } from '../../lib/stores/config.js'
-  import { status_store } from '../../lib/stores/status.js'
+  import { config_store } from '../../lib/stores/config'
+  import { status_store } from '../../lib/stores/status'
   import { createConfigForm } from '../../lib/config/configForm.svelte.js'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'

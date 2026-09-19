@@ -20,7 +20,7 @@ const { saveParam, upload } = vi.hoisted(() => ({
   saveParam: vi.fn(() => Promise.resolve(true)),
   upload: vi.fn(() => Promise.resolve(true)),
 }))
-vi.mock('../../../stores/config.js', async () => {
+vi.mock('../../../stores/config', async () => {
   const { writable } = await import('svelte/store')
   const config_store = writable({ wizard_passed: false, hostname: 'openevse' })
   return { config_store: Object.assign(config_store, { saveParam, upload }) }
@@ -30,7 +30,7 @@ vi.mock('../../../api/httpAPI.js', () => ({
 }))
 
 import { writable } from 'svelte/store'
-import { status_store } from '../../../stores/status.js'
+import { status_store } from '../../../stores/status'
 
 import Wizard from '../../../../routes/Wizard.svelte'
 

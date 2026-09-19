@@ -2,7 +2,7 @@
   import { _ } from 'svelte-i18n'
   import { onMount } from 'svelte'
   import { history_store } from '../lib/stores/history.js'
-  import { config_store } from '../lib/stores/config.js'
+  import { config_store } from '../lib/stores/config'
   import { uisettings_store } from '../lib/stores/uisettings.js'
   import { rfid_users_store } from '../lib/stores/rfid_users.js'
   import { httpAPI } from '../lib/api/httpAPI.js'

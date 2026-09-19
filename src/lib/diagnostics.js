@@ -4,13 +4,13 @@
 // is safe-by-default to share.
 
 import { get } from 'svelte/store'
-import { config_store } from './stores/config.js'
-import { status_store } from './stores/status.js'
+import { config_store } from './stores/config'
+import { status_store } from './stores/status'
 import { schedule_store } from './stores/schedule.js'
 import { plan_store } from './stores/plan.js'
-import { override_store } from './stores/override.js'
+import { override_store } from './stores/override'
 import { claims_target_store } from './stores/claims_target.js'
-import { limit_store } from './stores/limit.js'
+import { limit_store } from './stores/limit'
 import { certificate_store } from './stores/certificates.js'
 import { uistates_store } from './stores/uistates.js'
 import { uisettings_store } from './stores/uisettings.js'

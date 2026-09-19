@@ -8,7 +8,7 @@
 -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { config_store } from '../../../stores/config.js'
+  import { config_store } from '../../../stores/config'
   import { createConfigForm } from '../../../config/configForm.svelte.js'
   import { createTzObj } from '../../../utils.js'
   import zones from '../../../config/zones.json'

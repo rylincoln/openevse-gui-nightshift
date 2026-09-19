@@ -1,8 +1,8 @@
 <!-- src/routes/settings/Mqtt.svelte -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { config_store } from '../../lib/stores/config.js'
-  import { status_store } from '../../lib/stores/status.js'
+  import { config_store } from '../../lib/stores/config'
+  import { status_store } from '../../lib/stores/status'
   import { certificate_store } from '../../lib/stores/certificates.js'
   import { createConfigForm } from '../../lib/config/configForm.svelte.js'
   import { httpAPI } from '../../lib/api/httpAPI.js'

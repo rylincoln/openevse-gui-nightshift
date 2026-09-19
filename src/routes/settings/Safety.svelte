@@ -1,7 +1,7 @@
 <!-- src/routes/settings/Safety.svelte -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { config_store } from '../../lib/stores/config.js'
+  import { config_store } from '../../lib/stores/config'
   import { cabletemp_store } from '../../lib/stores/cabletemp.js'
   import { createConfigForm } from '../../lib/config/configForm.svelte.js'
   import { createCableTempForm } from '../../lib/config/cableTempForm.svelte.js'

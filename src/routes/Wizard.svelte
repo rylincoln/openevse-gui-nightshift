@@ -10,8 +10,8 @@
 -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { config_store } from '../lib/stores/config.js'
-  import { status_store } from '../lib/stores/status.js'
+  import { config_store } from '../lib/stores/config'
+  import { status_store } from '../lib/stores/status'
   import { serialQueue } from '../lib/queue.js'
   import { navigate } from '../lib/router.js'
   import WizardShell from '../lib/components/wizard/WizardShell.svelte'

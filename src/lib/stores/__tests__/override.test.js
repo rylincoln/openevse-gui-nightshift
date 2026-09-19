@@ -5,7 +5,7 @@ vi.mock('../../api/httpAPI.js', () => ({
   httpAPI: vi.fn()
 }))
 
-vi.mock('../status.js', () => ({
+vi.mock('../status', () => ({
   status_store: {
     subscribe: vi.fn(),
     set: vi.fn(),
@@ -13,7 +13,7 @@ vi.mock('../status.js', () => ({
   }
 }))
 
-import { override_store } from '../override.js'
+import { override_store } from '../override'
 import { httpAPI } from '../../api/httpAPI.js'
 
 describe('override_store', () => {

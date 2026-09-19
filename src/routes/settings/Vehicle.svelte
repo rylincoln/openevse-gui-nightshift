@@ -1,7 +1,7 @@
 <!-- src/routes/settings/Vehicle.svelte -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { config_store } from '../../lib/stores/config.js'
+  import { config_store } from '../../lib/stores/config'
   import { createConfigForm } from '../../lib/config/configForm.svelte.js'
   import { serialQueue } from '../../lib/queue.js'
   import { httpAPI } from '../../lib/api/httpAPI.js'

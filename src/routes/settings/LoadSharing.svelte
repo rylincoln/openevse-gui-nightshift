@@ -1,9 +1,9 @@
 <script>
   import { _ } from 'svelte-i18n'
-  import { config_store } from '../../lib/stores/config.js'
+  import { config_store } from '../../lib/stores/config'
   import { claims_target_store } from '../../lib/stores/claims_target.js'
   import { loadsharing_store } from '../../lib/stores/loadsharing.js'
-  import { status_store } from '../../lib/stores/status.js'
+  import { status_store } from '../../lib/stores/status'
   import { uisettings_store } from '../../lib/stores/uisettings.js'
   import { redirect } from '../../lib/router.js'
   import { createConfigForm } from '../../lib/config/configForm.svelte.js'

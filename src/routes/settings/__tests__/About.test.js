@@ -8,7 +8,7 @@ vi.mock('svelte-i18n', () => {
   return { _: t }
 })
 
-import { config_store } from '../../../lib/stores/config.js'
+import { config_store } from '../../../lib/stores/config'
 import About from '../About.svelte'
 
 beforeEach(() => {
