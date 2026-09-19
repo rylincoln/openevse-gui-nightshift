@@ -24,15 +24,13 @@ function createCertificateStore(): CertificateStore {
   }
 
   async function upload(data: Partial<Certificate>): Promise<WriteResponse & { success: boolean }> {
-    // The device is trusted to answer with a write response here; the
-    // original code mutates the response in place without first excluding
-    // httpAPI's 'error' sentinel, so a network failure still throws exactly
-    // as it did before this file was typed.
-    const res = (await httpAPI('POST', '/certificates', JSON.stringify(data))) as WriteResponse & {
-      success: boolean
-    }
-    res.success = res.msg == 'done'
-    return res
+    const res = await httpAPI<WriteResponse>('POST', '/certificates', JSON.stringify(data))
+    // A network/parse failure resolves the bare 'error' sentinel, which has no
+    // `msg` to read — treat it as a failed write rather than mutating it (the
+    // original JS's `res.success = ...` threw a TypeError in this case, since
+    // strict mode forbids creating a property on a string primitive).
+    if (res === 'error') return { msg: 'error', success: false }
+    return { ...res, success: res.msg == 'done' }
   }
 
   // Asks the firmware to generate a self-signed certificate/key pair and store
