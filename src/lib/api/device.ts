@@ -404,8 +404,21 @@ export interface Config {
   relay_stuck_recovery_count?: number
 
   // The fields below are read by the app (src/routes/settings/{Mqtt,Evse,
-  // Http,Terminal,Safety,LoadSharing}.svelte) but absent from
+  // Http,Terminal,Safety,LoadSharing,Display}.svelte) but absent from
   // dev/fixtures/config.json — capability-gated.
+
+  /** On-device LVGL TFT panel theme ('dark'|'light'). src/routes/settings/Display.svelte. */
+  tft_theme?: string
+  /** TFT panel brightness, percent (10-100 firmware floor). src/routes/settings/Display.svelte. */
+  tft_brightness?: number
+  /** TFT panel standby brightness, percent (0 blanks the backlight on idle). src/routes/settings/Display.svelte. */
+  tft_standby_brightness?: number
+  /** TFT panel clock format, 12h vs 24h. src/routes/settings/Display.svelte. */
+  tft_12h_clock?: boolean
+  /** 2-line character LCD backlight type ('mono'|'rgb'), RAPI $S0. src/routes/settings/Display.svelte. */
+  lcd_type?: string
+  /** 2-line LCD backlight idle timeout, seconds (0 = never sleep). src/routes/settings/Display.svelte. */
+  lcd_backlight_timeout?: number
 
   /** Cable-temperature monitoring toggle. */
   cable_temp?: boolean

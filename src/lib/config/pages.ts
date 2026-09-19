@@ -1,6 +1,7 @@
 // src/lib/config/pages.ts
 // The single source of truth for the Settings page catalogue.
 // The hub, the nav, the placeholder route, and tests all read from here.
+import type { Config } from '../api/device'
 
 export type Section = 'connectivity' | 'charger' | 'energy' | 'system'
 
@@ -12,11 +13,8 @@ export interface SettingsPage {
   icon: string
   labelKey: string
   section: Section
-  // A `/config` key (or any one of several) that must be present for this
-  // page to show. Not `keyof Config`: capability-gated fields like
-  // `tft_theme`/`lcd_type` below are real wire keys the device.ts `Config`
-  // interface doesn't yet enumerate.
-  requires?: string | string[]
+  /** A `/config` key (or any one of several) that must be present for this page to show. */
+  requires?: keyof Config | (keyof Config)[]
   /** Gated on the client-side OpenEVSE Labs switch (uisettings.dev_features). */
   labs?: boolean
 }
@@ -58,7 +56,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
 // (uisettings.dev_features), passed in via opts so this stays a pure function
 // of its inputs.
 function hasCapability(
-  config: Record<string, unknown> | undefined | null,
+  config: Partial<Config> | undefined,
   requires: SettingsPage['requires'],
 ): boolean {
   if (!requires) return true
@@ -72,7 +70,7 @@ export interface PageGroup {
 }
 
 export function pagesBySection(
-  config: Record<string, unknown> | undefined | null,
+  config: Partial<Config> | undefined,
   { dev_features = false }: { dev_features?: boolean } = {},
 ): PageGroup[] {
   return SECTIONS.map((section) => ({
