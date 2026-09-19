@@ -6,7 +6,11 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
 
-const files = execSync("git ls-files 'src/**/*.js' 'src/**/*.ts' 'src/**/*.svelte'", {
+// A single '*' already matches '/' in a git pathspec without ':(glob)' magic, so
+// 'src/*.js' covers every depth under src/ — including top-level files like
+// src/App.svelte, which 'src/**/*.svelte' misses (the literal '/' before the
+// trailing '*.svelte' requires at least one path segment after src/).
+const files = execSync("git ls-files 'src/*.js' 'src/*.ts' 'src/*.svelte'", {
   encoding: 'utf8',
 })
   .split('\n')
