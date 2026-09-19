@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDuration, formatAgo, formatCountdown } from '../duration.js'
+import { formatDuration, formatAgo, formatCountdown } from '../duration'
 
 describe('formatDuration', () => {
   it('formats sub-minute durations', () => {

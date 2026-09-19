@@ -8,7 +8,7 @@ vi.mock('svelte-i18n', () => {
 })
 
 import { uistates_store } from '../stores/uistates'
-import { showWriteError } from '../alerts.js'
+import { showWriteError } from '../alerts'
 
 describe('showWriteError', () => {
   beforeEach(() => {

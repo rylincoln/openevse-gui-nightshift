@@ -6,7 +6,7 @@
   import { pagesBySection } from '../lib/config/pages.js'
   import { config_store } from '../lib/stores/config'
   import { uisettings_store } from '../lib/stores/uisettings'
-  import { redirect } from '../lib/router.js'
+  import { redirect } from '../lib/router'
 
   let groups = $derived(
     pagesBySection($config_store, { dev_features: $uisettings_store?.dev_features }),

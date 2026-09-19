@@ -1,6 +1,6 @@
 // src/lib/__tests__/diagnostics.test.js
 import { describe, it, expect } from 'vitest'
-import { scrubSecrets, buildDiagnostics } from '../diagnostics.js'
+import { scrubSecrets, buildDiagnostics } from '../diagnostics'
 
 describe('scrubSecrets', () => {
   it('redacts fields whose key looks like a secret', () => {

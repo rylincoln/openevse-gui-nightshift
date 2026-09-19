@@ -12,7 +12,7 @@
 -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { redirect } from '../lib/router.js'
+  import { redirect } from '../lib/router'
   import Card from '../lib/components/ui/Card.svelte'
   import TextInput from '../lib/components/ui/TextInput.svelte'
   import PasswordInput from '../lib/components/ui/PasswordInput.svelte'

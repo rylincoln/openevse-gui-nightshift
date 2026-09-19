@@ -5,10 +5,10 @@
 // (unassign whatever source was on that pin, then assign the new one) rather
 // than a single field write.
 import { cabletemp_store } from '../stores/cabletemp'
-import { serialQueue } from '../queue.js'
-import { showWriteError } from '../alerts.js'
+import { serialQueue } from '../queue'
+import { showWriteError } from '../alerts'
 import { createSaveState } from './saveState.js'
-import { cableTempSourceOnPin, CABLE_TEMP_PIN_NONE } from '../cabletemp.js'
+import { cableTempSourceOnPin, CABLE_TEMP_PIN_NONE } from '../cabletemp'
 
 export function createCableTempForm() {
   const saveState = createSaveState()

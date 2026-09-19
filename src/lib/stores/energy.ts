@@ -1,6 +1,6 @@
 import { writable, get, type Readable, type Writable } from 'svelte/store'
 import { httpAPI, isErrorBody, type ApiResult } from '../api/httpAPI'
-import { serialQueue } from '../queue.js'
+import { serialQueue } from '../queue'
 import type {
   EnergyRaw,
   EnergyDaily,
@@ -76,7 +76,7 @@ function createEnergyStore(): EnergyStore {
     const url = before > 0 ? `/energy/raw?before=${before}` : '/energy/raw'
     setLoading('raw', true)
     setError('raw', false)
-    const res: ApiResult<EnergyRaw | ErrorBody> = await serialQueue.add(() =>
+    const res: ApiResult<EnergyRaw | ErrorBody> | false = await serialQueue.add(() =>
       httpAPI<EnergyRaw | ErrorBody>('GET', url),
     )
     setLoading('raw', false)
@@ -114,7 +114,7 @@ function createEnergyStore(): EnergyStore {
   ): Promise<boolean> {
     setLoading(key, true)
     setError(key, false)
-    const res: ApiResult<Record<string, unknown>> = await serialQueue.add(() =>
+    const res: ApiResult<Record<string, unknown>> | false = await serialQueue.add(() =>
       httpAPI<Record<string, unknown>>('GET', urlPath),
     )
     setLoading(key, false)

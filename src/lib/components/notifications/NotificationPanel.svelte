@@ -12,9 +12,9 @@
   import IconButton from '../ui/IconButton.svelte'
   import { notification_store } from '../../stores/notifications'
   import { sortNewestFirst, advisoryRoute, isKnownAdvisory } from '../../notifications/notifications.js'
-  import { formatDuration } from '../../format/duration.js'
-  import { serialQueue } from '../../queue.js'
-  import { showWriteError } from '../../alerts.js'
+  import { formatDuration } from '../../format/duration'
+  import { serialQueue } from '../../queue'
+  import { showWriteError } from '../../alerts'
 
   let { visible = false, onclose = () => {} } = $props()
 

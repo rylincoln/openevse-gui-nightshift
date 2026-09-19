@@ -1,7 +1,7 @@
 <script>
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
-  import { clientid2name } from '../../utils.js'
+  import { clientid2name } from '../../utils'
 
   let { rows = [] } = $props()
 

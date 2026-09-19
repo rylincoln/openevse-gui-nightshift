@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../api/httpAPI', () => ({ httpAPI: vi.fn() }))
 
 import { notification_store } from '../notifications'
-import { httpAPI } from '../../api/httpAPI.js'
+import { httpAPI } from '../../api/httpAPI'
 
 const LIST = {
   count: 1,

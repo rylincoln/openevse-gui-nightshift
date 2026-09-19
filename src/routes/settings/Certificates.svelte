@@ -2,8 +2,8 @@
 <script>
   import { _ } from 'svelte-i18n'
   import { certificate_store } from '../../lib/stores/certificates'
-  import { serialQueue } from '../../lib/queue.js'
-  import { showWriteError } from '../../lib/alerts.js'
+  import { serialQueue } from '../../lib/queue'
+  import { showWriteError } from '../../lib/alerts'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
   import CertificateModal from '../../lib/components/config/CertificateModal.svelte'

@@ -10,7 +10,7 @@
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../../stores/config'
   import { createConfigForm } from '../../../config/configForm.svelte.js'
-  import { createTzObj } from '../../../utils.js'
+  import { createTzObj } from '../../../utils'
   import zones from '../../../config/zones.json'
   import FormField from '../../config/FormField.svelte'
   import Select from '../../ui/Select.svelte'

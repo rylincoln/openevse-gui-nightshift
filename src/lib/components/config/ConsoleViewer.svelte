@@ -2,8 +2,8 @@
 <script>
   import { _ } from 'svelte-i18n'
   import { tick } from 'svelte'
-  import { httpAPI } from '../../api/httpAPI.js'
-  import { copyText } from '../../clipboard.js'
+  import { httpAPI } from '../../api/httpAPI'
+  import { copyText } from '../../clipboard'
 
   let { mode = 'debug' } = $props()
 

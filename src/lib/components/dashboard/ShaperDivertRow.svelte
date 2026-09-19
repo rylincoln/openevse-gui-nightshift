@@ -6,7 +6,7 @@
   import { _ } from 'svelte-i18n'
   import { status_store } from '../../stores/status'
   import { config_store } from '../../stores/config'
-  import { round } from '../../utils.js'
+  import { round } from '../../utils'
   import StatChip from '../ui/StatChip.svelte'
 
   let shaperOn = $derived(!!$config_store?.current_shaper_enabled)

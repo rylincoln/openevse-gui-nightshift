@@ -3,7 +3,7 @@
   import { untrack } from 'svelte'
   import Card from '../ui/Card.svelte'
   import Icon from '../../icons/Icon.svelte'
-  import { cToF } from '../../temperature.js'
+  import { cToF } from '../../temperature'
 
   let {
     title    = null,      // card heading (defaults to "Temperature Protection")

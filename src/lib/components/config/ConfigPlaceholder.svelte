@@ -1,7 +1,7 @@
 <!-- src/lib/components/config/ConfigPlaceholder.svelte -->
 <script>
   import { _ } from 'svelte-i18n'
-  import { currentPath } from '../../router.js'
+  import { currentPath } from '../../router'
   import { SETTINGS_PAGES } from '../../config/pages.js'
   import ConfigPage from './ConfigPage.svelte'
 

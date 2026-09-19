@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatCost } from '../cost.js'
+import { formatCost } from '../cost'
 
 describe('formatCost', () => {
   it('returns null when the rate is zero or missing', () => {

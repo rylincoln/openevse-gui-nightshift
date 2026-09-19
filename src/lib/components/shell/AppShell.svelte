@@ -1,6 +1,6 @@
 <script>
-  import { currentPath } from '../../router.js'
-  import { routes, NotFound, LEGACY_ROUTES } from '../../routes.js'
+  import { currentPath } from '../../router'
+  import { routes, NotFound, LEGACY_ROUTES } from '../../routes'
   import { status_store } from '../../stores/status'
   import { uistates_store } from '../../stores/uistates'
   import Router from '../Router.svelte'

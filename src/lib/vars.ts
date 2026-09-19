@@ -1,4 +1,11 @@
-export const EvseClients = {
+export interface EvseClient {
+	id: number
+	priority: number
+}
+
+// clientid2name (utils.ts) looks up a client's key by scanning every entry's
+// `id` for a match, so this needs a plain string index — not `as const`.
+export const EvseClients: Record<string, EvseClient> = {
 	manual: { id: 65537, priority: 1000 },
 	divert: { id: 65538, priority: 50 },
 	boost: 	{ id: 65539, priority: 200},

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { routes, LEGACY_ROUTES } from '../routes.js'
+import { routes, LEGACY_ROUTES } from '../routes'
 
 describe('route table', () => {
   it('maps the four primary paths', () => {

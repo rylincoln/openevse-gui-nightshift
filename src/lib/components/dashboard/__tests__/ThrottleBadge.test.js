@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/svelte'
-import { EvseClients } from '../../../vars.js'
+import { EvseClients } from '../../../vars'
 
 const { claims } = vi.hoisted(() => {
   const { writable } = require('svelte/store')

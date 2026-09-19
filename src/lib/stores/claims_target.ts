@@ -1,4 +1,4 @@
-import './../../lib/vars.js'
+import './../../lib/vars'
 import { get, writable, type Writable } from 'svelte/store'
 import { httpAPI, isErrorBody } from '../api/httpAPI'
 import type { ErrorBody } from '../api/device'

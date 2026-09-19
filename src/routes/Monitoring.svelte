@@ -2,12 +2,12 @@
   import { _ } from 'svelte-i18n'
   import { onMount } from 'svelte'
   import { get } from 'svelte/store'
-  import { currentPath } from '../lib/router.js'
+  import { currentPath } from '../lib/router'
   import { status_store } from '../lib/stores/status'
   import { config_store } from '../lib/stores/config'
   import { cabletemp_store } from '../lib/stores/cabletemp'
   import { uistates_store } from '../lib/stores/uistates'
-  import { serialQueue } from '../lib/queue.js'
+  import { serialQueue } from '../lib/queue'
   import {
     energyMetrics, sensorMetrics, serviceMetrics, vehicleMetrics,
     showVehicle, homeBatteryMetrics, showHomeBattery, safetyData, relayHealthData,

@@ -1,5 +1,5 @@
 <script>
-  import { hardMaxCurrent } from '../lib/utils.js'
+  import { hardMaxCurrent } from '../lib/utils'
   import { _ } from 'svelte-i18n'
   import { schedule_store } from '../lib/stores/schedule'
   import { limit_store } from '../lib/stores/limit'
@@ -10,8 +10,8 @@
   import { claims_store } from '../lib/stores/claims'
   import { plan_store } from '../lib/stores/plan'
   import { claimRows } from '../lib/monitoring/metrics.js'
-  import { serialQueue } from '../lib/queue.js'
-  import { showWriteError } from '../lib/alerts.js'
+  import { serialQueue } from '../lib/queue'
+  import { showWriteError } from '../lib/alerts'
   import { DAYS } from '../lib/schedule/timers.js'
   import { timersToRules, rulesToTimers, ruleDeleteIds, actionToFeatureKey } from '../lib/charge_manager/rules.js'
   import { vehicleLimitAvailability } from '../lib/charge_manager/vehicle.js'

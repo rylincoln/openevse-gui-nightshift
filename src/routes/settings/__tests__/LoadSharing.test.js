@@ -6,14 +6,14 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
-vi.mock('../../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.resolve({ msg: 'done' })) }))
+vi.mock('../../../lib/api/httpAPI', () => ({ httpAPI: vi.fn(() => Promise.resolve({ msg: 'done' })) }))
 
-import { httpAPI } from '../../../lib/api/httpAPI.js'
+import { httpAPI } from '../../../lib/api/httpAPI'
 import { config_store } from '../../../lib/stores/config'
 import { claims_target_store } from '../../../lib/stores/claims_target'
 import { loadsharing_store } from '../../../lib/stores/loadsharing'
 import { uisettings_store } from '../../../lib/stores/uisettings'
-import { EvseClients } from '../../../lib/vars.js'
+import { EvseClients } from '../../../lib/vars'
 import LoadSharing from '../LoadSharing.svelte'
 
 beforeEach(() => {

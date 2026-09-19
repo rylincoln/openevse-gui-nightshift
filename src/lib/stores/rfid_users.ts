@@ -1,6 +1,6 @@
 import { writable, type Readable, type Writable } from 'svelte/store'
 import { httpAPI, type ApiResult } from '../api/httpAPI'
-import { serialQueue } from '../queue.js'
+import { serialQueue } from '../queue'
 import type { RfidUsers, ErrorBody, WriteResponse } from '../api/device'
 
 // Holds the firmware's UID → user-name map. Backed by /rfid/users on devices
@@ -35,7 +35,7 @@ function createRfidUsersStore(): RfidUsersStore {
 
   async function download(): Promise<boolean> {
     update((s) => ({ ...s, loading: true, error: false }))
-    const res: ApiResult<RfidUsers | ErrorBody> = await serialQueue.add(() =>
+    const res: ApiResult<RfidUsers | ErrorBody> | false = await serialQueue.add(() =>
       httpAPI<RfidUsers | ErrorBody>('GET', '/rfid/users'),
     )
     if (!res || res === 'error' || res.msg === 'error' || !isPlainObject(res)) {
@@ -48,7 +48,7 @@ function createRfidUsersStore(): RfidUsersStore {
 
   async function save(uid: string, name: string): Promise<boolean> {
     const body = JSON.stringify({ rfid: uid, name })
-    const res: ApiResult<WriteResponse> = await serialQueue.add(() =>
+    const res: ApiResult<WriteResponse> | false = await serialQueue.add(() =>
       httpAPI<WriteResponse>('POST', '/rfid/users', body),
     )
     if (!res || res === 'error' || res.msg === 'error') return false
@@ -58,7 +58,7 @@ function createRfidUsersStore(): RfidUsersStore {
 
   async function remove(uid: string): Promise<boolean> {
     const url = `/rfid/users?rfid=${encodeURIComponent(uid)}`
-    const res: ApiResult<WriteResponse> = await serialQueue.add(() =>
+    const res: ApiResult<WriteResponse> | false = await serialQueue.add(() =>
       httpAPI<WriteResponse>('DELETE', url),
     )
     if (!res || res === 'error' || res.msg === 'error') return false

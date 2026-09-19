@@ -4,15 +4,20 @@
 // whichever unit the user prefers (temp_unit config: 'c' | 'f').
 
 /** Convert a °C number to °F, rounded to 1 dp. NaN-safe. */
-export function cToF(c) {
+export function cToF(c: unknown): number | null {
   if (c === null || c === undefined || !Number.isFinite(Number(c))) return null
   return Math.round((Number(c) * 9 / 5 + 32) * 10) / 10
 }
 
 /** Round a °C number to 1 dp. NaN-safe. */
-export function roundC(c) {
+export function roundC(c: unknown): number | null {
   if (c === null || c === undefined || !Number.isFinite(Number(c))) return null
   return Math.round(Number(c) * 10) / 10
+}
+
+export interface FormattedTemp {
+  value: number | null
+  unitKey: 'units.fahrenheit' | 'units.celsius'
 }
 
 /**
@@ -20,7 +25,7 @@ export function roundC(c) {
  * Returns `{ value, unitKey }` so callers can render with svelte-i18n.
  * Pass `unit = 'f'` for Fahrenheit; anything else is treated as Celsius.
  */
-export function formatTemp(celsius, unit) {
+export function formatTemp(celsius: unknown, unit: string | undefined): FormattedTemp {
   const isF = unit === 'f'
   if (celsius === null || celsius === undefined || !Number.isFinite(Number(celsius))) {
     return { value: null, unitKey: isF ? 'units.fahrenheit' : 'units.celsius' }

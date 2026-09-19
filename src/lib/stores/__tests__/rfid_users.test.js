@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
-vi.mock('../../queue.js', () => ({
+vi.mock('../../api/httpAPI', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../queue', () => ({
   serialQueue: { add: vi.fn((fn) => fn()) },
 }))
 
 import { rfid_users_store } from '../rfid_users'
-import { httpAPI } from '../../api/httpAPI.js'
+import { httpAPI } from '../../api/httpAPI'
 
 describe('rfid_users_store', () => {
   beforeEach(() => {

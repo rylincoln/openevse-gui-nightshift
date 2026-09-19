@@ -4,7 +4,7 @@ import {
   cableTempStatusKey, cableTempSourceOnPin, cableTempSourceByIndex,
   cableTempSourceOptions, c10ToC, cToC10, cableTempHasAssignedSource,
   cToUnit, unitToC, c10ToUnit, unitToC10,
-} from '../cabletemp.js'
+} from '../cabletemp'
 
 const cabletemp = {
   sources: [

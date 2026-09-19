@@ -3,7 +3,7 @@ import { render, cleanup } from '@testing-library/svelte'
 import { tick } from 'svelte'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.resolve('error')) }))
+vi.mock('../../api/httpAPI', () => ({ httpAPI: vi.fn(() => Promise.resolve('error')) }))
 
 import WebSocket from '../WebSocket.svelte'
 import DataManager from '../DataManager.svelte'

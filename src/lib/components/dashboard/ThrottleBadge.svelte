@@ -1,7 +1,7 @@
 <script>
   import { _ } from 'svelte-i18n'
   import { claims_target_store } from '../../stores/claims_target'
-  import { EvseClients } from '../../vars.js'
+  import { EvseClients } from '../../vars'
   import Icon from '../../icons/Icon.svelte'
 
   let active = $derived(

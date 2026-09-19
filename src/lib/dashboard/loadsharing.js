@@ -9,7 +9,7 @@
 // joined-peer list plus group current total on /status. That is enough to
 // tell an allocation from a lost controller, which is the distinction the
 // card has to get right.
-import { EvseClients } from '../vars.js'
+import { EvseClients } from '../vars'
 
 const LIMIT_CLIENTS = [EvseClients.shaper.id, EvseClients.loadsharing.id]
 

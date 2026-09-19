@@ -4,7 +4,7 @@
   import UplotChart from './UplotChart.svelte'
   import { readChartTheme } from './chartTheme.js'
   import { socOrNull } from '../../dashboard/sessionChart.js'
-  import { cToF } from '../../temperature.js'
+  import { cToF } from '../../temperature'
 
   /** @type {{ samples: Array<{ts:number,a:number,t:number,e:number,s:number}> }} */
   let { samples = [] } = $props()

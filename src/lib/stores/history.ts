@@ -1,6 +1,6 @@
 import { writable, get, type Writable } from 'svelte/store'
 import { httpAPI, isErrorBody } from '../api/httpAPI'
-import { dedup } from '../utils.js'
+import { dedup } from '../utils'
 import type { LogEntry, ErrorBody } from '../api/device'
 
 export interface HistoryStore extends Writable<LogEntry[] | undefined> {

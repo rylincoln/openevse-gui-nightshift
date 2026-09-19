@@ -1,5 +1,5 @@
 <script>
-  import { currentPath, redirect } from '../router.js'
+  import { currentPath, redirect } from '../router'
   let { routes = {}, fallback, aliases = {} } = $props()
 
   // A legacy path renders nothing for the one tick it takes the redirect

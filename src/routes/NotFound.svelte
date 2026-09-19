@@ -1,6 +1,6 @@
 <script>
   import { _ } from 'svelte-i18n'
-  import { navigate } from '../lib/router.js'
+  import { navigate } from '../lib/router'
   import Button from '../lib/components/ui/Button.svelte'
 </script>
 

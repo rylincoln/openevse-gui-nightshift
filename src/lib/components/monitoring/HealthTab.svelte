@@ -2,12 +2,12 @@
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import Button from '../ui/Button.svelte'
-  import { getStateDesc } from '../../utils.js'
-  import { serialQueue } from '../../queue.js'
-  import { httpAPI } from '../../api/httpAPI.js'
+  import { getStateDesc } from '../../utils'
+  import { serialQueue } from '../../queue'
+  import { httpAPI } from '../../api/httpAPI'
   import { status_store } from '../../stores/status'
   import { config_store } from '../../stores/config'
-  import { showWriteError } from '../../alerts.js'
+  import { showWriteError } from '../../alerts'
 
   let { data = { errors: [], infos: [] }, relay = null } = $props()
 
