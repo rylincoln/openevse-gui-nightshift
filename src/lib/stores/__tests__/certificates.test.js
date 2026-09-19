@@ -77,6 +77,16 @@ describe('certificate_store', () => {
     expect(result.success).toBe(false)
   })
 
+  it('does not throw when the request fails outright (httpAPI resolves the error sentinel)', async () => {
+    httpAPI.mockResolvedValue('error')
+    const data = { name: 'newcert', pem: '...' }
+
+    const result = await certificate_store.upload(data)
+
+    expect(result).toBeTruthy()
+    expect(result.success).toBe(false)
+  })
+
   it('should remove certificate by id', async () => {
     httpAPI.mockResolvedValue({ msg: 'done' })
     const result = await certificate_store.remove(1)
