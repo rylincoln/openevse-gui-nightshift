@@ -1,4 +1,4 @@
-// Screenshot manifest — the single source of truth for `npm run screenshots`.
+// Screenshot manifest — the single source of truth for `pnpm screenshots`.
 //
 // Each entry produces one image per theme × viewport combination, named
 // docs/screenshots/<name>-<theme>-<viewport>.png. Defaults (dark theme,

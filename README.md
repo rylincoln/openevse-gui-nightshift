@@ -23,7 +23,7 @@ to be flashed onto the WiFi module and served from its embedded web server.
 
 ## Screenshots
 
-All screenshots are generated automatically with `npm run screenshots` (see
+All screenshots are generated automatically with `pnpm screenshots` (see
 [Screenshots](#screenshots-1) below) — the full set, covering every screen and
 settings page, lives in [docs/screenshots/](docs/screenshots/). The UI ships
 light and dark themes — toggle from the header.
@@ -45,13 +45,15 @@ light and dark themes — toggle from the header.
 
 ## Requirements
 
-- Node.js 20+ and npm.
+- Node.js 20+ and pnpm. The exact pnpm version is pinned in `package.json`
+  (`packageManager`); `corepack enable pnpm` picks it up, and any pnpm 10+
+  already installed switches itself to the pinned version on first use.
 
 ## Quick start
 
 ```bash
-npm install
-npm run dev:mock      # run the UI offline against built-in mock data
+pnpm install
+pnpm dev:mock      # run the UI offline against built-in mock data
 ```
 
 Open the printed URL — no hardware required.
@@ -65,8 +67,8 @@ Point the dev server at a charger by setting `VITE_OPENEVSEHOST` in a `.env` fil
 
 ```bash
 cp .env.example .env        # then edit VITE_OPENEVSEHOST, e.g. 10.75.1.144
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Vite proxies `/api`, `/ws`, `/debug` and `/evse` to that host, so the dev UI talks
@@ -75,7 +77,7 @@ to live hardware.
 ### Mock mode (no hardware needed)
 
 ```bash
-npm run dev:mock
+pnpm dev:mock
 ```
 
 This starts Vite in `mock` mode. A built-in plugin intercepts every `/api/*` request
@@ -135,21 +137,21 @@ docker compose up
 ```
 
 Open [http://localhost:5173](http://localhost:5173). Source files are bind-mounted
-so edits hot-reload exactly as with the local `npm run dev` workflow.
+so edits hot-reload exactly as with the local `pnpm dev` workflow.
 
 ## Build
 
 ```bash
-npm run build         # static, gzipped output in dist/ — ready to flash
-npm run preview       # serve the production build locally
+pnpm build         # static, gzipped output in dist/ — ready to flash
+pnpm preview       # serve the production build locally
 ```
 
 ## Test
 
 ```bash
-npm test              # run the full suite once
-npm run test:watch    # re-run on change
-npm run test:coverage # with a coverage report
+pnpm test          # run the full suite once
+pnpm test:watch    # re-run on change
+pnpm test:coverage # with a coverage report
 ```
 
 Tests use Vitest and `@testing-library/svelte`. Coverage is scoped to the pure logic
@@ -158,7 +160,7 @@ in `src/lib/**/*.js`.
 ## Screenshots
 
 ```bash
-npm run screenshots                          # regenerate docs/screenshots/*.png
+pnpm screenshots                          # regenerate docs/screenshots/*.png
 node scripts/screenshots.mjs --only dashboard-charging,settings   # a subset
 ```
 
@@ -186,7 +188,7 @@ dev/
   fixtures/          canned device responses for mock mode
     scenarios/       named fixture overlays (wizard, display, notifications, ...)
 scripts/
-  screenshots.mjs    automated screenshot generator (npm run screenshots)
+  screenshots.mjs    automated screenshot generator (pnpm screenshots)
   screenshots.config.js  the capture manifest
 docs/screenshots/    generated UI screenshots — do not edit by hand
 docs/superpowers/    design specs and implementation plans
@@ -196,7 +198,7 @@ Architecture in brief: the route component is the only store-aware unit; pure lo
 lives in `src/lib/` modules and is unit-tested; device writes are serialised through a
 single queue (the device's web server is single-threaded).
 
-Other scripts: `npm run icons` regenerates the PWA icon set.
+Other scripts: `pnpm icons` regenerates the PWA icon set.
 
 ## License
 
