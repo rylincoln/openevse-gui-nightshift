@@ -181,11 +181,17 @@ export interface Status {
   reset_reason_name?: string
 
   // The fields below are read by the app (src/lib/data/DataManager.svelte,
-  // src/lib/dashboard/loadsharing.js, src/routes/settings/{Terminal,Rfid}.svelte,
-  // src/routes/settings/Firmware.svelte, src/lib/components/shell/AppShell.svelte,
-  // src/lib/components/wizard/steps/Wifi.svelte) but absent from
-  // dev/fixtures/status.json — capability-gated.
+  // src/lib/dashboard/loadsharing.js, src/lib/monitoring/metrics.js,
+  // src/routes/settings/{Terminal,Rfid}.svelte, src/routes/settings/Firmware.svelte,
+  // src/lib/components/shell/AppShell.svelte, src/lib/components/wizard/steps/Wifi.svelte)
+  // but absent from dev/fixtures/status.json — capability-gated.
 
+  /** bytes. PSRAM boards only (ESP32-S3 LCD); Terminal.svelte gates its PSRAM rows on this being defined. */
+  psram_free?: number
+  /** bytes. PSRAM boards only. */
+  psram_largest?: number
+  /** hundredths of Hz. RAPI D9 ($GZ); src/lib/monitoring/metrics.js only renders the row when `> 0`. */
+  frequency?: number
   /** Bumps on every /boost change. Absent on firmware without Boost. */
   boost_version?: number
   /** Bumps when GET /loadsharing/status should be re-fetched. */
@@ -380,7 +386,11 @@ export interface Config {
   overcurrent_monitor?: boolean
   /** Absent on firmware without zero-cross detection. */
   zero_cross?: boolean
-  chip_id: string
+  // RAPI D9 ($GI, commit 2cc1d2d "OpenEVSE9 Changes") — same feature class
+  // as voltage/relay_dc*/pp_auto/boot_lock/zero_cross/heartbeat_* above,
+  // which this file already marks optional. Pre-D9 firmware omits it;
+  // About.svelte:22 gates its row on `{#if $config_store?.chip_id}`.
+  chip_id?: string
   zero_cross_threshold_ma?: number
   /** Relay-health-monitoring cluster. Absent on firmware without relay diagnostics. */
   relay_life_pct?: number
@@ -590,6 +600,18 @@ export interface LoadSharingPeer {
   online: boolean
   joined: boolean
   priority: number
+  /** Not in the mock/fixtures. src/lib/dashboard/loadsharing.js:74 falls back to this alongside `host`. */
+  hostname?: string
+  /** seconds, same clock as `Status.uptime`. src/lib/dashboard/loadsharing.js:76. */
+  last_seen?: number
+  /** Not in the mock/fixtures. Fallback for `host` at src/routes/settings/LoadSharing.svelte:387. */
+  ip?: string
+  /** Not in the mock/fixtures. src/routes/settings/LoadSharing.svelte:388. */
+  isLocal?: boolean
+  /** Not in the mock/fixtures. Preferred over `http://${host}` at src/routes/settings/LoadSharing.svelte:439. */
+  url?: string
+  /** Not in the mock/fixtures. src/routes/settings/LoadSharing.svelte:117-118. */
+  status?: { state?: EvseState }
 }
 /** `GET /loadsharing/status`. */
 export interface LoadSharingStatus {
