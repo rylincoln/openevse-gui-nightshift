@@ -1,6 +1,6 @@
 // Automated UI screenshot generator.
 //
-//   npm run screenshots            regenerate docs/screenshots/*.png
+//   pnpm screenshots               regenerate docs/screenshots/*.png
 //   node scripts/screenshots.mjs --only dashboard-charging,settings
 //
 // Starts the Vite dev server in mock mode with MOCK_STATIC=1 (no WebSocket

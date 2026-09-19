@@ -4,16 +4,17 @@
   "version": "2026.37.1",
   "license": "GPL-3.0-or-later",
   "type": "module",
+  "packageManager": "pnpm@12.5.1",
   "scripts": {
-    "dev": "vite",
-    "dev:mock": "vite --mode mock",
+    "dev": "cross-env NODE_OPTIONS=--max-http-header-size=65536 vite",
+    "dev:mock": "cross-env NODE_OPTIONS=--max-http-header-size=65536 vite --mode mock",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "cross-env NODE_OPTIONS=--max-http-header-size=65536 vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "icons": "node scripts/gen-icons.mjs",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "cross-env NODE_OPTIONS=--max-http-header-size=65536 node scripts/screenshots.mjs"
   },
   "devDependencies": {
     "@gfx/zopfli": "^1.0.15",
@@ -22,6 +23,7 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/svelte": "^5.4.2",
     "@vitest/coverage-v8": "^5.0.1",
+    "cross-env": "^10.1.0",
     "jsdom": "^30.0.1",
     "playwright": "^1.63.0",
     "sharp": "^0.35.4",
@@ -40,9 +42,5 @@
     "svelte-i18n": "^4.0.1",
     "svelte-local-storage-store": "^0.6.4",
     "uplot": "^1.6.32"
-  },
-  "overrides": {
-    "esbuild": "^0.25.0",
-    "@babel/core": "^7.29.6"
   }
 }

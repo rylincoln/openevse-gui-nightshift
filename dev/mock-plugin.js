@@ -4,7 +4,7 @@
  * Intercepts /api/* HTTP requests and /ws WebSocket connections so the app
  * can be viewed locally without a real OpenEVSE device.
  *
- * Activated only when Vite is started with --mode mock (npm run dev:mock).
+ * Activated only when Vite is started with --mode mock (pnpm dev:mock).
  */
 
 import { readFileSync, existsSync } from 'node:fs'

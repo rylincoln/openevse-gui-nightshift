@@ -1,0 +1,13 @@
+# Dependency build scripts pnpm may run (it blocks all of them by default).
+# es5-ext's postinstall only prints a locale-dependent message; esbuild's
+# validates / fetches its native binary.
+allowBuilds:
+  es5-ext: false
+  esbuild: true
+
+# Pin transitive build-tool versions past their security advisories
+# (browserslist / esbuild / @babel/core). pnpm reads overrides from here,
+# not from package.json's npm-style `overrides` field.
+overrides:
+  esbuild: ^0.25.0
+  '@babel/core': ^7.29.6

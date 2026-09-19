@@ -8,9 +8,9 @@ services:
     environment:
       - VITE_OPENEVSEHOST=openevse-native:8000
     command: >-
-      sh -c "npm install &&
+      sh -c "corepack enable pnpm && pnpm install &&
       node -e \"const http=require('http');const url='http://openevse-native:8000/status';let tries=0;const max=60;const probe=()=>{tries++;http.get(url,res=>{res.resume();if(res.statusCode&&res.statusCode<500){process.exit(0)}if(tries>=max){console.error('Native OpenEVSE not ready');process.exit(1)}setTimeout(probe,1000)}).on('error',()=>{if(tries>=max){console.error('Native OpenEVSE not reachable');process.exit(1)}setTimeout(probe,1000)});};probe();\" &&
-      npm run dev -- --host 0.0.0.0 --port 5173"
+      pnpm dev --host 0.0.0.0 --port 5173"
     ports:
       - "5173:5173"
     depends_on:

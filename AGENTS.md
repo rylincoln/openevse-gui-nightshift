@@ -8,12 +8,12 @@ ESP32 firmware** — a Svelte 5 + Vite + Tailwind app, usually checked out as th
 ## Commands
 
 ```bash
-npm install
-npm run dev:mock      # offline dev against built-in mock data — start here
-npm run dev           # against a real charger (VITE_OPENEVSEHOST in .env)
-npm test              # vitest unit tests — must pass before committing
-npm run build         # production build → dist/ (embedded into the firmware)
-npm run screenshots   # regenerate docs/screenshots/*.png (deterministic)
+pnpm install
+pnpm dev:mock          # offline dev against built-in mock data — start here
+pnpm dev               # against a real charger (VITE_OPENEVSEHOST in .env)
+pnpm test              # vitest unit tests — must pass before committing
+pnpm build             # production build → dist/ (embedded into the firmware)
+pnpm screenshots       # regenerate docs/screenshots/*.png (deterministic)
 ```
 
 ## Architecture rules
@@ -42,8 +42,8 @@ npm run screenshots   # regenerate docs/screenshots/*.png (deterministic)
 
 ## After any UI-visible change
 
-1. `npm test` and `npm run build` must pass.
-2. `npm run screenshots` — regenerate and commit any changed images in
+1. `pnpm test` and `pnpm build` must pass.
+2. `pnpm screenshots` — regenerate and commit any changed images in
    `docs/screenshots/` (the manifest is `scripts/screenshots.config.js`; add an
    entry when adding a screen).
 
