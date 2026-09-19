@@ -79,6 +79,15 @@ describe('override_store', () => {
     expect(get(override_store).charge_current).toBe(10)
   })
 
+  it('download returns false and leaves the store unchanged when the request fails', async () => {
+    override_store.set({ state: 'active', charge_current: 10 })
+    httpAPI.mockResolvedValue('error')
+
+    const result = await override_store.download()
+    expect(result).toBe(false)
+    expect(get(override_store)).toEqual({ state: 'active', charge_current: 10 })
+  })
+
   it('returns true on a successful upload', async () => {
     httpAPI.mockResolvedValue({ msg: 'done' })
     const result = await override_store.upload({ charge_current: 20 })
