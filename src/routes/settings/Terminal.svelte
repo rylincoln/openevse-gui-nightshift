@@ -2,12 +2,12 @@
 <script>
   import { onMount } from 'svelte'
   import { _ } from 'svelte-i18n'
-  import { httpAPI } from '../../lib/api/httpAPI.js'
+  import { httpAPI } from '../../lib/api/httpAPI'
   import { uisettings_store } from '../../lib/stores/uisettings'
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
-  import { serialQueue } from '../../lib/queue.js'
-  import { showWriteError } from '../../lib/alerts.js'
+  import { serialQueue } from '../../lib/queue'
+  import { showWriteError } from '../../lib/alerts'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
   import FormField from '../../lib/components/config/FormField.svelte'
@@ -17,8 +17,8 @@
   import Toggle from '../../lib/components/ui/Toggle.svelte'
   import Modal from '../../lib/components/ui/Modal.svelte'
   import ProgressBar from '../../lib/components/ui/ProgressBar.svelte'
-  import { downloadDiagnostics } from '../../lib/diagnostics.js'
-  import { formatBytes } from '../../lib/utils.js'
+  import { downloadDiagnostics } from '../../lib/diagnostics'
+  import { formatBytes } from '../../lib/utils'
 
   function setDevFeatures(on) {
     uisettings_store.update((s) => ({ ...s, dev_features: !!on }))

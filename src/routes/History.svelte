@@ -5,16 +5,16 @@
   import { config_store } from '../lib/stores/config'
   import { uisettings_store } from '../lib/stores/uisettings'
   import { rfid_users_store } from '../lib/stores/rfid_users'
-  import { httpAPI } from '../lib/api/httpAPI.js'
-  import { serialQueue } from '../lib/queue.js'
-  import { formatDate, getStateDesc } from '../lib/utils.js'
+  import { httpAPI } from '../lib/api/httpAPI'
+  import { serialQueue } from '../lib/queue'
+  import { formatDate, getStateDesc } from '../lib/utils'
   import {
     pageRange, logTypeIcon, logTypeTone, logStateInfo, logEnergyKwh, logTempC,
     logPilotAmps, logReason,
   } from '../lib/history/logs.js'
   import { isKnownAdvisory } from '../lib/notifications/notifications.js'
-  import { formatTemp } from '../lib/temperature.js'
-  import { formatCost } from '../lib/cost.js'
+  import { formatTemp } from '../lib/temperature'
+  import { formatCost } from '../lib/cost'
   import Card from '../lib/components/ui/Card.svelte'
   import Button from '../lib/components/ui/Button.svelte'
   import ProgressBar from '../lib/components/ui/ProgressBar.svelte'

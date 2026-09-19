@@ -1,6 +1,6 @@
 // src/lib/__tests__/temperature.test.js
 import { describe, it, expect } from 'vitest'
-import { cToF, roundC, formatTemp } from '../temperature.js'
+import { cToF, roundC, formatTemp } from '../temperature'
 
 describe('cToF', () => {
   it('converts known reference points', () => {

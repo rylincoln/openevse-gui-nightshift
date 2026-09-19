@@ -9,7 +9,8 @@
 // the 4 sources independently picks a pin) — see openevse_esp32_firmware's
 // docs/rapi.md $SN entry for why only 2 of the 4 sources can be active at
 // once, and the PP_READ/PP-auto-ampacity pin-sharing note.
-import { cToF } from './temperature.js'
+import { cToF } from './temperature'
+import type { CableTemp, CableTempSource } from './api/device'
 
 export const CABLE_TEMP_PIN_NONE = 0
 export const CABLE_TEMP_PIN_PP = 1
@@ -24,21 +25,34 @@ export const CABLE_TEMP_STATUS_NOT_INSTALLED = 1
 export const CABLE_TEMP_STATUS_OPEN = 2
 export const CABLE_TEMP_STATUS_SHORTED = 3
 
-const STATUS_I18N_SUFFIX = { 1: 'not_installed', 2: 'open', 3: 'shorted' }
+const STATUS_I18N_SUFFIX: Record<number, string> = { 1: 'not_installed', 2: 'open', 3: 'shorted' }
 
 /** i18n key suffix ('not_installed'|'open'|'shorted') for a non-OK status; null when OK (0). */
-export function cableTempStatusKey(status) {
+export function cableTempStatusKey(status: number | undefined): string | null {
+  if (status === undefined) return null
   return STATUS_I18N_SUFFIX[status] ?? null
 }
 
 /** The source object (from /cabletemp's `sources` array) wired to `pin`, or null. */
-export function cableTempSourceOnPin(cabletemp, pin) {
+export function cableTempSourceOnPin(
+  cabletemp: CableTemp | undefined,
+  pin: number,
+): CableTempSource | null {
   return cabletemp?.sources?.find((s) => s.pin === pin) ?? null
 }
 
 /** The source object at logical index `index` (0-3), or null. */
-export function cableTempSourceByIndex(cabletemp, index) {
+export function cableTempSourceByIndex(
+  cabletemp: CableTemp | undefined,
+  index: number,
+): CableTempSource | null {
   return cabletemp?.sources?.find((s) => s.source === index) ?? null
+}
+
+export interface CableTempSourceOption {
+  value: string
+  label: string
+  disabled?: boolean
 }
 
 /**
@@ -49,7 +63,13 @@ export function cableTempSourceByIndex(cabletemp, index) {
  * would just be confusing, so the GUI keeps the two inputs mutually
  * exclusive. `none`/`labelFor` are passed in so this stays i18n-free.
  */
-export function cableTempSourceOptions(cabletemp, pin, otherPin, none, labelFor) {
+export function cableTempSourceOptions(
+  cabletemp: CableTemp | undefined,
+  pin: number,
+  otherPin: number,
+  none: string,
+  labelFor: (name: string) => string,
+): CableTempSourceOption[] {
   const usedByOther = cableTempSourceOnPin(cabletemp, otherPin)?.source
   return [
     { value: '', label: none },
@@ -62,12 +82,12 @@ export function cableTempSourceOptions(cabletemp, pin, otherPin, none, labelFor)
 }
 
 /** Tenths-of-°C (offset_c10/panic_c10 wire format) -> °C, or null. */
-export function c10ToC(c10) {
+export function c10ToC(c10: unknown): number | null {
   return typeof c10 === 'number' && Number.isFinite(c10) ? c10 / 10 : null
 }
 
 /** °C -> tenths-of-°C (offset_c10/panic_c10 wire format), or null. */
-export function cToC10(c) {
+export function cToC10(c: unknown): number | null {
   return typeof c === 'number' && Number.isFinite(c) ? Math.round(c * 10) : null
 }
 
@@ -78,30 +98,30 @@ export function cToC10(c) {
 // the 9/5 ratio alone — no +32.
 
 /** °C -> the display unit ('c' | 'f'), 1 dp; `delta` for a difference. null-safe. */
-export function cToUnit(c, unit, delta = false) {
+export function cToUnit(c: unknown, unit: string | undefined, delta = false): number | null {
   if (typeof c !== 'number' || !Number.isFinite(c)) return null
   if (unit !== 'f') return Math.round(c * 10) / 10
   return delta ? Math.round(c * 9 / 5 * 10) / 10 : cToF(c)
 }
 
 /** The display unit ('c' | 'f') -> °C; `delta` for a difference. null-safe. */
-export function unitToC(v, unit, delta = false) {
+export function unitToC(v: unknown, unit: string | undefined, delta = false): number | null {
   if (typeof v !== 'number' || !Number.isFinite(v)) return null
   if (unit !== 'f') return v
   return delta ? v * 5 / 9 : (v - 32) * 5 / 9
 }
 
 /** Tenths-of-°C wire value -> the display unit. */
-export function c10ToUnit(c10, unit, delta = false) {
+export function c10ToUnit(c10: unknown, unit: string | undefined, delta = false): number | null {
   return cToUnit(c10ToC(c10), unit, delta)
 }
 
 /** The display unit -> tenths-of-°C wire value. */
-export function unitToC10(v, unit, delta = false) {
+export function unitToC10(v: unknown, unit: string | undefined, delta = false): number | null {
   return cToC10(unitToC(v, unit, delta))
 }
 
 /** Whether any Cable Temperature Monitoring source is assigned to a pin. */
-export function cableTempHasAssignedSource(cabletemp) {
+export function cableTempHasAssignedSource(cabletemp: CableTemp | undefined): boolean {
   return !!cabletemp?.sources?.some((s) => s.pin !== CABLE_TEMP_PIN_NONE)
 }

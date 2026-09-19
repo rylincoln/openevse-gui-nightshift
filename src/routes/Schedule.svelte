@@ -1,8 +1,8 @@
 <script>
   import { _ } from 'svelte-i18n'
   import { schedule_store } from '../lib/stores/schedule'
-  import { serialQueue } from '../lib/queue.js'
-  import { showWriteError } from '../lib/alerts.js'
+  import { serialQueue } from '../lib/queue'
+  import { showWriteError } from '../lib/alerts'
   import { nextTimerId } from '../lib/schedule/timers.js'
   import Button from '../lib/components/ui/Button.svelte'
   import TimerList from '../lib/components/schedule/TimerList.svelte'

@@ -6,7 +6,7 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
-vi.mock('../../lib/api/httpAPI.js', async (importOriginal) => ({
+vi.mock('../../lib/api/httpAPI', async (importOriginal) => ({
   ...(await importOriginal()),
   httpAPI: vi.fn(() => Promise.resolve({})),
 }))

@@ -9,7 +9,7 @@ vi.mock('svelte-i18n', () => {
 })
 
 // We don't care about the queue's batching for unit tests — just resolve.
-vi.mock('../../../queue.js', () => ({
+vi.mock('../../../queue', () => ({
   serialQueue: { add: (fn) => Promise.resolve(fn()) },
 }))
 
@@ -25,7 +25,7 @@ vi.mock('../../../stores/config', async () => {
   const config_store = writable({ wizard_passed: false, hostname: 'openevse' })
   return { config_store: Object.assign(config_store, { saveParam, upload }) }
 })
-vi.mock('../../../api/httpAPI.js', () => ({
+vi.mock('../../../api/httpAPI', () => ({
   httpAPI: vi.fn(() => Promise.resolve([])),
 }))
 

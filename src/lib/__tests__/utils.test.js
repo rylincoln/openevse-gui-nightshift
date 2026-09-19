@@ -48,7 +48,7 @@ import {
   compareVersion,
   removeDuplicateObjects,
   hardMaxCurrent,
-} from '../utils.js'
+} from '../utils'
 
 describe('sec2time', () => {
   it('should format 0 seconds', () => {

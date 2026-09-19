@@ -30,24 +30,40 @@ const SECRET_PATTERNS = [
 
 const PLACEHOLDER = '***REDACTED***'
 
-function looksSecret(key) {
+function looksSecret(key: string): boolean {
   const k = String(key).toLowerCase()
   return SECRET_PATTERNS.some((p) => k.includes(p))
 }
 
 /** Deep-clone with secret fields blanked out. Safe for arbitrary nesting. */
-export function scrubSecrets(value) {
+export function scrubSecrets(value: unknown): unknown {
   if (value === null || typeof value !== 'object') return value
   if (Array.isArray(value)) return value.map(scrubSecrets)
-  const out = {}
+  const out: Record<string, unknown> = {}
   for (const [k, v] of Object.entries(value)) {
     out[k] = looksSecret(k) && v ? PLACEHOLDER : scrubSecrets(v)
   }
   return out
 }
 
+export interface DiagnosticsSnapshot {
+  generated_at: string
+  ua: string | null
+  config: unknown
+  status: unknown
+  schedule: unknown
+  plan: unknown
+  override: unknown
+  claims_target: unknown
+  limit: unknown
+  certificates: unknown
+  uistates: unknown
+  uisettings: unknown
+  theme: unknown
+}
+
 /** Build the diagnostic snapshot object. Exposed so tests can assert shape. */
-export function buildDiagnostics({ now = new Date() } = {}) {
+export function buildDiagnostics({ now = new Date() }: { now?: Date } = {}): DiagnosticsSnapshot {
   return {
     generated_at: now.toISOString(),
     ua: typeof navigator !== 'undefined' ? navigator.userAgent : null,
@@ -70,7 +86,7 @@ export function buildDiagnostics({ now = new Date() } = {}) {
  * used so callers can show a toast / log it. Lives in this module so the
  * UI component doesn't have to know anything about Blobs and anchor tags.
  */
-export function downloadDiagnostics() {
+export function downloadDiagnostics(): string {
   const data = buildDiagnostics()
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
   const filename = `openevse-diagnostics-${stamp}.json`

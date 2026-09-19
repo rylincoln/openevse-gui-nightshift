@@ -1,6 +1,6 @@
 import { get } from 'svelte/store'
 import { uistates_store } from '../stores/uistates'
-import { redirect } from '../router.js'
+import { redirect } from '../router'
 import type { ErrorBody } from './device'
 
 /** Every call resolves to the payload or the string 'error' — never rejects. */

@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('../../api/httpAPI.js', async (importOriginal) => ({
+vi.mock('../../api/httpAPI', async (importOriginal) => ({
   ...(await importOriginal()),
   httpAPI: vi.fn(),
 }))
 
 import { plan_store } from '../plan'
-import { httpAPI } from '../../api/httpAPI.js'
+import { httpAPI } from '../../api/httpAPI'
 
 describe('plan_store', () => {
   beforeEach(() => { vi.clearAllMocks() })

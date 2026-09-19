@@ -9,12 +9,12 @@ vi.mock('svelte-i18n', () => {
 
 // Drive the native-host bridge from the test: a writable stands in for the
 // host store so we can flip hasDrawer, and openDrawer is a spy.
-vi.mock('../../../nativeHost.js', async () => {
+vi.mock('../../../nativeHost', async () => {
   const { writable } = await import('svelte/store')
   return { host: writable({ embedded: false, hasDrawer: false }), openDrawer: vi.fn() }
 })
 
-import { host as mockHost, openDrawer } from '../../../nativeHost.js'
+import { host as mockHost, openDrawer } from '../../../nativeHost'
 import Header from '../Header.svelte'
 
 beforeEach(() => {

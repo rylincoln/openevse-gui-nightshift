@@ -8,9 +8,9 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
-vi.mock('../../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.resolve({ msg: 'done' })) }))
+vi.mock('../../../lib/api/httpAPI', () => ({ httpAPI: vi.fn(() => Promise.resolve({ msg: 'done' })) }))
 
-import { httpAPI } from '../../../lib/api/httpAPI.js'
+import { httpAPI } from '../../../lib/api/httpAPI'
 import { config_store } from '../../../lib/stores/config'
 import { uistates_store } from '../../../lib/stores/uistates'
 import Vehicle from '../Vehicle.svelte'

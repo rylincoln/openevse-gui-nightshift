@@ -10,10 +10,10 @@
  *   < 1h    -> "Mm Ss"
  *   >= 1h   -> "Hh Mm"
  * Negative inputs are clamped to 0.
- * @param {number} seconds
- * @returns {string}
+ * @param seconds
+ * @returns
  */
-export function formatDuration(seconds) {
+export function formatDuration(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds))
   if (s < 60) return `${s}s`
   if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`
@@ -24,11 +24,11 @@ export function formatDuration(seconds) {
  * Relative "… ago" label for a unix timestamp (seconds).
  * Returns null when the timestamp is falsy (0 / null / undefined) so callers can
  * render a "Never" placeholder.
- * @param {number} unixTs   seconds since epoch
- * @param {number} [nowMs]  current time in ms (defaults to Date.now())
- * @returns {string|null}
+ * @param unixTs   seconds since epoch
+ * @param [nowMs]  current time in ms (defaults to Date.now())
+ * @returns
  */
-export function formatAgo(unixTs, nowMs = Date.now()) {
+export function formatAgo(unixTs: number | null | undefined, nowMs: number = Date.now()): string | null {
   if (!unixTs) return null
   const s = Math.max(0, Math.floor(nowMs / 1000) - unixTs)
   return `${formatDuration(s)} ago`
@@ -37,10 +37,10 @@ export function formatAgo(unixTs, nowMs = Date.now()) {
 /**
  * Countdown label from milliseconds remaining.
  * Returns "—" when the input is null/undefined or already elapsed.
- * @param {number|null|undefined} ms
- * @returns {string}
+ * @param ms
+ * @returns
  */
-export function formatCountdown(ms) {
+export function formatCountdown(ms: number | null | undefined): string {
   if (ms == null) return '—'
   const s = Math.ceil(ms / 1000)
   if (s <= 0) return '—'

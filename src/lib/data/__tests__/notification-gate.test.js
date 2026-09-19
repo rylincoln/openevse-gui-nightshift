@@ -6,9 +6,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/svelte'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../api/httpAPI', () => ({ httpAPI: vi.fn() }))
 
-import { httpAPI } from '../../api/httpAPI.js'
+import { httpAPI } from '../../api/httpAPI'
 import DataManager from '../DataManager.svelte'
 import { status_store } from '../../stores/status'
 import { uistates_store } from '../../stores/uistates'

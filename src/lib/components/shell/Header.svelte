@@ -4,7 +4,7 @@
   import IconButton from '../ui/IconButton.svelte'
   import NotificationBell from '../notifications/NotificationBell.svelte'
   import { theme } from '../../stores/theme'
-  import { host, openDrawer } from '../../nativeHost.js'
+  import { host, openDrawer } from '../../nativeHost'
   let { deviceName = 'OpenEVSE', wsConnected = true, evseConnected = true } = $props()
   let connected = $derived(wsConnected && evseConnected)
   let statusKey = $derived(

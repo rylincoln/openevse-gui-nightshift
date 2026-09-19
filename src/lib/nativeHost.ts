@@ -7,23 +7,40 @@
 // first. The app therefore also sets the global at document end and fires a
 // `openevsehost` event — hence the store + listener below, and an idempotent
 // `announce()` guarded by a once-only flag.
-import { writable } from 'svelte/store'
+import { writable, type Readable } from 'svelte/store'
+
+declare global {
+  interface Window {
+    OpenEVSEHost?: { drawer?: boolean }
+    ReactNativeWebView?: { postMessage: (message: string) => void }
+  }
+}
 
 const w = window
 
+interface HostMessage {
+  type: string
+  drawerButton?: boolean
+}
+
 // Never let a missing/throwing bridge break the page.
-const post = (msg) => {
+const post = (msg: HostMessage): void => {
   try {
-    w.ReactNativeWebView.postMessage(JSON.stringify(msg))
+    w.ReactNativeWebView?.postMessage(JSON.stringify(msg))
   } catch {
     // no bridge (plain browser) or it threw — ignore
   }
 }
 
-const read = () => {
+interface HostState {
+  embedded: boolean
+  hasDrawer: boolean
+}
+
+const read = (): HostState => {
   const host = w.OpenEVSEHost
   const embedded = !!host && !!w.ReactNativeWebView
-  return { embedded, hasDrawer: embedded && host.drawer === true }
+  return { embedded, hasDrawer: embedded && host?.drawer === true }
 }
 
 let announced = false
@@ -32,7 +49,7 @@ let current = read()
 // Tell the app once that this GUI renders its own drawer button, so the app
 // can drop its fallback (Android floating button). Safe to call repeatedly —
 // the flag makes every call after the first a no-op.
-export const announce = () => {
+export const announce = (): void => {
   if (current.embedded && !announced) {
     announced = true
     post({ type: 'hostUi', drawerButton: current.hasDrawer })
@@ -53,6 +70,6 @@ w.addEventListener('openevsehost', () => {
   store.set(current)
   announce()
 })
-export const host = { subscribe: store.subscribe }
+export const host: Readable<HostState> = { subscribe: store.subscribe }
 
-export const openDrawer = () => post({ type: 'openDrawer' })
+export const openDrawer = (): void => post({ type: 'openDrawer' })

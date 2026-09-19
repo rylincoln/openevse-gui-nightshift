@@ -7,12 +7,12 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
-vi.mock('../../lib/api/httpAPI.js', async (importOriginal) => ({
+vi.mock('../../lib/api/httpAPI', async (importOriginal) => ({
   ...(await importOriginal()),
   httpAPI: vi.fn(() => Promise.resolve({})),
 }))
 
-import { httpAPI } from '../../lib/api/httpAPI.js'
+import { httpAPI } from '../../lib/api/httpAPI'
 import { status_store } from '../../lib/stores/status'
 import { config_store } from '../../lib/stores/config'
 import { claims_target_store } from '../../lib/stores/claims_target'
@@ -20,7 +20,7 @@ import { override_store } from '../../lib/stores/override'
 import { uistates_store } from '../../lib/stores/uistates'
 import { uisettings_store } from '../../lib/stores/uisettings'
 import { limit_store } from '../../lib/stores/limit'
-import { EvseClients } from '../../lib/vars.js'
+import { EvseClients } from '../../lib/vars'
 import Dashboard from '../Dashboard.svelte'
 
 describe('Dashboard', () => {

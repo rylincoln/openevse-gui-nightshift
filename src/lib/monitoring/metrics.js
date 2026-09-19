@@ -1,7 +1,7 @@
 /** Pure helpers for the Monitoring screen. Self-contained — no store/DOM imports. */
-import { formatTemp } from '../temperature.js'
-import { EvseClients } from '../vars.js'
-import { cableTempStatusKey } from '../cabletemp.js'
+import { formatTemp } from '../temperature'
+import { EvseClients } from '../vars'
+import { cableTempStatusKey } from '../cabletemp'
 
 /** Claim priority for an EVSE client id (higher wins); 0 if unknown. */
 function clientPriority(id) {

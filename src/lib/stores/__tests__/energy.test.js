@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI.js', async (importOriginal) => ({
+vi.mock('../../api/httpAPI', async (importOriginal) => ({
   ...(await importOriginal()),
   httpAPI: vi.fn(),
 }))
-vi.mock('../../queue.js', () => ({
+vi.mock('../../queue', () => ({
   serialQueue: { add: vi.fn((fn) => fn()) },
 }))
 
 import { energy_store } from '../energy'
-import { httpAPI } from '../../api/httpAPI.js'
+import { httpAPI } from '../../api/httpAPI'
 
 describe('energy_store', () => {
   beforeEach(() => {

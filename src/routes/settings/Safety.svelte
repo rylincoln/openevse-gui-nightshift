@@ -10,8 +10,8 @@
     CABLE_TEMP_PIN_PP, CABLE_TEMP_PIN_PP2,
     cableTempSourceOnPin, cableTempSourceOptions, cableTempStatusKey,
     cToUnit, c10ToUnit, unitToC10,
-  } from '../../lib/cabletemp.js'
-  import { formatTemp } from '../../lib/temperature.js'
+  } from '../../lib/cabletemp'
+  import { formatTemp } from '../../lib/temperature'
   import { notification_store } from '../../lib/stores/notifications'
   import { settingsMarkers } from '../../lib/notifications/notifications.js'
   import AdvisoryMarker from '../../lib/components/notifications/AdvisoryMarker.svelte'

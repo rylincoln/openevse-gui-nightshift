@@ -1,6 +1,6 @@
 <!-- src/routes/settings/Evse.svelte -->
 <script>
-  import { hardMaxCurrent } from '../../lib/utils.js'
+  import { hardMaxCurrent } from '../../lib/utils'
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { createConfigForm } from '../../lib/config/configForm.svelte.js'

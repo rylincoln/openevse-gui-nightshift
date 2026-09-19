@@ -4,7 +4,7 @@
   // controller. The full breakdown lives on Settings → Load sharing; this is
   // the glance, not the feature.
   import { _ } from 'svelte-i18n'
-  import { formatDuration } from '../../format/duration.js'
+  import { formatDuration } from '../../format/duration'
 
   /** @type {{ view: import('../../dashboard/loadsharing.js').loadSharingView extends (...a: any) => infer R ? NonNullable<R> : never }} */
   let { view } = $props()

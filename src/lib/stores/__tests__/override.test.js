@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI.js', () => ({
+vi.mock('../../api/httpAPI', () => ({
   httpAPI: vi.fn()
 }))
 
@@ -14,7 +14,7 @@ vi.mock('../status', () => ({
 }))
 
 import { override_store } from '../override'
-import { httpAPI } from '../../api/httpAPI.js'
+import { httpAPI } from '../../api/httpAPI'
 
 describe('override_store', () => {
   beforeEach(() => {

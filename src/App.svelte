@@ -6,14 +6,14 @@
   import AppShell from './lib/components/shell/AppShell.svelte'
   import Wizard from './routes/Wizard.svelte'
   import Login from './routes/Login.svelte'
-  import { currentPath } from './lib/router.js'
+  import { currentPath } from './lib/router'
   import AlertBox from './lib/components/ui/AlertBox.svelte'
   import FetchData from './lib/data/FetchData.svelte'
   import WebSocket from './lib/data/WebSocket.svelte'
   import DataManager from './lib/data/DataManager.svelte'
   import { config_store } from './lib/stores/config'
   import { uistates_store } from './lib/stores/uistates'
-  import { announce } from './lib/nativeHost.js'
+  import { announce } from './lib/nativeHost'
   import { _, isLoading } from 'svelte-i18n'
 
   setupI18n()

@@ -6,7 +6,7 @@
   else is reachable from Settings later.
 -->
 <script>
-  import { hardMaxCurrent } from '../../../utils.js'
+  import { hardMaxCurrent } from '../../../utils'
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../../stores/config'
   import { createConfigForm } from '../../../config/configForm.svelte.js'

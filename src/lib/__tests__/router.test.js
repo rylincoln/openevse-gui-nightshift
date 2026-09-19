@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { get } from 'svelte/store'
-import { currentPath, navigate, redirect } from '../router.js'
+import { currentPath, navigate, redirect } from '../router'
 
 describe('hash router', () => {
   beforeEach(() => { window.history.replaceState(null, '', '#') })

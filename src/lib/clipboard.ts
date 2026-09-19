@@ -1,7 +1,7 @@
 // Copy text to the clipboard. The async Clipboard API only exists in secure
 // contexts, and the charger is normally reached over plain http, so fall back
 // to a hidden textarea + execCommand('copy') when it is missing.
-export async function copyText(text) {
+export async function copyText(text: string): Promise<boolean> {
   if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(text)

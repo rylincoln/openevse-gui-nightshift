@@ -3,7 +3,7 @@
   import { DateTime } from 'luxon'
   import { uistates_store } from '../stores/uistates'
   import { status_store } from '../stores/status'
-  import { JSONTryParse } from '../utils.js'
+  import { JSONTryParse } from '../utils'
 
   let socket
   let timerId

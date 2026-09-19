@@ -9,7 +9,7 @@ vi.mock('svelte-i18n', () => {
   }
   return { _: t }
 })
-vi.mock('../../../api/httpAPI.js', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../../api/httpAPI', () => ({ httpAPI: vi.fn() }))
 
 import { notification_store } from '../../../stores/notifications'
 import AdvisoryStrip from '../AdvisoryStrip.svelte'

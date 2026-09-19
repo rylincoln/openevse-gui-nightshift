@@ -7,7 +7,7 @@ vi.mock('svelte-i18n', () => {
   const isLoading = { subscribe: (fn) => { fn(false); return () => {} } }
   return { _: t, isLoading, register: vi.fn(), init: vi.fn(), getLocaleFromNavigator: () => 'en' }
 })
-vi.mock('../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.resolve('error')) }))
+vi.mock('../lib/api/httpAPI', () => ({ httpAPI: vi.fn(() => Promise.resolve('error')) }))
 
 import App from '../App.svelte'
 

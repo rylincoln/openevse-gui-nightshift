@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { loadSharingView } from '../loadsharing.js'
-import { EvseClients } from '../../vars.js'
+import { EvseClients } from '../../vars'
 
 const LS = EvseClients.loadsharing.id
 

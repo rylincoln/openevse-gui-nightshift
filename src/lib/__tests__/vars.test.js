@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { EvseClients } from '../vars.js'
+import { EvseClients } from '../vars'
 
 describe('EvseClients', () => {
   it('should have all expected client keys', () => {

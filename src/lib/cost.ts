@@ -4,13 +4,21 @@
 
 /**
  * Format an energy reading as a localised cost string.
- * @param {number} kWh Session energy in kilowatt-hours.
- * @param {number} rate Tariff per kWh in the user's currency.
- * @param {string} symbol Currency symbol — prefixed verbatim, no spacing.
- * @returns {string|null} `null` when rate/kWh aren't usable for a cost.
+ * @param kWh Session energy in kilowatt-hours.
+ * @param rate Tariff per kWh in the user's currency.
+ * @param symbol Currency symbol — prefixed verbatim, no spacing.
+ * @returns `null` when rate/kWh aren't usable for a cost.
  */
-export function formatCost(kWh, rate, symbol) {
-  if (!Number.isFinite(kWh) || !Number.isFinite(rate) || rate <= 0 || kWh < 0) {
+export function formatCost(
+  kWh: number | undefined,
+  rate: number | undefined,
+  symbol: string | undefined,
+): string | null {
+  if (
+    kWh === undefined || rate === undefined ||
+    !Number.isFinite(kWh) || !Number.isFinite(rate) ||
+    rate <= 0 || kWh < 0
+  ) {
     return null
   }
   const value = kWh * rate

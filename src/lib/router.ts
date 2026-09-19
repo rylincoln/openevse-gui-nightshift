@@ -1,6 +1,6 @@
 import { readable } from 'svelte/store'
 
-function readHash() {
+function readHash(): string {
   const h = window.location.hash.replace(/^#/, '')
   return h || '/'
 }
@@ -11,7 +11,7 @@ function readHash() {
 // so route changes made through it are structurally immune. redirect()
 // below has always worked this way via replaceState, which is why it was
 // never implicated.
-function pushHash(hash) {
+function pushHash(hash: string): void {
   if (window.location.hash !== hash) {
     window.history.pushState(null, '', hash)
   }
@@ -20,13 +20,14 @@ function pushHash(hash) {
   window.dispatchEvent(new Event('hashchange'))
 }
 
-document.addEventListener('click', (e) => {
+document.addEventListener('click', (e: MouseEvent) => {
   if (e.defaultPrevented || e.button !== 0) return
   if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
   const a = e.target instanceof Element ? e.target.closest('a[href^="#"]') : null
   if (!a) return
   e.preventDefault()
-  pushHash(a.getAttribute('href'))
+  const href = a.getAttribute('href')
+  if (href) pushHash(href)
 })
 
 export const currentPath = readable(readHash(), (set) => {
@@ -42,12 +43,12 @@ export const currentPath = readable(readHash(), (set) => {
   }
 })
 
-export function navigate(path) {
+export function navigate(path: string): void {
   pushHash('#' + path)
 }
 
 /** Like navigate, but without a history entry — Back skips the old URL. */
-export function redirect(path) {
+export function redirect(path: string): void {
   window.history.replaceState(null, '', '#' + path)
   // replaceState doesn't fire hashchange; currentPath listens for it.
   window.dispatchEvent(new Event('hashchange'))

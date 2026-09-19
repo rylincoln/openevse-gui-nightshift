@@ -8,9 +8,9 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t, locales: { subscribe: (fn) => { fn(['en']); return () => {} } } }
 })
-vi.mock('../../../lib/api/httpAPI.js', () => ({ httpAPI: vi.fn(() => Promise.resolve({ msg: 'done' })) }))
+vi.mock('../../../lib/api/httpAPI', () => ({ httpAPI: vi.fn(() => Promise.resolve({ msg: 'done' })) }))
 
-import { httpAPI } from '../../../lib/api/httpAPI.js'
+import { httpAPI } from '../../../lib/api/httpAPI'
 import { config_store } from '../../../lib/stores/config'
 import { certificate_store } from '../../../lib/stores/certificates'
 import { uistates_store } from '../../../lib/stores/uistates'

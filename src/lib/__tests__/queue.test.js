@@ -14,7 +14,7 @@ let SerialQueueModule
 
 beforeEach(async () => {
   vi.resetModules()
-  SerialQueueModule = await import('../queue.js')
+  SerialQueueModule = await import('../queue')
 })
 
 describe('SerialQueue', () => {

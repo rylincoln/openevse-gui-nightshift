@@ -1,3 +1,4 @@
+import type { Component } from 'svelte'
 import Dashboard from '../routes/Dashboard.svelte'
 import Schedule from '../routes/Schedule.svelte'
 import ChargeManager from '../routes/ChargeManager.svelte'
@@ -26,7 +27,7 @@ import Terminal from '../routes/settings/Terminal.svelte'
 import Display from '../routes/settings/Display.svelte'
 import About from '../routes/settings/About.svelte'
 
-export const routes = {
+export const routes: Record<string, Component> = {
   '/': Dashboard,
   '/schedule': ChargeManager,
   '/schedule/legacy': Schedule,
@@ -76,7 +77,7 @@ routes['/settings/about'] = About
 // and already-open tabs land on the right page after a firmware update
 // instead of a 404. Two pages were renamed; the rest moved
 // /configuration/* -> /settings/*.
-export const LEGACY_ROUTES = {
+export const LEGACY_ROUTES: Record<string, string> = {
   '/configuration': '/settings',
   '/configuration/selfproduction': '/settings/solar',
   '/configuration/dev': '/settings/terminal',

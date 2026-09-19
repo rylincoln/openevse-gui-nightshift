@@ -36,7 +36,7 @@ afterEach(() => {
 
 describe('nativeHost', () => {
   it('reports not-embedded and stays silent in a plain browser', async () => {
-    const mod = await import('../nativeHost.js')
+    const mod = await import('../nativeHost')
     expect(get(mod.host)).toEqual({ embedded: false, hasDrawer: false })
     // Nothing to post, and openDrawer must not throw without a bridge.
     expect(() => mod.announce()).not.toThrow()
@@ -46,7 +46,7 @@ describe('nativeHost', () => {
   it('announces once (idempotent) and opens the drawer when embedded with a drawer', async () => {
     const postMessage = vi.fn()
     setBridge({ host: { version: 1, drawer: true }, rn: { postMessage } })
-    const mod = await import('../nativeHost.js')
+    const mod = await import('../nativeHost')
 
     expect(get(mod.host)).toEqual({ embedded: true, hasDrawer: true })
 
@@ -62,7 +62,7 @@ describe('nativeHost', () => {
   it('announces drawerButton:false when embedded without a drawer', async () => {
     const postMessage = vi.fn()
     setBridge({ host: { version: 1, drawer: false }, rn: { postMessage } })
-    const mod = await import('../nativeHost.js')
+    const mod = await import('../nativeHost')
 
     expect(get(mod.host)).toEqual({ embedded: true, hasDrawer: false })
     mod.announce()
@@ -74,7 +74,7 @@ describe('nativeHost', () => {
       throw new Error('bridge went away')
     })
     setBridge({ host: { drawer: true }, rn: { postMessage } })
-    const mod = await import('../nativeHost.js')
+    const mod = await import('../nativeHost')
 
     expect(() => mod.announce()).not.toThrow()
     expect(() => mod.openDrawer()).not.toThrow()
@@ -85,7 +85,7 @@ describe('nativeHost', () => {
     // Deliberately NO subscriber here: the listener must be wired at module
     // scope, not inside a store's start fn. If someone regresses it back into
     // a readable's start, the dispatch below is unheard and this test fails.
-    const mod = await import('../nativeHost.js')
+    const mod = await import('../nativeHost')
     expect(get(mod.host)).toEqual({ embedded: false, hasDrawer: false })
 
     // App arrives: sets globals at document end and fires the event.

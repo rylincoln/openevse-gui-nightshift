@@ -3,7 +3,7 @@
   import Card from '../ui/Card.svelte'
   import IconButton from '../ui/IconButton.svelte'
   import Icon from '../../icons/Icon.svelte'
-  import { displayTime } from '../../utils.js'
+  import { displayTime } from '../../utils'
   import { formatDayChips } from '../../schedule/timers.js'
 
   let { timer, removing = false, disabled = false, onedit = () => {}, ondelete = () => {} } = $props()
