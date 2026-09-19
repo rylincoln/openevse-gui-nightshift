@@ -2,7 +2,7 @@
 <script>
   import { _ } from 'svelte-i18n'
   import { currentPath } from '../../router'
-  import { SETTINGS_PAGES } from '../../config/pages.js'
+  import { SETTINGS_PAGES } from '../../config/pages'
   import ConfigPage from './ConfigPage.svelte'
 
   let page = $derived(SETTINGS_PAGES.find((p) => p.route === $currentPath))

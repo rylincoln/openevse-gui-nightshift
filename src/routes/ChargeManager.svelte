@@ -15,7 +15,7 @@
   import { DAYS } from '../lib/schedule/timers.js'
   import { timersToRules, rulesToTimers, ruleDeleteIds, actionToFeatureKey } from '../lib/charge_manager/rules.js'
   import { vehicleLimitAvailability } from '../lib/charge_manager/vehicle.js'
-  import { allRequiredSafetyChecksOn } from '../lib/config/safety.js'
+  import { allRequiredSafetyChecksOn } from '../lib/config/safety'
   import GlobalSection from '../lib/components/charge_manager/GlobalSection.svelte'
   import ConditionalSection from '../lib/components/charge_manager/ConditionalSection.svelte'
   import GlobalFeaturePicker from '../lib/components/charge_manager/GlobalFeaturePicker.svelte'

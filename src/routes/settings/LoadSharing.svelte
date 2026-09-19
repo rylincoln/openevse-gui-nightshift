@@ -6,7 +6,7 @@
   import { status_store } from '../../lib/stores/status'
   import { uisettings_store } from '../../lib/stores/uisettings'
   import { redirect } from '../../lib/router'
-  import { createConfigForm } from '../../lib/config/configForm.svelte.js'
+  import { createConfigForm } from '../../lib/config/configForm.svelte'
   import { EvseClients } from '../../lib/vars'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'

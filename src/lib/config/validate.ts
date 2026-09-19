@@ -1,25 +1,30 @@
-// src/lib/config/validate.js
+// src/lib/config/validate.ts
 // Pure field validators. Each returns { ok, msgKey } — msgKey is an i18n key
 // or null when ok. Reused by config pages for inline validation hints.
 
-export function isRequired(v) {
+export interface ValidationResult {
+  ok: boolean
+  msgKey: string | null
+}
+
+export function isRequired(v: unknown): ValidationResult {
   const ok = v !== undefined && v !== null && String(v).trim() !== ''
   return { ok, msgKey: ok ? null : 'config.validation.required' }
 }
 
-export function inRange(v, min, max) {
+export function inRange(v: unknown, min: number, max: number): ValidationResult {
   const n = Number(v)
   const ok = Number.isFinite(n) && n >= min && n <= max
   return { ok, msgKey: ok ? null : 'config.validation.range' }
 }
 
-export function isPort(v) {
+export function isPort(v: unknown): ValidationResult {
   const n = Number(v)
   const ok = Number.isInteger(n) && n >= 1 && n <= 65535
   return { ok, msgKey: ok ? null : 'config.validation.port' }
 }
 
-export function isHostname(v) {
+export function isHostname(v: unknown): ValidationResult {
   const ok =
     typeof v === 'string' && v.length > 0 && v.length <= 253 && /^[a-zA-Z0-9.-]+$/.test(v)
   return { ok, msgKey: ok ? null : 'config.validation.hostname' }
@@ -27,6 +32,6 @@ export function isHostname(v) {
 
 // The device reports a saved password back as a masking sentinel, never the
 // real value. A field still holding a sentinel must not be re-saved.
-export function isDummyPassword(v) {
+export function isDummyPassword(v: unknown): boolean {
   return v === '_DUMMY_PASSWORD' || v === '••••••••••'
 }

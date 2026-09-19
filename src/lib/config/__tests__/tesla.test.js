@@ -1,6 +1,6 @@
 // src/lib/config/__tests__/tesla.test.js
 import { describe, it, expect } from 'vitest'
-import { hasTeslaCredentials } from '../tesla.js'
+import { hasTeslaCredentials } from '../tesla'
 
 describe('hasTeslaCredentials', () => {
   const full = {

@@ -3,9 +3,9 @@
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { cabletemp_store } from '../../lib/stores/cabletemp'
-  import { createConfigForm } from '../../lib/config/configForm.svelte.js'
-  import { createCableTempForm } from '../../lib/config/cableTempForm.svelte.js'
-  import { allRequiredSafetyChecksOn } from '../../lib/config/safety.js'
+  import { createConfigForm } from '../../lib/config/configForm.svelte'
+  import { createCableTempForm } from '../../lib/config/cableTempForm.svelte'
+  import { allRequiredSafetyChecksOn } from '../../lib/config/safety'
   import {
     CABLE_TEMP_PIN_PP, CABLE_TEMP_PIN_PP2,
     cableTempSourceOnPin, cableTempSourceOptions, cableTempStatusKey,

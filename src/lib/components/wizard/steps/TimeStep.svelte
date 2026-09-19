@@ -9,7 +9,7 @@
 <script>
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../../stores/config'
-  import { createConfigForm } from '../../../config/configForm.svelte.js'
+  import { createConfigForm } from '../../../config/configForm.svelte'
   import { createTzObj } from '../../../utils'
   import zones from '../../../config/zones.json'
   import FormField from '../../config/FormField.svelte'

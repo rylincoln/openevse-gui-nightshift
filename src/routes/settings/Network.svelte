@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
-  import { createConfigForm } from '../../lib/config/configForm.svelte.js'
+  import { createConfigForm } from '../../lib/config/configForm.svelte'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
   import FormField from '../../lib/components/config/FormField.svelte'
@@ -13,7 +13,7 @@
   import { serialQueue } from '../../lib/queue'
   import { httpAPI } from '../../lib/api/httpAPI'
   import { showWriteError } from '../../lib/alerts'
-  import { normalizeNetworks, signalIcon, signalPercent, isSecured } from '../../lib/config/wifi.js'
+  import { normalizeNetworks, signalIcon, signalPercent, isSecured } from '../../lib/config/wifi'
   import Icon from '../../lib/icons/Icon.svelte'
   import Button from '../../lib/components/ui/Button.svelte'
 

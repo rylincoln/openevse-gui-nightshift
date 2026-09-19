@@ -13,7 +13,7 @@ vi.mock('../../api/httpAPI', () => ({ httpAPI: vi.fn() }))
 import { httpAPI } from '../../api/httpAPI'
 import { config_store } from '../../stores/config'
 import { uistates_store } from '../../stores/uistates'
-import { createConfigForm } from '../configForm.svelte.js'
+import { createConfigForm } from '../configForm.svelte'
 
 describe('createConfigForm', () => {
   beforeEach(() => {

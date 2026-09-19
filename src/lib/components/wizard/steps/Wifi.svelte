@@ -17,7 +17,7 @@
   import { serialQueue } from '../../../queue'
   import { httpAPI } from '../../../api/httpAPI'
   import { showWriteError } from '../../../alerts'
-  import { normalizeNetworks, signalIcon, isSecured } from '../../../config/wifi.js'
+  import { normalizeNetworks, signalIcon, isSecured } from '../../../config/wifi'
   import Icon from '../../../icons/Icon.svelte'
   import Button from '../../ui/Button.svelte'
 

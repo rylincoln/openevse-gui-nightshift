@@ -3,7 +3,7 @@
   import { DateTime } from 'luxon'
   import { uistates_store } from '../../stores/uistates'
   import { status_store } from '../../stores/status'
-  import { signalPercent } from '../../config/wifi.js'
+  import { signalPercent } from '../../config/wifi'
   import Modal from '../ui/Modal.svelte'
   import Button from '../ui/Button.svelte'
 

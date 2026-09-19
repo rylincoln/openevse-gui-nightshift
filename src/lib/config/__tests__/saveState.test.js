@@ -1,7 +1,7 @@
 // src/lib/config/__tests__/saveState.test.js
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { get } from 'svelte/store'
-import { createSaveState, SAVED_LINGER_MS } from '../saveState.js'
+import { createSaveState, SAVED_LINGER_MS } from '../saveState'
 
 describe('createSaveState', () => {
   beforeEach(() => vi.useFakeTimers())

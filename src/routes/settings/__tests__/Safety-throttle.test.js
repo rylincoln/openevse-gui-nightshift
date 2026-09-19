@@ -16,7 +16,7 @@ const { config, status, saveField } = vi.hoisted(() => {
 
 vi.mock('../../../lib/stores/config', () => ({ config_store: config }))
 vi.mock('../../../lib/stores/status', () => ({ status_store: status }))
-vi.mock('../../../lib/config/configForm.svelte.js', () => ({
+vi.mock('../../../lib/config/configForm.svelte', () => ({
   createConfigForm: () => ({ saveField, saveFields: vi.fn(), saveState: {}, revert: 0 }),
 }))
 

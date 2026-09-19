@@ -1,5 +1,5 @@
-// src/lib/config/cableTempForm.svelte.js
-// Write orchestration for /cabletemp, parallel to configForm.svelte.js but
+// src/lib/config/cableTempForm.svelte.ts
+// Write orchestration for /cabletemp, parallel to configForm.svelte but
 // not built on it: /cabletemp is its own endpoint, not a config_store field,
 // and reassigning a physical input's source is a two-step read-modify-write
 // (unassign whatever source was on that pin, then assign the new one) rather
@@ -7,14 +7,30 @@
 import { cabletemp_store } from '../stores/cabletemp'
 import { serialQueue } from '../queue'
 import { showWriteError } from '../alerts'
-import { createSaveState } from './saveState.js'
+import { createSaveState, type SaveStateStore } from './saveState'
 import { cableTempSourceOnPin, CABLE_TEMP_PIN_NONE } from '../cabletemp'
+import type { CableTemp, CableTempSource } from '../api/device'
 
-export function createCableTempForm() {
+type CalibrationField = 'r25' | 'beta' | 'offset_c10' | 'panic_c10'
+
+export interface CableTempForm {
+  saveState: SaveStateStore
+  readonly busy: boolean
+  refresh(): Promise<boolean>
+  setPin(cabletemp: CableTemp | undefined, pin: number, newSource: number | null): Promise<boolean>
+  saveField(
+    source: number,
+    current: CableTempSource,
+    field: CalibrationField,
+    value: number,
+  ): Promise<boolean>
+}
+
+export function createCableTempForm(): CableTempForm {
   const saveState = createSaveState()
   let busy = $state(false)
 
-  async function refresh() {
+  async function refresh(): Promise<boolean> {
     return serialQueue.add(() => cabletemp_store.download())
   }
 
@@ -22,7 +38,11 @@ export function createCableTempForm() {
    * Reassign (or clear, with newSource = null) the source wired to one
    * physical pin. A no-op if that pin already reports the requested source.
    */
-  async function setPin(cabletemp, pin, newSource) {
+  async function setPin(
+    cabletemp: CableTemp | undefined,
+    pin: number,
+    newSource: number | null,
+  ): Promise<boolean> {
     const name = `pin${pin}`
     const current = cableTempSourceOnPin(cabletemp, pin)?.source ?? null
     if (current === newSource) return true
@@ -59,7 +79,12 @@ export function createCableTempForm() {
    * unchanged (the endpoint requires all four calibration fields together)
    * and leaving its pin assignment alone.
    */
-  async function saveField(source, current, field, value) {
+  async function saveField(
+    source: number,
+    current: CableTempSource,
+    field: CalibrationField,
+    value: number,
+  ): Promise<boolean> {
     const name = `source${source}_${field}`
     saveState.begin(name)
     busy = true
