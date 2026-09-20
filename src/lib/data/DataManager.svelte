@@ -272,10 +272,11 @@
     $uistates_store.divert_update = val
     clearInterval(counter_divert_update)
     counter_divert_update = setInterval(() => {
-      // val (and so the running total) is undefined on firmware without
-      // solar/divert mode; ?? 0 keeps the interval counting instead of
-      // latching onto NaN — this field is never read back by the app.
-      $uistates_store.divert_update = ($uistates_store.divert_update ?? 0) + 1
+      // Number(undefined) + 1 === NaN, Number(n) + 1 === n + 1 — reproduces
+      // the original `$uistates_store.divert_update++` exactly (undefined
+      // on firmware without solar/divert mode) rather than substituting a
+      // different seed value.
+      $uistates_store.divert_update = Number($uistates_store.divert_update) + 1
     }, 1000);
   }
 
@@ -283,9 +284,8 @@
     $uistates_store.vehicle_state_update = val
     clearInterval(counter_vehicle_update)
     counter_vehicle_update = setInterval(() => {
-      // See countDivertUpdate: undefined on firmware without vehicle-data
-      // integration; never read back by the app.
-      $uistates_store.vehicle_state_update = ($uistates_store.vehicle_state_update ?? 0) + 1
+      // See countDivertUpdate: reproduces `x++` exactly via Number().
+      $uistates_store.vehicle_state_update = Number($uistates_store.vehicle_state_update) + 1
     }, 1000);
   }
 
@@ -293,9 +293,8 @@
     $uistates_store.rfid_waiting = val
     clearInterval(counter_rfid_scan)
     counter_rfid_scan = setInterval(() => {
-      // See countDivertUpdate: undefined without an RFID reader; Rfid.svelte
-      // already reads this store field with `?? 0`.
-      $uistates_store.rfid_waiting = ($uistates_store.rfid_waiting ?? 0) - 1
+      // See countDivertUpdate: reproduces `x--` exactly via Number().
+      $uistates_store.rfid_waiting = Number($uistates_store.rfid_waiting) - 1
       if ($uistates_store.rfid_waiting == 0) {
         clearInterval(counter_rfid_scan)
       }
@@ -307,9 +306,10 @@
     clearInterval(counter_elapsed)
     if (charging) {
       counter_elapsed = setInterval(() => {
-        // val is undefined only before status_store's first download (see
-        // refreshDateTime); never read back by the app.
-        $uistates_store.elapsed = ($uistates_store.elapsed ?? 0) + 1
+        // See countDivertUpdate: reproduces `x++` exactly via Number() (dead
+        // in practice — val is undefined only before status_store's first
+        // download, and DataManager never mounts that early).
+        $uistates_store.elapsed = Number($uistates_store.elapsed) + 1
       }, 1000);
     }
   }
@@ -342,7 +342,7 @@
   }
 
   function setErrorState(evseState: number | undefined): void {
-    if ((evseState ?? 0) >= 4 && (evseState ?? 0) <= 11) {
+    if (evseState !== undefined && evseState >= 4 && evseState <= 11) {
       // error state
       $uistates_store.error = true
     }
