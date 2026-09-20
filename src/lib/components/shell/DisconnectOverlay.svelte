@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { DateTime } from 'luxon'
   import { uistates_store } from '../../stores/uistates'
@@ -25,8 +25,8 @@
   let escalated = $state(false)
   let now = $state(DateTime.now().toUnixInteger())
 
-  let graceTimer
-  let ticker
+  let graceTimer: ReturnType<typeof setTimeout> | undefined
+  let ticker: ReturnType<typeof setInterval> | undefined
 
   // Escalate to / retract from the blocking modal as the connection state
   // changes. Cleared on teardown so a disconnected unmount leaves no timer.
@@ -56,7 +56,7 @@
     return () => clearInterval(ticker)
   })
 
-  function formatAgo(seconds) {
+  function formatAgo(seconds: number): string {
     const s = Math.max(0, seconds)
     if (s < 60) return `${s}s`
     const m = Math.floor(s / 60)
@@ -71,7 +71,7 @@
     if (!Number.isFinite(srssi)) return null
     return `${signalPercent(srssi)}% (${srssi} dBm)`
   })
-  let signalWeak = $derived(Number.isFinite(srssi) && srssi <= WEAK_RSSI)
+  let signalWeak = $derived(typeof srssi === 'number' && Number.isFinite(srssi) && srssi <= WEAK_RSSI)
 
   // Address the socket is retrying — surfaced so an IP change (the device
   // rejoining WiFi on a new DHCP lease) is diagnosable from the dialog.
@@ -90,13 +90,13 @@
     dbg.close_code != null ? `${dbg.close_code}${dbg.close_reason ? ` (${dbg.close_reason})` : ''}` : '—',
   )
 
-  function retryNow() {
+  function retryNow(): void {
     // Bump the nonce WebSocket.svelte watches; it forces an immediate
     // teardown+reconnect, skipping the up-to-30s backoff.
     $uistates_store.ws_retry_request = ($uistates_store.ws_retry_request ?? 0) + 1
   }
 
-  function reloadPage() {
+  function reloadPage(): void {
     if (typeof window !== 'undefined') window.location.reload()
   }
 
@@ -107,7 +107,7 @@
   // so no CORS; /api prefix only in the dev proxy.
   let probing = $state(false)
   let probeResult = $state('')
-  async function testConnection() {
+  async function testConnection(): Promise<void> {
     if (probing) return
     probing = true
     probeResult = ''

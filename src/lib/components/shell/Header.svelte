@@ -1,11 +1,17 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import ChargePointMark from '../../../assets/ChargePointMark.svelte'
   import IconButton from '../ui/IconButton.svelte'
   import NotificationBell from '../notifications/NotificationBell.svelte'
   import { theme } from '../../stores/theme'
   import { host, openDrawer } from '../../nativeHost'
-  let { deviceName = 'OpenEVSE', wsConnected = true, evseConnected = true } = $props()
+
+  interface Props {
+    deviceName?: string
+    wsConnected?: boolean
+    evseConnected?: boolean
+  }
+  let { deviceName = 'OpenEVSE', wsConnected = true, evseConnected = true }: Props = $props()
   let connected = $derived(wsConnected && evseConnected)
   let statusKey = $derived(
     !wsConnected

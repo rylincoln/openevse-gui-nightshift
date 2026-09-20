@@ -1,13 +1,17 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
+  import type { ComponentProps } from 'svelte'
   import { config_store } from '../../stores/config'
   import UplotChart from './UplotChart.svelte'
   import { readChartTheme } from './chartTheme'
   import { socOrNull } from '../../dashboard/sessionChart'
   import { cToF } from '../../temperature'
+  import type { EnergySample } from '../../api/device'
 
-  /** @type {{ samples: Array<{ts:number,a:number,t:number,e:number,s:number}> }} */
-  let { samples = [] } = $props()
+  interface Props {
+    samples?: EnergySample[]
+  }
+  let { samples = [] }: Props = $props()
 
   // Samples always arrive in °C; the plotted series, its scale bounds and its
   // legend label all have to move together when the user prefers Fahrenheit.
@@ -36,17 +40,17 @@
     return () => mq.removeEventListener?.('change', sync)
   })
 
-  let data = $derived.by(() => {
+  let data: ComponentProps<typeof UplotChart>['data'] = $derived.by(() => {
     const x = samples.map((s) => s.ts)
     const a = samples.map((s) => s.a)
     // `> 0` is the no-reading sentinel and is tested against the raw °C value,
     // before any conversion -- in °F the same reading is a positive number.
     const t = samples.map((s) => (s.t > 0 ? (isF ? cToF(s.t) : s.t) : null))
-    const base = [x, a, t]
+    const base: [number[], number[], (number | null)[]] = [x, a, t]
     return hasSoc ? [...base, samples.map(socOrNull)] : base
   })
 
-  let opts = $derived.by(() => {
+  let opts: ComponentProps<typeof UplotChart>['opts'] = $derived.by(() => {
     const theme = readChartTheme()
     // Headroom that survives broken config: never below 40 A, always above the
     // highest observed sample. max_current_hard reports 0 on some firmware

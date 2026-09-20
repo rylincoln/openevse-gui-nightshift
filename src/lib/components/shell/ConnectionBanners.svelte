@@ -1,6 +1,12 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
-  let { wsConnected = true, evseConnected = true, error = false } = $props()
+
+  interface Props {
+    wsConnected?: boolean
+    evseConnected?: boolean
+    error?: boolean
+  }
+  let { wsConnected = true, evseConnected = true, error = false }: Props = $props()
 </script>
 
 {#if !wsConnected}

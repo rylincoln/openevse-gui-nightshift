@@ -1,10 +1,20 @@
 <!-- src/lib/components/config/RfidUserModal.svelte -->
-<script>
+<script lang="ts">
   import { untrack } from 'svelte'
   import { _ } from 'svelte-i18n'
   import Modal from '../ui/Modal.svelte'
   import Button from '../ui/Button.svelte'
 
+  interface Props {
+    open?: boolean
+    uid?: string
+    initialName?: string
+    canRemove?: boolean
+    busy?: boolean
+    onclose?: () => void
+    onsave?: (name: string) => void
+    onremove?: () => void
+  }
   let {
     open = false,
     uid = '',
@@ -12,9 +22,9 @@
     canRemove = false,
     busy = false,
     onclose = () => {},
-    onsave = (_name) => {},
+    onsave = (_name: string) => {},
     onremove = () => {},
-  } = $props()
+  }: Props = $props()
 
   let name = $state(untrack(() => initialName))
 

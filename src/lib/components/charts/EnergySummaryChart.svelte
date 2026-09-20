@@ -1,25 +1,32 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import uPlot from 'uplot'
+  import type { ComponentProps } from 'svelte'
   import UplotChart from './UplotChart.svelte'
   import { readChartTheme } from './chartTheme'
 
-  /**
-   * @typedef {Object} Row
-   * @property {string} label  X-axis label (e.g. "2026-05-24", "May", "2025")
-   * @property {number} kwh    Energy total for the bucket
-   */
-  /** @type {{ rows: Row[] }} */
-  let { rows = [] } = $props()
+  // The daily/monthly/annual summary rows all reduce to this shape before
+  // reaching the chart — see EnergyTab.svelte's `summaryRows`, which is built
+  // from `EnergyDaily`/`EnergyMonthly`/`EnergyAnnual` (device.ts).
+  interface Row {
+    /** X-axis label (e.g. "2026-05-24", "May", "2025") */
+    label: string
+    /** Energy total for the bucket */
+    kwh: number
+  }
+  interface Props {
+    rows?: Row[]
+  }
+  let { rows = [] }: Props = $props()
 
-  let data = $derived.by(() => {
+  let data: ComponentProps<typeof UplotChart>['data'] = $derived.by(() => {
     // Use ordinal x positions (0..n-1) and emit string labels via splits/values.
     const xs = rows.map((_r, i) => i)
     const ys = rows.map((r) => r.kwh)
     return [xs, ys]
   })
 
-  let opts = $derived.by(() => {
+  let opts: ComponentProps<typeof UplotChart>['opts'] = $derived.by(() => {
     const theme = readChartTheme()
     return {
       legend: { show: false },
@@ -58,7 +65,7 @@
           stroke: theme.accent,
           fill: theme.accent + '55',
           width: 1,
-          paths: uPlot.paths.bars({ size: [0.65, 60] }),
+          paths: uPlot.paths.bars?.({ size: [0.65, 60] }),
           points: { show: false },
         },
       ],

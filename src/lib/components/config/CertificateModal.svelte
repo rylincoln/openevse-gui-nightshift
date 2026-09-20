@@ -1,11 +1,27 @@
 <!-- src/lib/components/config/CertificateModal.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Modal from '../ui/Modal.svelte'
   import Select from '../ui/Select.svelte'
   import Button from '../ui/Button.svelte'
 
-  let { open = false, busy = false, onclose = () => {}, onsubmit = () => {} } = $props()
+  // The write payload for a new certificate: `certificate_store.upload` takes
+  // `Partial<Certificate>` (device.ts), which has no `key` field — a client
+  // cert's private key is only ever sent, never read back from GET /certificates.
+  interface CertificatePayload {
+    type: string
+    name: string
+    certificate: string
+    key?: string
+  }
+
+  interface Props {
+    open?: boolean
+    busy?: boolean
+    onclose?: () => void
+    onsubmit?: (cert: CertificatePayload) => void
+  }
+  let { open = false, busy = false, onclose = () => {}, onsubmit = () => {} }: Props = $props()
 
   let type = $state('root')
   let name = $state('')
@@ -22,8 +38,8 @@
     (type !== 'client' || privateKey.trim() !== ''),
   )
 
-  function submit() {
-    const cert = { type, name, certificate }
+  function submit(): void {
+    const cert: CertificatePayload = { type, name, certificate }
     if (type === 'client') cert.key = privateKey
     onsubmit(cert)
   }

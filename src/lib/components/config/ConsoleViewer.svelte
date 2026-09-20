@@ -1,42 +1,45 @@
 <!-- src/lib/components/config/ConsoleViewer.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { tick } from 'svelte'
   import { httpAPI } from '../../api/httpAPI'
   import { copyText } from '../../clipboard'
 
-  let { mode = 'debug' } = $props()
+  interface Props {
+    mode?: 'debug' | 'evse'
+  }
+  let { mode = 'debug' }: Props = $props()
 
   // The device's console WS streams output one character at a time. Rendering
   // each message as its own <div> put every character on its own line, so we
   // keep a single appended text buffer and let <pre> respect the embedded
   // newlines from the stream itself.
   let text = $state('')
-  let connectionState = $state('connecting')
-  let socket
-  let containerEl
+  let connectionState = $state<'connecting' | 'connected' | 'failed'>('connecting')
+  let socket: WebSocket | undefined
+  let containerEl: HTMLElement | undefined
 
   // Cap the buffer so a long-running console doesn't grow unbounded. Trims to
   // the last ~80k chars on overflow — that's ~1000 typical log lines.
   const MAX_CHARS = 100_000
   const KEEP_CHARS = 80_000
 
-  function normalize(chunk) {
+  function normalize(chunk: unknown): string {
     return String(chunk).replace(/\r\n|\r/g, '\n')
   }
 
-  function append(chunk, prepend = false) {
+  function append(chunk: unknown, prepend = false): void {
     let next = prepend ? normalize(chunk) + text : text + normalize(chunk)
     if (next.length > MAX_CHARS) next = next.slice(-KEEP_CHARS)
     text = next
   }
 
-  async function loadHistory(consoleMode) {
+  async function loadHistory(consoleMode: 'debug' | 'evse'): Promise<void> {
     const history = await httpAPI('GET', `/${consoleMode}`, null, 'text')
     if (history !== 'error' && history) append(history, true)
   }
 
-  async function connect(consoleMode, isCancelled) {
+  async function connect(consoleMode: 'debug' | 'evse', isCancelled: () => boolean): Promise<void> {
     connectionState = 'connecting'
 
     // StreamSpy exposes its buffered output through /debug and /evse. Fetch
@@ -81,7 +84,7 @@
   })
 
   let copied = $state(false)
-  async function copy() {
+  async function copy(): Promise<void> {
     if (!text) return
     if (await copyText(text)) {
       copied = true

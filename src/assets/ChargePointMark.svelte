@@ -37,8 +37,13 @@
   names the product, so labelling the mark too made screen readers announce it
   twice. Pass `label` for a standalone use where nothing else names it.
 -->
-<script>
-  let { size = 32, class: klass = '', label = '' } = $props()
+<script lang="ts">
+  interface Props {
+    size?: number
+    class?: string
+    label?: string
+  }
+  let { size = 32, class: klass = '', label = '' }: Props = $props()
 </script>
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"

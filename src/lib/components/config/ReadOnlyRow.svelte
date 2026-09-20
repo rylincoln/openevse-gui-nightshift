@@ -1,8 +1,14 @@
 <!-- src/lib/components/config/ReadOnlyRow.svelte -->
-<script>
-  let { label = '', value = '', tone = 'default', detail = '' } = $props()
+<script lang="ts">
+  interface Props {
+    label?: string
+    value?: string | number | null
+    tone?: 'default' | 'ok' | 'warn' | 'error'
+    detail?: string
+  }
+  let { label = '', value = '', tone = 'default', detail = '' }: Props = $props()
 
-  const tones = {
+  const tones: Record<'default' | 'ok' | 'warn' | 'error', string> = {
     default: 'text-text',
     ok: 'text-accent',
     warn: 'text-warning',
