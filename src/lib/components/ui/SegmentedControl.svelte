@@ -1,7 +1,18 @@
-<script>
-  let { options = [], value, onchange = () => {}, disabled = false } = $props()
+<script lang="ts">
+  interface SegmentedOption {
+    value: string | number
+    label: string
+    disabled?: boolean
+  }
+  interface Props {
+    options?: SegmentedOption[]
+    value: string | number
+    onchange?: (value: string | number) => void
+    disabled?: boolean
+  }
+  let { options = [], value, onchange = () => {}, disabled = false }: Props = $props()
 
-  function pick(opt) {
+  function pick(opt: SegmentedOption): void {
     if (disabled || opt.disabled || opt.value === value) return
     onchange(opt.value)
   }

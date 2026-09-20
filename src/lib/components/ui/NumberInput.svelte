@@ -1,7 +1,17 @@
 <!-- src/lib/components/ui/NumberInput.svelte -->
-<script>
+<script lang="ts">
   import { untrack } from 'svelte'
 
+  interface Props {
+    value?: number | null
+    min?: number
+    max?: number
+    step?: number
+    placeholder?: string
+    disabled?: boolean
+    revert?: number
+    onchange?: (value: number | null) => void
+  }
   let {
     value = null,
     min = undefined,
@@ -11,9 +21,9 @@
     disabled = false,
     revert = 0,
     onchange = () => {},
-  } = $props()
+  }: Props = $props()
 
-  let draft = $state(untrack(() => value ?? ''))
+  let draft = $state<number | string>(untrack(() => value ?? ''))
   let focused = $state(false)
 
   $effect(() => {
@@ -21,7 +31,7 @@
     if (!focused) draft = value ?? ''
   })
 
-  function emit() {
+  function emit(): void {
     focused = false
     const next = draft === '' ? null : Number(draft)
     if (next !== value) onchange(next)

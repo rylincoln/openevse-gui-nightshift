@@ -1,5 +1,11 @@
-<script>
-  let { checked = false, disabled = false, label = '', onchange = () => {} } = $props()
+<script lang="ts">
+  interface Props {
+    checked?: boolean
+    disabled?: boolean
+    label?: string
+    onchange?: (checked: boolean) => void
+  }
+  let { checked = false, disabled = false, label = '', onchange = () => {} }: Props = $props()
 </script>
 
 <button

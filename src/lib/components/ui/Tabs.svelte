@@ -1,8 +1,18 @@
-<script>
-  // `variant` — 'primary' (default) is the pill-style row used at page level;
-  // 'subtle' is an underlined row meant to read as a sub-navigation under a
-  // primary tab. The two are visually distinct at a glance.
-  let { tabs = [], active = 0, variant = 'primary', onchange = () => {} } = $props()
+<script lang="ts">
+  interface TabItem {
+    label: string
+    alert?: boolean
+  }
+  interface Props {
+    tabs?: TabItem[]
+    active?: number
+    // 'primary' (default) is the pill-style row used at page level;
+    // 'subtle' is an underlined row meant to read as a sub-navigation under a
+    // primary tab. The two are visually distinct at a glance.
+    variant?: 'primary' | 'subtle'
+    onchange?: (index: number) => void
+  }
+  let { tabs = [], active = 0, variant = 'primary', onchange = () => {} }: Props = $props()
 </script>
 
 {#if variant === 'subtle'}

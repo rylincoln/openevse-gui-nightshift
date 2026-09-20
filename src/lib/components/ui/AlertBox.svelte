@@ -1,6 +1,17 @@
-<script>
+<script lang="ts">
   import Modal from './Modal.svelte'
   import Button from './Button.svelte'
+
+  interface Props {
+    visible?: boolean
+    title?: string
+    body?: string
+    button?: boolean
+    label?: string
+    closable?: boolean
+    action?: () => void
+    onclose?: () => void
+  }
   let {
     visible = false,
     title = '',
@@ -10,7 +21,7 @@
     closable = true,
     action = () => {},
     onclose = () => {},
-  } = $props()
+  }: Props = $props()
 </script>
 
 <Modal {visible} {closable} {onclose}>

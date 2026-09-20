@@ -1,7 +1,15 @@
-<script>
-  let { open = false, align = 'left', onclose = () => {}, children } = $props()
+<script lang="ts">
+  import type { Snippet } from 'svelte'
 
-  function onKey(e) {
+  interface Props {
+    open?: boolean
+    align?: 'left' | 'right'
+    onclose?: () => void
+    children?: Snippet
+  }
+  let { open = false, align = 'left', onclose = () => {}, children }: Props = $props()
+
+  function onKey(e: KeyboardEvent): void {
     if (open && e.key === 'Escape') onclose()
   }
 </script>

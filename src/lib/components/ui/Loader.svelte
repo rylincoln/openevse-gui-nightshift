@@ -1,7 +1,11 @@
-<script>
+<script lang="ts">
   import ChargePointMark from '../../../assets/ChargePointMark.svelte'
   import ProgressBar from './ProgressBar.svelte'
-  let { progress = 0 } = $props()
+
+  interface Props {
+    progress?: number
+  }
+  let { progress = 0 }: Props = $props()
 </script>
 
 <div class="fixed inset-0 z-50 grid place-items-center bg-surface">

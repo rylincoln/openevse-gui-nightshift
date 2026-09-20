@@ -1,7 +1,15 @@
 <!-- src/lib/components/ui/TextInput.svelte -->
-<script>
+<script lang="ts">
   import { untrack } from 'svelte'
 
+  interface Props {
+    value?: string
+    placeholder?: string
+    disabled?: boolean
+    maxlength?: number
+    revert?: number
+    onchange?: (value: string) => void
+  }
   let {
     value = '',
     placeholder = '',
@@ -9,7 +17,7 @@
     maxlength = undefined,
     revert = 0,
     onchange = () => {},
-  } = $props()
+  }: Props = $props()
 
   let draft = $state(untrack(() => value))
   let focused = $state(false)
@@ -21,7 +29,7 @@
     if (!focused) draft = value
   })
 
-  function blur() {
+  function blur(): void {
     focused = false
     if (draft !== value) onchange(draft)
   }

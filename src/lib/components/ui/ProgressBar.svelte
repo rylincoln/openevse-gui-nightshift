@@ -1,5 +1,8 @@
-<script>
-  let { value = 0 } = $props()
+<script lang="ts">
+  interface Props {
+    value?: number
+  }
+  let { value = 0 }: Props = $props()
   let clamped = $derived(Math.max(0, Math.min(100, value)))
 </script>
 
