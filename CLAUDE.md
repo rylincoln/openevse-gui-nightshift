@@ -17,7 +17,8 @@ and pnpm's own settings (`allowBuilds`, `overrides`) live in
 ```bash
 pnpm test src/lib/__tests__/queue.test.js        # one file (any path substring works)
 pnpm test src/lib/config -t "inclusive"           # one test by name pattern
-pnpm test:coverage                                # coverage is scoped to src/lib/**/*.js
+pnpm test:coverage                                # coverage is scoped to src/lib/**/*.ts
+pnpm check                                        # svelte-check, strict TypeScript
 node scripts/screenshots.mjs --only dashboard-charging,settings   # a subset of the manifest
 node scripts/build-locale-values.mjs              # regenerate es/fr/hu.json on demand
 ```
@@ -53,38 +54,41 @@ components mounted by `src/App.svelte` own the whole data layer
 `notifications`, `limit`) means the firmware predates that feature — leave the
 store idle and the UI hidden. Gate on presence, never on values.
 
-**Stores** (`src/lib/stores/*.js`) wrap a `writable` with `download()` → boolean
-and usually `upload()`. All HTTP goes through `src/lib/api/httpAPI.js`: in dev
+**Stores** (`src/lib/stores/*.ts`) wrap a `writable` with `download()` → boolean
+and usually `upload()`. All HTTP goes through `src/lib/api/httpAPI.ts`: in dev
 it prefixes `/api` (which Vite proxies or the mock plugin serves), returns the
-string `'error'` on failure, and redirects to `/login` on 401.
+string `'error'` on failure, and redirects to `/login` on 401. `httpAPI<T>()`
+resolves to `T | 'error'`; narrow with `res !== 'error'` and `isErrorBody()`.
 
 ## Config pages
 
 Every `src/routes/settings/*.svelte` follows one pattern
 (`Emoncms.svelte` is the smallest example):
 
-- `createConfigForm()` from `src/lib/config/configForm.svelte.js` gives
+- `createConfigForm()` from `src/lib/config/configForm.svelte.ts` gives
   `saveField(name, value)` / `saveFields({...})`, a `saveState` store
   (`'saving' | 'saved' | 'error'` per field, fed to `<FormField status>`), and a
   `revert` counter that bumps on failure so controlled inputs resync to the
   store's confirmed value. Pass `revert={form.revert}` to every input.
+  `saveField(name, value)` is typed against `Config`, so a wrong key is a
+  check error.
 - Save is per field on change; the write is `config_store.upload` → `POST /config`,
   success is `msg: "done" | "no change"`. Failure calls `showWriteError()`
-  (`src/lib/alerts.js`) — the one global write-failure alert; reuse it.
+  (`src/lib/alerts.ts`) — the one global write-failure alert; reuse it.
 - Layout: `ConfigPage > ConfigSection > FormField > ui primitive`
   (`src/lib/components/config/`, `src/lib/components/ui/`).
-- Modules that use runes outside a component are named `*.svelte.js`.
+- Modules that use runes outside a component are named `*.svelte.ts`.
 
 ## Routing and the settings catalogue
 
-Hash routing, exact match, no params (`src/lib/router.js`,
-`src/lib/components/Router.svelte`). `routes.js` also holds `LEGACY_ROUTES`
+Hash routing, exact match, no params (`src/lib/router.ts`,
+`src/lib/components/Router.svelte`). `routes.ts` also holds `LEGACY_ROUTES`
 (old `/configuration/*` hashes → `/settings/*`) so firmware upgrades don't 404
-bookmarks. `SETTINGS_PAGES` in `src/lib/config/pages.js` gates pages by
+bookmarks. `SETTINGS_PAGES` in `src/lib/config/pages.ts` gates pages by
 `requires` (a `/config` key that must be present) or `labs` (the client-side
 OpenEVSE Labs switch, `uisettings.dev_features`).
 
-Adding a settings page touches: `pages.js`, `routes.js` (override the
+Adding a settings page touches: `pages.ts`, `routes.ts` (override the
 placeholder), `config.pages.<key>` in every i18n catalog, and
 `scripts/screenshots.config.js`.
 
@@ -111,16 +115,19 @@ vi.mock('svelte-i18n', () => {
 })
 ```
 
-`vi.mock()` targets must exist on disk (Vite 8 resolves them).
+`vi.mock()` targets must exist on disk (Vite 8 resolves them); with the source
+now `.ts`, targets are extensionless (`vi.mock('../stores/config')`). Tests
+remain JavaScript and are excluded from `pnpm check`.
 `src/lib/i18n/__tests__/locale-parity.test.js` fails the suite when a key is
 missing from any `source/` catalog or a `{placeholder}` differs from `en`.
 
 ## Device facts
 
 `/status` units: `amp` is milliamps, `power` is watts, `session_energy` is Wh,
-`temp*` are tenths of °C (`temp_round` in `utils.js`); `total_energy`,
+`temp*` are tenths of °C (`temp_round` in `utils.ts`); `total_energy`,
 `total_day` are already kWh. EVSE `state`: 1 idle, 2 connected, 3 charging,
-4–11 fault, 254 sleeping, 255 off.
+4–11 fault, 254 sleeping, 255 off. Field types and units are declared in
+`src/lib/api/device.ts`; capability-gated fields are optional there.
 
 `docs/superpowers/specs/` and `plans/` hold the design spec and plan behind
 each feature — read the matching pair before extending a screen. The two

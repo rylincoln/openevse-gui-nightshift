@@ -12,6 +12,7 @@ pnpm install
 pnpm dev:mock          # offline dev against built-in mock data — start here
 pnpm dev               # against a real charger (VITE_OPENEVSEHOST in .env)
 pnpm test              # vitest unit tests — must pass before committing
+pnpm check             # svelte-check, strict TypeScript — must pass before committing
 pnpm build             # production build → dist/ (embedded into the firmware)
 pnpm screenshots       # regenerate docs/screenshots/*.png (deterministic)
 ```
@@ -20,10 +21,16 @@ pnpm screenshots       # regenerate docs/screenshots/*.png (deterministic)
 
 - **Route components are the only store-aware units.** Pure logic lives in
   `src/lib/**` modules and gets unit tests; components stay thin.
+- **TypeScript everywhere in `src/` except tests.** Modules are `.ts`
+  (`*.svelte.ts` for rune modules); components use `<script lang="ts">` with
+  an `interface Props`. The device API is typed in `src/lib/api/device.ts` —
+  add a field there (optional if capability-gated) before reading it
+  anywhere, and keep `dev/fixtures/` in agreement (`device.check.ts`
+  enforces this).
 - **Device writes are serialised through a single queue** — the device's web
   server is single-threaded. Never issue parallel writes.
-- The route table is exact-match (`src/lib/routes.js`); settings pages are
-  catalogued in `src/lib/config/pages.js` (single source of truth for hub,
+- The route table is exact-match (`src/lib/routes.ts`); settings pages are
+  catalogued in `src/lib/config/pages.ts` (single source of truth for hub,
   nav, and placeholder routes).
 - i18n: all user-visible strings go through `svelte-i18n`; add new keys to
   **all** catalogs (English text is an acceptable placeholder in the
@@ -42,7 +49,7 @@ pnpm screenshots       # regenerate docs/screenshots/*.png (deterministic)
 
 ## After any UI-visible change
 
-1. `pnpm test` and `pnpm build` must pass.
+1. `pnpm check`, `pnpm test` and `pnpm build` must pass.
 2. `pnpm screenshots` — regenerate and commit any changed images in
    `docs/screenshots/` (the manifest is `scripts/screenshots.config.js`; add an
    entry when adding a screen).
