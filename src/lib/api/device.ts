@@ -9,8 +9,8 @@
 // Field lists are derived from dev/fixtures/*.json plus every field the app
 // reads; src/lib/api/device.check.ts asserts the fixtures still conform.
 
-/** EVSE state from `/status.state`. 1 idle, 2 connected, 3 charging, 4–11 fault, 254 sleeping, 255 off. */
-export type EvseState = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 254 | 255
+/** EVSE state from `/status.state`. 0 starting, 1 idle, 2 connected, 3 charging, 4–11 fault, 254 sleeping, 255 off. */
+export type EvseState = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 254 | 255
 
 /** Body of every successful POST/PATCH/DELETE. Anything other than 'done' / 'no change' is a device-side message. */
 export interface WriteResponse {
@@ -20,6 +20,13 @@ export interface WriteResponse {
 /** Error body some GETs return instead of a payload (`{ msg: 'error' }`). */
 export interface ErrorBody {
   msg: string
+}
+
+/** `GET /r?json=1&rapi=<cmd>`. Every field is absent on error/timeout. */
+export interface RapiResponse {
+  cmd?: string
+  ret?: string
+  error?: string
 }
 
 /** The advisory badge carried inside `/status.notifications` and every WS frame that has it. */
@@ -75,7 +82,7 @@ export interface Status {
   temp2: number | false
   /** tenths of °C; `false` when the probe is absent */
   temp3: number | false
-  /** tenths of °C; `false` when the probe is absent. not in dev/fixtures — capability-gated (src/lib/monitoring/metrics.js) */
+  /** tenths of °C; `false` when the probe is absent. not in dev/fixtures — capability-gated (src/lib/monitoring/metrics.ts) */
   temp4?: number | false
   state: EvseState
   status: string
@@ -111,7 +118,7 @@ export interface Status {
   total_switches: number
   /** seconds */
   elapsed: number
-  /** Wh */
+  /** watt-seconds (Ws); unread by the app */
   wattsec: number
   /** Wh */
   watthour: number
@@ -135,7 +142,7 @@ export interface Status {
   shaper_cur?: number
   shaper_updated?: boolean
   service_level: number
-  /** A limit is active. Absent on firmware predating the Limit feature — gate on presence, never on value. */
+  /** true while a limit is active; absent on firmware predating the Limit feature. */
   limit?: boolean
   ota_update: number
   config_version: number
@@ -143,7 +150,8 @@ export interface Status {
   override_version: number
   schedule_version: number
   schedule_plan_version: number
-  limit_version: number
+  /** Bumps on every limit change. Absent on firmware predating the Limit feature. */
+  limit_version?: number
   /** Absent on firmware without vehicle-data integration. */
   vehicle_state_update?: number
   battery_level?: number
@@ -181,7 +189,7 @@ export interface Status {
   reset_reason_name?: string
 
   // The fields below are read by the app (src/lib/data/DataManager.svelte,
-  // src/lib/dashboard/loadsharing.js, src/lib/monitoring/metrics.js,
+  // src/lib/dashboard/loadsharing.ts, src/lib/monitoring/metrics.ts,
   // src/routes/settings/{Terminal,Rfid}.svelte, src/routes/settings/Firmware.svelte,
   // src/lib/components/shell/AppShell.svelte, src/lib/components/wizard/steps/Wifi.svelte)
   // but absent from dev/fixtures/status.json — capability-gated.
@@ -190,7 +198,7 @@ export interface Status {
   psram_free?: number
   /** bytes. PSRAM boards only. */
   psram_largest?: number
-  /** hundredths of Hz. RAPI D9 ($GZ); src/lib/monitoring/metrics.js only renders the row when `> 0`. */
+  /** hundredths of Hz. RAPI D9 ($GZ); src/lib/monitoring/metrics.ts only renders the row when `> 0`. */
   frequency?: number
   /** Bumps on every /boost change. Absent on firmware without Boost. */
   boost_version?: number
@@ -520,7 +528,7 @@ export interface Certificate {
 
 export interface Notification {
   id: string
-  /** 'safety' | 'fault' | 'thermal' | 'wear', per src/lib/notifications/notifications.js's ADVISORIES catalog. */
+  /** 'safety' | 'fault' | 'thermal' | 'wear', per src/lib/notifications/notifications.ts's ADVISORIES catalog. */
   category: string
   severity: string
   sticky: boolean
@@ -574,7 +582,7 @@ export interface LogEntry {
   temperature: number
   /** Absent on legacy entries and on rows with no RFID tap. */
   rfidTag?: string
-  /** amps. Read via src/lib/history/logs.js's logPilotAmps(). */
+  /** amps. Read via src/lib/history/logs.ts's logPilotAmps(). */
   pilot?: number
   /** An advisory id, when this row exists to name an advisory. */
   notification?: string
@@ -613,9 +621,9 @@ export interface LoadSharingPeer {
   online: boolean
   joined: boolean
   priority: number
-  /** Not in the mock/fixtures. src/lib/dashboard/loadsharing.js:74 falls back to this alongside `host`. */
+  /** Not in the mock/fixtures. src/lib/dashboard/loadsharing.ts:74 falls back to this alongside `host`. */
   hostname?: string
-  /** seconds, same clock as `Status.uptime`. src/lib/dashboard/loadsharing.js:76. */
+  /** seconds, same clock as `Status.uptime`. src/lib/dashboard/loadsharing.ts:76. */
   last_seen?: number
   /** Not in the mock/fixtures. Fallback for `host` at src/routes/settings/LoadSharing.svelte:387. */
   ip?: string

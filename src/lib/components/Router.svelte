@@ -1,17 +1,17 @@
 <script lang="ts">
-  import type { Component as SvelteComponent } from 'svelte'
+  import type { Component as RouteComponent } from 'svelte'
   import { currentPath, redirect } from '../router'
 
   interface Props {
-    routes?: Record<string, SvelteComponent>
-    fallback?: SvelteComponent
+    routes?: Record<string, RouteComponent>
+    fallback?: RouteComponent
     aliases?: Record<string, string>
   }
   let { routes = {}, fallback, aliases = {} }: Props = $props()
 
   // A legacy path renders nothing for the one tick it takes the redirect
   // to land — never the fallback, which would flash a 404.
-  let Component = $derived<SvelteComponent | null | undefined>(
+  let Component = $derived<RouteComponent | null | undefined>(
     routes[$currentPath] ?? (aliases[$currentPath] ? null : fallback),
   )
 

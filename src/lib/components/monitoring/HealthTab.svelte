@@ -9,14 +9,7 @@
   import { config_store } from '../../stores/config'
   import { showWriteError } from '../../alerts'
   import type { SafetyData, SafetyRow, RelayHealthRow } from '../../monitoring/metrics'
-
-  // GET /r?json=1&rapi=... response shape — same as Terminal.svelte's RAPI
-  // console, which reads these same three fields off the identical endpoint.
-  interface RapiResponse {
-    cmd?: string
-    ret?: string
-    error?: string
-  }
+  import type { RapiResponse } from '../../api/device'
 
   interface Props {
     data?: SafetyData

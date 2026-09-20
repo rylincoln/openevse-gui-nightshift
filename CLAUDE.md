@@ -125,8 +125,8 @@ missing from any `source/` catalog or a `{placeholder}` differs from `en`.
 
 `/status` units: `amp` is milliamps, `power` is watts, `session_energy` is Wh,
 `temp*` are tenths of °C (`temp_round` in `utils.ts`); `total_energy`,
-`total_day` are already kWh. EVSE `state`: 1 idle, 2 connected, 3 charging,
-4–11 fault, 254 sleeping, 255 off. Field types and units are declared in
+`total_day` are already kWh. EVSE `state`: 0 starting, 1 idle, 2 connected,
+3 charging, 4–11 fault, 254 sleeping, 255 off. Field types and units are declared in
 `src/lib/api/device.ts`; capability-gated fields are optional there.
 
 `docs/superpowers/specs/` and `plans/` hold the design spec and plan behind

@@ -1,4 +1,4 @@
-// src/lib/temperature.js
+// src/lib/temperature.ts
 // Pure °C ↔ °F conversion and display helpers. The device always reports
 // temperature in °C; this module owns the conversion + the i18n key for
 // whichever unit the user prefers (temp_unit config: 'c' | 'f').

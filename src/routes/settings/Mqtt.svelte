@@ -48,7 +48,7 @@
 
   async function refreshMqttStatus(): Promise<void> {
     // The device web server is single-threaded — route through serialQueue so
-    // this poll can't collide with concurrent store downloads (see queue.js).
+    // this poll can't collide with concurrent store downloads (see queue.ts).
     const res = await serialQueue.add(() => httpAPI<MqttStatus>('GET', '/mqtt'))
     // Only accept responses that include mqtt_connected — guards against old
     // firmware returning a generic 404 JSON that would corrupt mqttData.

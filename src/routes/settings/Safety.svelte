@@ -63,7 +63,7 @@
   )
   // GFCI self-test and overcurrent monitoring are optional safety features —
   // they're shown but don't gate the "All Required Safety Checks On" status
-  // (see lib/config/safety.js, shared with the Charge Manager).
+  // (see lib/config/safety.ts, shared with the Charge Manager).
   let allOn = $derived(allRequiredSafetyChecksOn($config_store))
 
   // Cable temperature monitoring (NTC thermistors in the EV/input cables,

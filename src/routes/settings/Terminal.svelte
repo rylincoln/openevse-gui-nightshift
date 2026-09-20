@@ -20,7 +20,7 @@
   import ProgressBar from '../../lib/components/ui/ProgressBar.svelte'
   import { downloadDiagnostics } from '../../lib/diagnostics'
   import { formatBytes } from '../../lib/utils'
-  import type { Status, WriteResponse } from '../../lib/api/device'
+  import type { Status, WriteResponse, RapiResponse } from '../../lib/api/device'
 
   // GET /debug/crash's decoded-summary response — only this page reads it.
   interface CrashSummary {
@@ -32,12 +32,6 @@
     valid?: boolean
     bt?: (number | string)[] | string
     elf_sha256?: string
-  }
-
-  interface RapiResult {
-    cmd: string
-    ret: string
-    error?: string
   }
 
   function setDevFeatures(on: boolean): void {
@@ -306,7 +300,7 @@
   })
 
   let command = $state('$')
-  let results = $state<RapiResult[]>([])
+  let results = $state<RapiResponse[]>([])
   let sending = $state(false)
   let consoleMode = $state<'debug' | 'evse' | null>(null)
   let exportedFile = $state('')
@@ -334,7 +328,7 @@
     if (sending || !trimmed || trimmed === '$') return
     sending = true
     try {
-      const res = await httpAPI<Partial<RapiResult>>('GET', '/r?json=1&rapi=' + command)
+      const res = await httpAPI<RapiResponse>('GET', '/r?json=1&rapi=' + command)
       if (res && res !== 'error') {
         results = [...results, { cmd: res.cmd ?? command, ret: res.ret ?? '', error: res.error }]
         command = '$'

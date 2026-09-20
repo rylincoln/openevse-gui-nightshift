@@ -45,7 +45,8 @@ light and dark themes — toggle from the header.
 
 ## Requirements
 
-- Node.js 20+ and pnpm. The exact pnpm version is pinned in `package.json`
+- Node.js 22.18+ (the locale build script imports a `.ts` module via Node's
+  built-in type stripping) and pnpm. The exact pnpm version is pinned in `package.json`
   (`packageManager`); `corepack enable pnpm` picks it up, and any pnpm 10+
   already installed switches itself to the pinned version on first use.
 
