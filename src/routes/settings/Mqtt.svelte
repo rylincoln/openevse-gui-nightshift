@@ -141,6 +141,14 @@
   let lastRxElapsed = $derived(formatAgo(lastRxTime, nowMs))
   // ── end MQTT status ───────────────────────────────────────────────────────
 
+  // NumberInput emits null when the field is cleared to empty; the port is
+  // shown blank (no numeric fallback shown when unset), so a clear must not
+  // write anything — not a literal null — same as the cable-temp calibration
+  // and peer-priority fields.
+  function saveMqttPort(v: number | null): void {
+    if (v !== null) form.saveField('mqtt_port', v)
+  }
+
   // Reset MQTT connection: force immediate reconnect and refresh status
   let resetBusy = $state(false)
   async function resetMqtt(): Promise<void> {
@@ -256,7 +264,7 @@
           value={$config_store?.mqtt_port ?? null}
           placeholder="1883"
           revert={form.revert}
-          onchange={(v) => form.saveField('mqtt_port', v)}
+          onchange={saveMqttPort}
         />
       </FormField>
       <FormField label={$_('config.mqtt.user')} status={$ss.mqtt_user ?? 'idle'}>
