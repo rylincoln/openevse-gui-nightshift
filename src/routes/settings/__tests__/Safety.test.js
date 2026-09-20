@@ -424,4 +424,28 @@ describe('Safety page — Cable Temperature Monitoring', () => {
       )
     })
   })
+
+  // NumberInput emits null when a calibration field is cleared to empty.
+  // Unlike the shaper/divert fields elsewhere, a cleared calibration value
+  // has no "use the firmware default" meaning, so it must not be written.
+  it('does not write a calibration field cleared to empty', async () => {
+    config_store.set({ ...ALL_ON, cable_temp: true })
+    const assigned = UNASSIGNED_SOURCES.map((s) =>
+      s.source === 0 ? { ...s, pin: 1, status: 0, temperature: 34.5, r25: 10000, beta: 3443, offset_c10: 0, panic_c10: 900 } : s,
+    )
+    httpAPI.mockImplementation((method, url) =>
+      (method === 'GET' && url === '/cabletemp')
+        ? Promise.resolve({ supported: true, enabled: true, sources: assigned })
+        : Promise.resolve({ msg: 'done' }),
+    )
+    const { getByText, getAllByRole } = render(Safety)
+    await fireEvent.click(getByText('config.cabletemp.title'))
+    await vi.waitFor(() => expect(getByText('config.cabletemp.reading')).toBeInTheDocument())
+
+    httpAPI.mockClear()
+    const numbers = getAllByRole('spinbutton')
+    await fireEvent.input(numbers[0], { target: { value: '' } }) // r25
+    await fireEvent.blur(numbers[0])
+    expect(httpAPI).not.toHaveBeenCalledWith('POST', '/cabletemp', expect.anything())
+  })
 })

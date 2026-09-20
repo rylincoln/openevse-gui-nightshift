@@ -1,5 +1,5 @@
 <!-- src/routes/settings/Safety.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { cabletemp_store } from '../../lib/stores/cabletemp'
@@ -24,6 +24,18 @@
   import Select from '../../lib/components/ui/Select.svelte'
   import NumberInput from '../../lib/components/ui/NumberInput.svelte'
   import TempProtectionCard from '../../lib/components/charge_manager/TempProtectionCard.svelte'
+  import type { Config } from '../../lib/api/device'
+  import type { CableTempSource } from '../../lib/api/device'
+
+  interface Calibration {
+    field: 'r25' | 'beta' | 'offset_c10' | 'panic_c10'
+    labelKey: string
+    unitKey?: string | null
+    temp?: 'abs' | 'delta'
+    min: number
+    max: number
+    step: number
+  }
 
   const form = createConfigForm()
   const ss = form.saveState
@@ -40,11 +52,13 @@
   // overcurrent_monitor below: absent from /config means the charger has no
   // such setting, and an unconditional toggle would read a missing key as
   // "off" and offer to fix something that isn't broken.
-  const BASE_CHECKS = [
+  type SafetyCheckKey =
+    | 'gfci_check' | 'ground_check' | 'relay_check' | 'diode_check' | 'vent_check' | 'temp_check'
+  const BASE_CHECKS: SafetyCheckKey[] = [
     'gfci_check', 'ground_check', 'relay_check',
     'diode_check', 'vent_check',
   ]
-  let CHECKS = $derived(
+  let CHECKS: SafetyCheckKey[] = $derived(
     $config_store?.temp_check === undefined ? BASE_CHECKS : [...BASE_CHECKS, 'temp_check'],
   )
   // GFCI self-test and overcurrent monitoring are optional safety features —
@@ -74,8 +88,8 @@
     if (cableTempOpen && cableTempOn) ctForm.refresh()
   })
 
-  function pinSource(pin) {
-    return cableTempSourceOnPin($cabletemp_store, pin)
+  function pinSource(pin: number): CableTempSource | null {
+    return cableTempSourceOnPin($cabletemp_store ?? undefined, pin)
   }
 
   // The device stores and reports every temperature in °C; like
@@ -85,7 +99,7 @@
   let tempUnit = $derived($config_store?.temp_unit ?? 'c')
   let tempUnitKey = $derived(tempUnit === 'f' ? 'units.fahrenheit' : 'units.celsius')
 
-  function readingText(source) {
+  function readingText(source: CableTempSource): string {
     const statusKey = cableTempStatusKey(source.status)
     if (statusKey) return $_('config.cabletemp.status_' + statusKey)
     if (typeof source.temperature !== 'number') return '—'
@@ -97,25 +111,30 @@
   // temperatures on the wire (tenths of °C): 'abs' for a point on the scale,
   // 'delta' for a difference, which converts to °F by ratio alone. Bounds for
   // those are in °C and converted alongside the value.
-  const CALIBRATION = [
+  const CALIBRATION: Calibration[] = [
     { field: 'r25', labelKey: 'config.cabletemp.r25', unitKey: 'units.ohm', min: 100, max: 65535, step: 1 },
     { field: 'beta', labelKey: 'config.cabletemp.beta', unitKey: null, min: 1000, max: 6000, step: 1 },
     { field: 'offset_c10', labelKey: 'config.cabletemp.offset', temp: 'delta', min: -20, max: 20, step: 0.1 },
     { field: 'panic_c10', labelKey: 'config.cabletemp.panic', temp: 'abs', min: 30, max: 150, step: 0.1 },
   ]
 
-  function calLabel(f) {
+  function calLabel(f: Calibration): string {
     const unitKey = f.temp ? tempUnitKey : f.unitKey
     return unitKey ? `${$_(f.labelKey)} (${$_(unitKey)})` : $_(f.labelKey)
   }
-  function calValue(source, f) {
+  function calValue(source: CableTempSource, f: Calibration): number | null {
     return f.temp ? c10ToUnit(source[f.field], tempUnit, f.temp === 'delta') : (source[f.field] ?? null)
   }
-  function calBound(f, c) {
-    return f.temp ? Math.round(cToUnit(c, tempUnit, f.temp === 'delta')) : c
+  function calBound(f: Calibration, c: number): number {
+    return f.temp ? Math.round(cToUnit(c, tempUnit, f.temp === 'delta') ?? 0) : c
   }
-  function calSave(source, f, v) {
+  // NumberInput emits null when the field is cleared; a calibration value
+  // has no sane "cleared" meaning (unlike the shaper/divert fields, which
+  // treat a blank box as "use the firmware default"), so don't write one.
+  function calSave(source: CableTempSource, f: Calibration, v: number | null): void {
+    if (v === null) return
     const wire = f.temp ? unitToC10(v, tempUnit, f.temp === 'delta') : v
+    if (wire === null) return
     ctForm.saveField(source.source, source, f.field, wire)
   }
 
@@ -232,13 +251,13 @@
               >
                 <Select
                   options={cableTempSourceOptions(
-                    $cabletemp_store, input.pin, input.other,
+                    $cabletemp_store ?? undefined, input.pin, input.other,
                     $_('config.cabletemp.none'),
                     (name) => $_('config.cabletemp.source_' + name),
                   )}
                   value={source ? String(source.source) : ''}
                   disabled={ctForm.busy}
-                  onchange={(v) => ctForm.setPin($cabletemp_store, input.pin, v === '' ? null : Number(v))}
+                  onchange={(v) => ctForm.setPin($cabletemp_store ?? undefined, input.pin, v === '' ? null : Number(v))}
                 />
               </FormField>
 
