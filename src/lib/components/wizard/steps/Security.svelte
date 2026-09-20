@@ -10,7 +10,7 @@
   Credentials go through CredentialFields, which writes username + password
   together in one request and requires a username when a password is set.
 -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import CredentialFields from '../../config/CredentialFields.svelte'
 </script>

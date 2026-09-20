@@ -14,17 +14,22 @@
 
   This mirrors v2's WizardAlertBox + reload2ip handoff.
 -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Modal from '../ui/Modal.svelte'
   import Button from '../ui/Button.svelte'
 
-  let { visible = false, hostname = '', onclose = () => {} } = $props()
+  interface Props {
+    visible?: boolean
+    hostname?: string
+    onclose?: () => void
+  }
+  let { visible = false, hostname = '', onclose = () => {} }: Props = $props()
 
   let copied = $state(false)
   let displayHost = $derived(hostname ? `${hostname}.local` : '')
 
-  async function copyAddress() {
+  async function copyAddress(): Promise<void> {
     if (!displayHost) return
     try {
       await navigator.clipboard.writeText(`http://${displayHost}`)

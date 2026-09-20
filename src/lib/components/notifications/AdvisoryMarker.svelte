@@ -1,5 +1,5 @@
 <!-- src/lib/components/notifications/AdvisoryMarker.svelte -->
-<script>
+<script lang="ts">
   // The inline marker that sits beside the very switch an advisory is about.
   //
   // This is the surface the whole feature exists for: "ground check is off" is
@@ -11,13 +11,17 @@
   // Text, not a glyph: the app's controls carry words, and "Critical" beside a
   // switch says more than a symbol the reader has to decode.
   import { _ } from 'svelte-i18n'
+  import type { Marker } from '../../notifications/notifications'
 
-  let { marker = null } = $props()
+  interface Props {
+    marker?: Marker | null
+  }
+  let { marker = null }: Props = $props()
 
   // Amber for warning, red only for critical — the firmware reserves red for
   // the fault screen, and keeping the web UI close to the LCD's palette keeps
   // the two tiers legible as different things.
-  const TONE = {
+  const TONE: Record<string, string> = {
     critical: 'bg-error/15 text-error',
     warning: 'bg-warning/15 text-warning',
     info: 'bg-surface-3 text-text-dim',

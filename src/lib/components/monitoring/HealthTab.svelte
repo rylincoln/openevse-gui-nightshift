@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import Button from '../ui/Button.svelte'
@@ -8,32 +8,45 @@
   import { status_store } from '../../stores/status'
   import { config_store } from '../../stores/config'
   import { showWriteError } from '../../alerts'
+  import type { SafetyData, SafetyRow, RelayHealthRow } from '../../monitoring/metrics'
 
-  let { data = { errors: [], infos: [] }, relay = null } = $props()
+  // GET /r?json=1&rapi=... response shape — same as Terminal.svelte's RAPI
+  // console, which reads these same three fields off the identical endpoint.
+  interface RapiResponse {
+    cmd?: string
+    ret?: string
+    error?: string
+  }
 
-  const sevClass = {
+  interface Props {
+    data?: SafetyData
+    relay?: RelayHealthRow[] | null
+  }
+  let { data = { errors: [], infos: [] }, relay = null }: Props = $props()
+
+  const sevClass: Record<string, string> = {
     ok: 'bg-accent/15 text-accent',
     warning: 'bg-warning/15 text-warning',
     error: 'bg-error/15 text-error',
   }
 
-  function rowLabel(row) {
+  function rowLabel(row: SafetyRow): string {
     return $_('monitoring.safety.' + row.key)
   }
-  function rowValue(row) {
-    return row.key === 'fault' ? $_(getStateDesc(row.state)) : row.count
+  function rowValue(row: SafetyRow): string | number | undefined {
+    return row.key === 'fault' ? $_(getStateDesc(row.state) ?? '') : row.count
   }
 
   let resetting = $state(false)
   let resetDone = $state(false)
 
-  async function resetFaultCounters() {
+  async function resetFaultCounters(): Promise<void> {
     if (resetting) return
     resetting = true
     resetDone = false
     try {
       // Single-threaded device server — serialize like every other request.
-      const res = await serialQueue.add(() => httpAPI('GET', '/r?json=1&rapi=$FC'))
+      const res = await serialQueue.add(() => httpAPI<RapiResponse>('GET', '/r?json=1&rapi=$FC'))
       if (res && res !== 'error' && !res.error) {
         resetDone = true
         await status_store.download()
@@ -46,10 +59,10 @@
     }
   }
 
-  function relayRowLabel(row) {
+  function relayRowLabel(row: RelayHealthRow): string {
     return $_('monitoring.health.relay.' + row.key)
   }
-  function relayRowValue(row) {
+  function relayRowValue(row: RelayHealthRow): string | number | boolean {
     if (row.value === null || row.value === undefined) {
       return $_('monitoring.health.relay.not_available')
     }
@@ -71,12 +84,12 @@
   let resettingRelay = $state(false)
   let resetRelayDone = $state(false)
 
-  async function resetRelayHealth() {
+  async function resetRelayHealth(): Promise<void> {
     if (resettingRelay) return
     resettingRelay = true
     resetRelayDone = false
     try {
-      const res = await serialQueue.add(() => httpAPI('GET', '/r?json=1&rapi=$FH'))
+      const res = await serialQueue.add(() => httpAPI<RapiResponse>('GET', '/r?json=1&rapi=$FH'))
       if (res && res !== 'error' && !res.error) {
         resetRelayDone = true
         await config_store.download()

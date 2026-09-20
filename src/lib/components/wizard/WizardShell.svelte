@@ -9,26 +9,38 @@
     - last step:  Previous + "Finish"
     - else:       Previous + Next
 -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
+  import type { Snippet } from 'svelte'
   import ChargePointMark from '../../../assets/ChargePointMark.svelte'
   import Button from '../ui/Button.svelte'
   import Icon from '../../icons/Icon.svelte'
 
+  interface Props {
+    step?: number
+    total?: number
+    title?: string
+    canAdvance?: boolean
+    // Hide the Next/Finish button when the step owns its own terminal action
+    // (the WiFi step: connecting joins the network and ends the session, so a
+    // separate Finish button would be redundant and could strand the user).
+    hideAdvance?: boolean
+    onPrev?: () => void
+    onNext?: () => void
+    onFinish?: () => void
+    children?: Snippet
+  }
   let {
     step = 0,
     total = 5,
     title = '',
     canAdvance = true,
-    // Hide the Next/Finish button when the step owns its own terminal action
-    // (the WiFi step: connecting joins the network and ends the session, so a
-    // separate Finish button would be redundant and could strand the user).
     hideAdvance = false,
     onPrev = () => {},
     onNext = () => {},
     onFinish = () => {},
     children,
-  } = $props()
+  }: Props = $props()
 
   let isFirst = $derived(step === 0)
   let isLast = $derived(step === total - 1)

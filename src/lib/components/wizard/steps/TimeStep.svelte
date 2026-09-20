@@ -6,7 +6,7 @@
   first-run users will be on NTP; manual clock-set still exists on the
   full Settings → Time page.
 -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../../stores/config'
   import { createConfigForm } from '../../../config/configForm.svelte'

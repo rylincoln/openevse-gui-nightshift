@@ -1,11 +1,16 @@
-<script>
+<script lang="ts">
   import { untrack } from 'svelte'
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import Icon from '../../icons/Icon.svelte'
   import MetricRow from './MetricRow.svelte'
+  import type { MetricGroupModel } from '../../monitoring/metrics'
 
-  let { group, expanded = false } = $props()
+  interface Props {
+    group: MetricGroupModel
+    expanded?: boolean
+  }
+  let { group, expanded = false }: Props = $props()
 
   let open = $state(untrack(() => expanded))
 </script>

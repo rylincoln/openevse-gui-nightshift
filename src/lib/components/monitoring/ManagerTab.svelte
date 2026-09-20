@@ -1,11 +1,15 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import { clientid2name } from '../../utils'
+  import type { ClaimRow } from '../../monitoring/metrics'
 
-  let { rows = [] } = $props()
+  interface Props {
+    rows?: ClaimRow[]
+  }
+  let { rows = [] }: Props = $props()
 
-  function fmtValue(v) {
+  function fmtValue(v: unknown): string {
     if (v === 'active' || v === 'disabled') return $_('monitoring.manager.' + v)
     if (v === null || v === undefined) return '—'
     return String(v)

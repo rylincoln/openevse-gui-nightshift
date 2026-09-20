@@ -9,7 +9,7 @@
   the finish-step handoff (FinishDialog) prints the new address to
   reconnect to.
 -->
-<script>
+<script lang="ts">
   import { onMount } from 'svelte'
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../../stores/config'
@@ -18,10 +18,15 @@
   import { httpAPI } from '../../../api/httpAPI'
   import { showWriteError } from '../../../alerts'
   import { normalizeNetworks, signalIcon, isSecured } from '../../../config/wifi'
+  import type { WifiNetwork } from '../../../config/wifi'
   import Icon from '../../../icons/Icon.svelte'
   import Button from '../../ui/Button.svelte'
 
-  let { onJoined = () => {}, beforeJoin = async () => {} } = $props()
+  interface Props {
+    onJoined?: (ssid: string) => void
+    beforeJoin?: () => Promise<void>
+  }
+  let { onJoined = () => {}, beforeJoin = async () => {} }: Props = $props()
 
   // Where to reach the charger once it leaves the setup hotspot. The DHCP IP
   // isn't known ahead of time, so we show the mDNS hostname (same as
@@ -30,17 +35,17 @@
     $config_store?.hostname ? `${$config_store.hostname}.local` : '',
   )
 
-  let networks = $state([])
+  let networks = $state<WifiNetwork[]>([])
   let scanning = $state(false)
   let scanError = $state(false)
-  let selected = $state(null)
+  let selected = $state<WifiNetwork | null>(null)
   let wifiPass = $state('')
   let manual = $state(false)
   let manualSsid = $state('')
   let joining = $state(false)
   let joined = $state(false)
 
-  async function scanWifi() {
+  async function scanWifi(): Promise<void> {
     if (scanning) return
     scanning = true
     scanError = false
@@ -55,19 +60,19 @@
     networks = normalizeNetworks(res)
   }
 
-  function pickNetwork(n) {
+  function pickNetwork(n: WifiNetwork): void {
     selected = n
     manual = false
     wifiPass = ''
   }
 
-  function toggleManual() {
+  function toggleManual(): void {
     manual = !manual
     selected = null
     wifiPass = ''
   }
 
-  async function joinSsid(ssid) {
+  async function joinSsid(ssid: string): Promise<void> {
     const normalizedSsid = ssid.trim()
     if (joining || !normalizedSsid) return
     joining = true
@@ -88,11 +93,11 @@
     }
   }
 
-  function joinWifi() {
+  function joinWifi(): void {
     if (selected) joinSsid(selected.ssid)
   }
 
-  function joinManualWifi() {
+  function joinManualWifi(): void {
     joinSsid(manualSsid)
   }
 
