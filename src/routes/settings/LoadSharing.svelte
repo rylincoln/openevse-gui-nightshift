@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { claims_target_store } from '../../lib/stores/claims_target'
@@ -19,6 +19,7 @@
   import Button from '../../lib/components/ui/Button.svelte'
   import IconButton from '../../lib/components/ui/IconButton.svelte'
   import Modal from '../../lib/components/ui/Modal.svelte'
+  import type { LoadSharingPeer, LoadSharingStatus } from '../../lib/api/device'
 
   const form = createConfigForm()
   const ss = form.saveState
@@ -31,7 +32,7 @@
 
   let peerHost = $state('')
   let peersBusy = $state(false)
-  let detailsPeer = $state(null)
+  let detailsPeer = $state<LoadSharingPeer | null>(null)
   let priorityRevert = $state(0)
 
   let enabled = $derived(!!$config_store?.loadsharing_enabled)
@@ -53,7 +54,7 @@
       : ($loadsharing_store?.peers ?? []),
   )
   let allocations = $derived($loadsharing_store?.status?.allocations ?? [])
-  let runtimeStatus = $derived($loadsharing_store?.status ?? {})
+  let runtimeStatus: Partial<LoadSharingStatus> = $derived($loadsharing_store?.status ?? {})
   let hasSafetyFactor = $derived($config_store?.loadsharing_safety_factor !== undefined)
   let hasHeartbeatTimeout = $derived($config_store?.loadsharing_heartbeat_timeout !== undefined)
   let hasFailsafeMode = $derived($config_store?.loadsharing_failsafe_mode !== undefined)
@@ -79,9 +80,10 @@
     controllerPeer?.url || (controllerHost ? `http://${controllerHost}` : ''),
   )
   let memberAssignedLimit = $derived(
-    [EvseClients.shaper.id, EvseClients.loadsharing.id].includes(
-      $claims_target_store?.claims?.max_current,
-    )
+    $claims_target_store?.claims?.max_current != null &&
+      [EvseClients.shaper.id, EvseClients.loadsharing.id].includes(
+        $claims_target_store.claims.max_current,
+      )
       ? $claims_target_store?.properties?.max_current ?? null
       : null,
   )
@@ -95,20 +97,20 @@
       : $_('config.loadsharing.unknown'),
   )
 
-  function allocatedFor(peer) {
+  function allocatedFor(peer: LoadSharingPeer): number | undefined {
     const key = peer.id ?? peer.host ?? peer.name
     const hit = allocations.find((a) => a.id === key || a.id === peer.host || a.id === peer.name)
     return hit?.target_current
   }
 
-  function reasonFor(peer) {
+  function reasonFor(peer: LoadSharingPeer): string {
     const key = peer.id ?? peer.host ?? peer.name
     const hit = allocations.find((a) => a.id === key || a.id === peer.host || a.id === peer.name)
     return hit?.reason ?? '—'
   }
 
-  function statusFor(peer) {
-    const states = {
+  function statusFor(peer: LoadSharingPeer | null | undefined): string {
+    const states: Record<number, string> = {
       1: $_('config.loadsharing.state_idle'),
       2: $_('config.loadsharing.state_connected'),
       3: $_('config.loadsharing.state_charging'),
@@ -121,7 +123,7 @@
     return $_('config.loadsharing.discovered')
   }
 
-  async function addPeer(host) {
+  async function addPeer(host?: string): Promise<void> {
     const targetHost = (typeof host === 'string' ? host : peerHost ?? '').trim()
     if (!targetHost) return
     peersBusy = true
@@ -138,7 +140,7 @@
     }
   }
 
-  async function removePeer(host) {
+  async function removePeer(host: string): Promise<void> {
     peersBusy = true
     try {
       const ok = await loadsharing_store.removePeer(host)
@@ -148,8 +150,8 @@
     }
   }
 
-  async function savePriority(host, priority) {
-    if (!host) return
+  async function savePriority(host: string, priority: number | null): Promise<void> {
+    if (!host || priority === null) return
     peersBusy = true
     try {
       const ok = await loadsharing_store.setPeerPriority(host, priority)
@@ -161,7 +163,7 @@
     }
   }
 
-  async function discoverPeers() {
+  async function discoverPeers(): Promise<void> {
     peersBusy = true
     try {
       await loadsharing_store.discover()
@@ -170,7 +172,7 @@
     }
   }
 
-  async function refreshPeers() {
+  async function refreshPeers(): Promise<void> {
     peersBusy = true
     try {
       await loadsharing_store.refresh()
