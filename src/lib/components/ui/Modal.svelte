@@ -1,11 +1,21 @@
-<script>
+<script lang="ts">
+  import type { Snippet } from 'svelte'
+
+  interface Props {
+    visible?: boolean
+    closable?: boolean
+    // 'sm' (default, dialogs) | 'md' (roomier dialogs) | 'lg' (live consoles, big content)
+    size?: 'sm' | 'md' | 'lg'
+    onclose?: () => void
+    children?: Snippet
+  }
   let {
     visible = false,
     closable = true,
-    size = 'sm', // 'sm' (default, dialogs) | 'md' (roomier dialogs) | 'lg' (live consoles, big content)
+    size = 'sm',
     onclose = () => {},
     children,
-  } = $props()
+  }: Props = $props()
 
   const widths = {
     sm: 'max-w-sm',

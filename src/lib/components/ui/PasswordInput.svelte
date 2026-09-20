@@ -1,9 +1,17 @@
 <!-- src/lib/components/ui/PasswordInput.svelte -->
-<script>
+<script lang="ts">
   import { untrack } from 'svelte'
   import Icon from '../../icons/Icon.svelte'
   import { isDummyPassword } from '../../config/validate'
 
+  interface Props {
+    value?: string
+    placeholder?: string
+    disabled?: boolean
+    maxlength?: number
+    revert?: number
+    onchange?: (value: string) => void
+  }
   let {
     value = '',
     placeholder = '',
@@ -11,7 +19,7 @@
     maxlength = undefined,
     revert = 0,
     onchange = () => {},
-  } = $props()
+  }: Props = $props()
 
   let draft = $state(untrack(() => (isDummyPassword(value) ? '' : value)))
   let focused = $state(false)
@@ -22,7 +30,7 @@
     if (!focused) draft = isDummyPassword(value) ? '' : value
   })
 
-  function blur() {
+  function blur(): void {
     focused = false
     // Empty draft on a field that still holds the device sentinel = untouched.
     if (draft === '' && isDummyPassword(value)) return

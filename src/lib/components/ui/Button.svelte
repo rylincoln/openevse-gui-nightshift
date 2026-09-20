@@ -1,4 +1,15 @@
-<script>
+<script lang="ts">
+  import type { Snippet } from 'svelte'
+  import type { HTMLButtonAttributes, MouseEventHandler } from 'svelte/elements'
+
+  interface Props {
+    label?: string
+    variant?: keyof typeof variants
+    disabled?: boolean
+    type?: HTMLButtonAttributes['type']
+    onclick?: MouseEventHandler<HTMLButtonElement>
+    children?: Snippet
+  }
   let {
     label = '',
     variant = 'primary',
@@ -6,7 +17,7 @@
     type = 'button',
     onclick = () => {},
     children,
-  } = $props()
+  }: Props = $props()
 
   const variants = {
     primary: 'bg-accent text-surface',

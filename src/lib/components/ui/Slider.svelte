@@ -1,6 +1,18 @@
-<script>
+<script lang="ts">
   import { untrack } from 'svelte'
 
+  interface Props {
+    min?: number
+    max?: number
+    step?: number
+    value?: number
+    disabled?: boolean
+    onchange?: (value: number) => void
+    oninput?: (value: number) => void
+    format?: (v: number) => string | number
+    ariaLabel?: string
+    showBubble?: boolean // floating value popup above the thumb
+  }
   let {
     min = 0,
     max = 100,
@@ -11,20 +23,20 @@
     oninput = () => {},
     format = (v) => v,
     ariaLabel = '',
-    showBubble = true,   // floating value popup above the thumb
-  } = $props()
+    showBubble = true,
+  }: Props = $props()
 
   let current = $state(untrack(() => value))
   $effect(() => {
     current = value
   })
 
-  function handleInput(e) {
-    current = Number(e.currentTarget.value)
+  function handleInput(e: Event): void {
+    current = Number((e.currentTarget as HTMLInputElement).value)
     oninput(current)
   }
-  function handleChange(e) {
-    onchange(Number(e.currentTarget.value))
+  function handleChange(e: Event): void {
+    onchange(Number((e.currentTarget as HTMLInputElement).value))
   }
 
   let pct = $derived(max > min ? ((current - min) / (max - min)) * 100 : 0)

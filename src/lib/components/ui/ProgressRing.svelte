@@ -1,14 +1,25 @@
-<script>
+<script lang="ts">
+  import type { Snippet } from 'svelte'
+
+  interface Props {
+    fill?: number
+    color?: string
+    track?: string
+    size?: number
+    thickness?: number
+    /** Apply a slow opacity breath. Use for passive / fault states. */
+    pulse?: boolean
+    children?: Snippet
+  }
   let {
     fill = 0,
     color = 'var(--accent)',
     track = 'var(--surface-3)',
     size = 178,
     thickness = 15,
-    /** Apply a slow opacity breath. Use for passive / fault states. */
     pulse = false,
     children,
-  } = $props()
+  }: Props = $props()
 
   let deg = $derived(Math.max(0, Math.min(1, fill)) * 360)
   let inner = $derived(size - thickness * 2)

@@ -1,8 +1,14 @@
-<script>
-  // `sub` is the small line under the value; `subTone` colours it — accent
-  // for good news (a cost, an ETA), warning for a qualifier the reader
-  // needs before trusting the number ("limited").
-  let { value, label, sub = null, subTone = 'accent' } = $props()
+<script lang="ts">
+  interface Props {
+    value: string | number
+    label: string
+    // `sub` is the small line under the value; `subTone` colours it — accent
+    // for good news (a cost, an ETA), warning for a qualifier the reader
+    // needs before trusting the number ("limited").
+    sub?: string | null
+    subTone?: 'accent' | 'warning'
+  }
+  let { value, label, sub = null, subTone = 'accent' }: Props = $props()
 </script>
 
 <div class="rounded-xl bg-surface-2 px-1 py-2 text-center">
