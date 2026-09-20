@@ -28,9 +28,15 @@ export interface UiStates {
   // (Task 15) alongside the *_version fields above; missing until now.
   // certificate_version's writer (refreshCertificateStore) is exported but
   // not wired to any $effect — kept for parity with the store's other
-  // *_version counters.
-  boost_version: number
-  certificate_version: number
+  // *_version counters. Optional (unlike its siblings above): pre-TS the key
+  // was simply absent from the plain object until the first successful
+  // refresh, so `$uistates_store.boost_version`/`certificate_version` read
+  // as `undefined`, not `0` — a `0` seed would make DataManager's
+  // `$uistates_store.boost_version != version` false for a device that
+  // genuinely reports `boost_version: 0` on its first frame, skipping the
+  // startup GET.
+  boost_version?: number
+  certificate_version?: number
   // "<count>:<severity>@<nonce>" — the advisory list's stand-in for a
   // version counter. null until the first frame from a charger that has
   // the advisory engine; stays null forever on one that doesn't.
@@ -89,8 +95,8 @@ const model: UiStates = {
   schedule_version: 0,
   schedule_plan_version: 0,
   limit_version: 0,
-  boost_version: 0,
-  certificate_version: 0,
+  boost_version: undefined,
+  certificate_version: undefined,
   notification_badge: null,
   notification_event: 0,
   logidx_min: 0,
