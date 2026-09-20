@@ -13,6 +13,16 @@
 
   const form = createConfigForm()
   const ss = form.saveState
+
+  // NumberInput emits null when a field is cleared to empty; every one of
+  // these is shown blank (no numeric fallback), so clearing must not write
+  // a literal null — matching the mqtt_port/divert-tuning fixes.
+  function saveShaperField(
+    name: 'current_shaper_max_pwr' | 'current_shaper_min_pause_time' | 'current_shaper_data_maxinterval' | 'current_shaper_smoothing_time',
+    v: number | null,
+  ): void {
+    if (v !== null) form.saveField(name, v)
+  }
 </script>
 
 <ConfigPage title={$_('config.pages.shaper')}>
@@ -41,7 +51,7 @@
         value={$config_store?.current_shaper_max_pwr ?? null}
         placeholder="9000"
         revert={form.revert}
-        onchange={(v) => form.saveField('current_shaper_max_pwr', v)}
+        onchange={(v) => saveShaperField('current_shaper_max_pwr', v)}
       />
     </FormField>
     <FormField label={$_('config.shaper.live_topic')} status={$ss.mqtt_live_pwr ?? 'idle'}>
@@ -59,7 +69,7 @@
         max={60}
         placeholder="5"
         revert={form.revert}
-        onchange={(v) => form.saveField('current_shaper_min_pause_time', v)}
+        onchange={(v) => saveShaperField('current_shaper_min_pause_time', v)}
       />
     </FormField>
     <FormField
@@ -73,7 +83,7 @@
         max={300}
         placeholder="120"
         revert={form.revert}
-        onchange={(v) => form.saveField('current_shaper_data_maxinterval', v)}
+        onchange={(v) => saveShaperField('current_shaper_data_maxinterval', v)}
       />
     </FormField>
     <FormField
@@ -86,7 +96,7 @@
         min={0}
         max={600}
         revert={form.revert}
-        onchange={(v) => form.saveField('current_shaper_smoothing_time', v)}
+        onchange={(v) => saveShaperField('current_shaper_smoothing_time', v)}
       />
     </FormField>
   </ConfigSection>

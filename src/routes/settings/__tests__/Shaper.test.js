@@ -58,4 +58,24 @@ describe('Shaper page', () => {
       expect(get(uistates_store).alertbox.visible).toBe(true)
     })
   })
+
+  // NumberInput emits null when a field is cleared to empty; every one of
+  // these is shown blank (no numeric fallback), so clearing must not write
+  // a literal null.
+  it('does not save null for a shaper field cleared to empty', async () => {
+    config_store.set({
+      current_shaper_enabled: true, current_shaper_max_pwr: 9000,
+      current_shaper_min_pause_time: 5, current_shaper_data_maxinterval: 120,
+      current_shaper_smoothing_time: 60,
+    })
+    const { getAllByRole } = render(Shaper)
+    const keys = ['current_shaper_max_pwr', 'current_shaper_min_pause_time', 'current_shaper_data_maxinterval', 'current_shaper_smoothing_time']
+    const numbers = getAllByRole('spinbutton')
+    for (const [i, key] of keys.entries()) {
+      httpAPI.mockClear()
+      await fireEvent.input(numbers[i], { target: { value: '' } })
+      await fireEvent.blur(numbers[i])
+      expect(httpAPI).not.toHaveBeenCalledWith('POST', '/config', expect.stringContaining(key))
+    }
+  })
 })
