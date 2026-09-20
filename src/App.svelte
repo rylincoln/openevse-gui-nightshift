@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte'
   import { setupI18n } from './lib/i18n/index'
   import { theme } from './lib/stores/theme'

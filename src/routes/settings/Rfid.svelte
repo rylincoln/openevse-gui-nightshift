@@ -1,5 +1,5 @@
 <!-- src/routes/settings/Rfid.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { onMount } from 'svelte'
   import { config_store } from '../../lib/stores/config'
@@ -28,7 +28,7 @@
   let alreadyRegistered = $derived(scanned !== '' && tags.includes(scanned))
 
   let labsOn = $derived(!!$uisettings_store?.dev_features)
-  let editingUid = $state(null)
+  let editingUid = $state<string | null>(null)
   let editingInitial = $state('')
   let editBusy = $state(false)
 
@@ -38,33 +38,33 @@
     if (labsOn) rfid_users_store.download()
   })
 
-  async function scan() {
-    const res = await serialQueue.add(() => httpAPI('GET', '/rfid/add', null, 'txt', 60000))
+  async function scan(): Promise<void> {
+    const res = await serialQueue.add(() => httpAPI('GET', '/rfid/add', null, 'text', 60000))
     if (!res || res === 'error') showWriteError()
   }
-  function saveTags(next) {
+  function saveTags(next: string[]): Promise<boolean> {
     return form.saveField('rfid_storage', serializeTags(next))
   }
-  function register() {
+  function register(): void {
     if (scanned) saveTags(addTag(tags, scanned))
   }
-  function remove(tag) {
+  function remove(tag: string): void {
     saveTags(removeTag(tags, tag))
   }
-  function removeAll() {
+  function removeAll(): void {
     saveTags([])
   }
 
-  function openNameEditor(uid) {
+  function openNameEditor(uid: string): void {
     editingUid = uid
     editingInitial = $rfid_users_store.users[uid] ?? ''
   }
-  function closeNameEditor() {
+  function closeNameEditor(): void {
     if (editBusy) return
     editingUid = null
     editingInitial = ''
   }
-  async function saveName(name) {
+  async function saveName(name: string): Promise<void> {
     if (!editingUid) return
     editBusy = true
     const ok = await rfid_users_store.save(editingUid, name)
@@ -72,7 +72,7 @@
     if (ok) closeNameEditor()
     else showWriteError()
   }
-  async function removeName() {
+  async function removeName(): Promise<void> {
     if (!editingUid) return
     editBusy = true
     const ok = await rfid_users_store.remove(editingUid)

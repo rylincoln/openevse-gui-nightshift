@@ -1,9 +1,10 @@
-<script>
+<script lang="ts">
   import { hardMaxCurrent } from '../lib/utils'
   import { _ } from 'svelte-i18n'
   import { schedule_store } from '../lib/stores/schedule'
   import { limit_store } from '../lib/stores/limit'
   import { config_store } from '../lib/stores/config'
+  import type { ConfigState } from '../lib/stores/config'
   import { status_store } from '../lib/stores/status'
   import { override_store } from '../lib/stores/override'
   import { claims_target_store } from '../lib/stores/claims_target'
@@ -13,7 +14,10 @@
   import { serialQueue } from '../lib/queue'
   import { showWriteError } from '../lib/alerts'
   import { DAYS } from '../lib/schedule/timers'
-  import { timersToRules, rulesToTimers, ruleDeleteIds, actionToFeatureKey } from '../lib/charge_manager/rules'
+  import {
+    timersToRules, rulesToTimers, ruleDeleteIds, actionToFeatureKey,
+    type Rule, type RuleLimit,
+  } from '../lib/charge_manager/rules'
   import { vehicleLimitAvailability } from '../lib/charge_manager/vehicle'
   import { allRequiredSafetyChecksOn } from '../lib/config/safety'
   import GlobalSection from '../lib/components/charge_manager/GlobalSection.svelte'
@@ -23,21 +27,32 @@
   import DefaultStateSettingsModal from '../lib/components/charge_manager/DefaultStateSettingsModal.svelte'
   import RuleModal from '../lib/components/charge_manager/RuleModal.svelte'
   import ManagerTab from '../lib/components/monitoring/ManagerTab.svelte'
+  import type { Config, LimitType } from '../lib/api/device'
+
+  // `_prevAction` is read only here (never round-tripped through Rule's own
+  // module), so it stays a local extension rather than widening Rule for one
+  // caller — see RuleModal's `RuleSave` for the matching shape on the way back.
+  type EditableRule = Rule & { _prevAction?: string }
 
   // ── Derived from stores ───────────────────────────────────────────────────
   let rules          = $derived(timersToRules(Array.isArray($schedule_store) ? $schedule_store : []))
   // Map each client id to its actual runtime claim priority (from /claims), so
   // the Claims Manager shows the real priority (e.g. timer shaper = 1100).
-  let priorityByClient = $derived(
+  let priorityByClient: Record<number, number> = $derived(
     Array.isArray($claims_store)
       ? Object.fromEntries($claims_store.map((c) => [c.client, c.priority]))
       : {}
   )
   let claims         = $derived(claimRows($claims_target_store, priorityByClient))
   // Firmware's currently-active schedule event (drives the rule's Active badge).
-  let activeEventId  = $derived($plan_store?.current_event?.id ?? null)
+  let activeEventId  = $derived(
+    $plan_store?.current_event ? $plan_store.current_event.id : null,
+  )
   let limit          = $derived($limit_store ?? { type: 'none', value: 0, auto_release: true })
-  let limitDefaultType  = $derived($config_store?.limit_default_type || 'none')
+  // limit_default_type is a plain string in Config (it can be '' before the
+  // firmware ever sets one); the app only ever writes/reads one of the
+  // LimitType values through it, same as limit_store's own `type` field.
+  let limitDefaultType = $derived(($config_store?.limit_default_type || 'none') as LimitType)
   let limitDefaultValue = $derived(Number($config_store?.limit_default_value ?? 0))
   let divertEnabled  = $derived(!!$config_store?.divert_enabled)
   let shapingEnabled = $derived(!!$config_store?.current_shaper_enabled)
@@ -91,7 +106,7 @@
   // shaping=1100/5000, session_limit=1100, ocpp=1050, rfid=1030, eco_divert=50
   const FEATURE_PRIORITY_ORDER = ['shaping', 'session_limit', 'ocpp', 'rfid', 'eco_divert']
 
-  const FEATURE_ACTIVE = {
+  const FEATURE_ACTIVE: Record<string, () => boolean> = {
     shaping:       () => shapingEnabled,
     session_limit: () => limitDefaultType !== 'none',
     ocpp:          () => ocppEnabled,
@@ -114,15 +129,15 @@
 
   // ── UI state ──────────────────────────────────────────────────────────────
   let busy         = $state(false)
-  let removingId   = $state(null)   // scheduled rule being deleted
-  let removingKey  = $state(null)   // global feature being deleted
+  let removingId   = $state<string | null>(null)   // scheduled rule being deleted
+  let removingKey  = $state<string | null>(null)   // global feature being deleted
   let pickerOpen   = $state(false)
   let editorOpen   = $state(false)
-  let editingRule  = $state(null)
+  let editingRule  = $state<EditableRule | null>(null)
   let settingsOpen = $state(false)   // Default State settings page
 
   // ── Action mapping ────────────────────────────────────────────────────────
-  function featureKeyToAction(key) {
+  function featureKeyToAction(key: string): string {
     if (key === 'eco_divert') return 'eco_divert'
     if (key === 'shaping')    return 'shaper'
     if (key === 'rfid')       return 'rfid'
@@ -132,7 +147,7 @@
 
   // ── Modal open ────────────────────────────────────────────────────────────
   /** Picker selected a key — open modal pre-configured. */
-  function openPickerResult(key) {
+  function openPickerResult(key: string): void {
     if (key === 'schedule') {
       editingRule = {
         id: null, alwaysOn: false, action: 'charge',
@@ -155,7 +170,7 @@
   }
 
   /** Edit icon on a GlobalFeatureCard. */
-  function openGlobalEdit(key) {
+  function openGlobalEdit(key: string): void {
     const action = featureKeyToAction(key)
     editingRule = {
       id: 'global_' + key, alwaysOn: true, action,
@@ -169,13 +184,13 @@
   }
 
   /** Edit icon on a RuleCard. */
-  function openRuleEdit(rule) {
+  function openRuleEdit(rule: Rule): void {
     editingRule = rule
     editorOpen = true
   }
 
   // ── Always-on API helpers ─────────────────────────────────────────────────
-  async function applyAlwaysOnAction(action, rule) {
+  async function applyAlwaysOnAction(action: string, rule: EditableRule): Promise<boolean> {
     switch (action) {
       case 'eco_divert':
         return await serialQueue.add(() => config_store.saveParam('divert_enabled', true))
@@ -189,12 +204,13 @@
         // Session limit: a missing/zero limit writes nothing — report it as a
         // failure instead of pretending the save happened. (The modal already
         // validates this; this is the backstop.)
-        if (!(rule.limit && rule.limit.type !== 'none' && rule.limit.value > 0)) return false
+        const limit: RuleLimit | null = rule.limit
+        if (!(limit && limit.type !== 'none' && limit.value > 0)) return false
         let ok = await serialQueue.add(() =>
-          config_store.saveParam('limit_default_type', rule.limit.type)
+          config_store.saveParam('limit_default_type', limit.type)
         )
         if (ok) ok = await serialQueue.add(() =>
-          config_store.saveParam('limit_default_value', rule.limit.value)
+          config_store.saveParam('limit_default_value', limit.value)
         )
         if (ok) await serialQueue.add(() => limit_store.download())
         return ok
@@ -202,7 +218,7 @@
     }
   }
 
-  async function clearAlwaysOnAction(action) {
+  async function clearAlwaysOnAction(action: string): Promise<boolean> {
     switch (action) {
       case 'eco_divert':
         return await serialQueue.add(() => config_store.saveParam('divert_enabled', false))
@@ -225,7 +241,7 @@
   }
 
   // ── Single-param config save (busy-guarded) ───────────────────────────────
-  async function saveConfigParam(name, val) {
+  async function saveConfigParam<K extends keyof Config>(name: K, val: Config[K]): Promise<void> {
     if (busy) return
     busy = true
     try {
@@ -237,17 +253,17 @@
   }
 
   // ── Default state ─────────────────────────────────────────────────────────
-  const saveDefaultState   = (active) => saveConfigParam('default_state', active)
-  const saveDefaultCurrent = (amps)   => saveConfigParam('max_current_soft', amps)
+  const saveDefaultState   = (active: boolean) => saveConfigParam('default_state', active)
+  const saveDefaultCurrent = (amps: number)   => saveConfigParam('max_current_soft', amps)
 
   // ── Safety toggles (Default State card) ───────────────────────────────────
-  const saveBootLock = (enabled) => saveConfigParam('boot_lock', enabled)
+  const saveBootLock = (enabled: boolean) => saveConfigParam('boot_lock', enabled)
   // 0 means "disabled" throughout the stack, so route it through the same
   // path as the toggle (also zeroes the fail current and flips the toggle).
-  const saveHeartbeatInterval = (sec) => (sec > 0 ? saveConfigParam('heartbeat_interval', sec) : saveHeartbeat(false))
-  const saveHeartbeatCurrent  = (amps) => saveConfigParam('heartbeat_current', amps)
+  const saveHeartbeatInterval = (sec: number | null) => ((sec ?? 0) > 0 ? saveConfigParam('heartbeat_interval', sec as number) : saveHeartbeat(false))
+  const saveHeartbeatCurrent  = (amps: number) => saveConfigParam('heartbeat_current', amps)
 
-  async function saveHeartbeat(enabled) {
+  async function saveHeartbeat(enabled: boolean): Promise<void> {
     if (busy) return
     busy = true
     try {
@@ -257,12 +273,12 @@
         ? {
             heartbeat_interval: 5,
             heartbeat_current: ($config_store?.heartbeat_current ?? 0) > 0
-              ? $config_store.heartbeat_current
+              ? $config_store?.heartbeat_current
               : 6,
           }
         : { heartbeat_interval: 0, heartbeat_current: 0 }
       const ok = await serialQueue.add(() => config_store.upload(fields))
-      if (ok) config_store.update((c) => ({ ...c, ...fields }))
+      if (ok) config_store.update((c) => ({ ...c, ...fields }) as ConfigState)
       else showWriteError()
     } finally {
       busy = false
@@ -274,15 +290,15 @@
   // one synchronous burst (TempProtectionCard pushes the crossed thumb along),
   // and the guard would silently drop the second save. serialQueue already
   // serializes the writes, matching how Safety.svelte drives the same card.
-  async function saveTempParam(name, degC) {
+  async function saveTempParam(name: 'temp_throttle_setpoint' | 'over_temp_shutdown', degC: number): Promise<void> {
     const ok = await serialQueue.add(() => config_store.saveParam(name, degC))
     if (!ok) showWriteError()
   }
-  const saveTempThrottle = (degC) => saveTempParam('temp_throttle_setpoint', degC)
-  const saveTempPanic    = (degC) => saveTempParam('over_temp_shutdown', degC)
+  const saveTempThrottle = (degC: number) => saveTempParam('temp_throttle_setpoint', degC)
+  const saveTempPanic    = (degC: number) => saveTempParam('over_temp_shutdown', degC)
 
   // ── Remove global feature (trash icon on GlobalFeatureCard) ───────────────
-  async function removeGlobalFeature(key) {
+  async function removeGlobalFeature(key: string): Promise<void> {
     if (busy) return
     busy = true
     removingKey = key
@@ -296,7 +312,7 @@
   }
 
   // ── Unified save from RuleModal ───────────────────────────────────────────
-  async function saveCard(rule) {
+  async function saveCard(rule: EditableRule): Promise<void> {
     if (busy) return
     busy = true
     try {
@@ -308,7 +324,7 @@
         // timer pair (if it was scheduled) plus any other scheduled rule for the
         // same feature, so making it always-on removes its schedule.
         const featureKey = actionToFeatureKey(rule.action)
-        const toDelete = new Set()
+        const toDelete = new Set<number>()
         if (wasScheduled) ruleDeleteIds(rule).forEach((id) => toDelete.add(id))
         if (featureKey) {
           for (const r of rules) {
@@ -370,8 +386,19 @@
     }
   }
 
+  // Mirrors RuleModal's own (unexported) RuleSave, plus the `_prevAction`
+  // extension: RuleModal's save() spreads the Rule object we handed it as
+  // `editingRule` into this payload, so _prevAction survives at runtime even
+  // though RuleSave's own declared type (in RuleModal, which knows nothing
+  // about our local extension) doesn't carry it statically.
+  type RuleSave = Omit<Rule, 'id'> & { id?: string | null; _prevAction?: string }
+  function handleRuleSave(rule: RuleSave): void {
+    editorOpen = false
+    saveCard(rule as EditableRule)
+  }
+
   // ── Delete scheduled rule ────────────────────────────────────────────────
-  async function deleteRule(rule) {
+  async function deleteRule(rule: Rule): Promise<void> {
     if (busy) return
     busy = true
     removingId = rule.id
@@ -482,7 +509,7 @@
   onBootLockChange={saveBootLock}
   onHeartbeatChange={saveHeartbeat}
   onclose={() => (editorOpen = false)}
-  onsave={(rule) => { editorOpen = false; saveCard(rule) }}
+  onsave={handleRuleSave}
 />
 
 <DefaultStateSettingsModal

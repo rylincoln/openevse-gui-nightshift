@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { navigate } from '../lib/router'
   import Button from '../lib/components/ui/Button.svelte'

@@ -1,5 +1,5 @@
 <!-- src/routes/settings/Solar.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
@@ -31,8 +31,11 @@
     { value: 'custom', label: $_('config.solar.preset_custom') },
   ])
 
-  function applyPreset(id) {
-    const values = presetValues(id)
+  // SegmentedControl emits string | number (its value union is shared with
+  // Select); every preset option here is string-valued, so this is always a
+  // string — named so the narrowing lives in the script, not the markup.
+  function applyPreset(id: string | number): void {
+    const values = presetValues(String(id))
     if (values) form.saveFields(values)
   }
 </script>

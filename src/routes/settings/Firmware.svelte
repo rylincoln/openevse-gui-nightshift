@@ -1,8 +1,8 @@
 <!-- src/routes/settings/Firmware.svelte -->
-<script>
+<script lang="ts">
   import { _, } from 'svelte-i18n'
   import { onMount } from 'svelte'
-  import { classifyReleases, findAsset, updateAvailable, fetchReleases }
+  import { classifyReleases, findAsset, updateAvailable, fetchReleases, type GitHubAsset, type GitHubRelease }
     from '../../lib/config/firmware'
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
@@ -18,17 +18,28 @@
   import Button from '../../lib/components/ui/Button.svelte'
   import ProgressBar from '../../lib/components/ui/ProgressBar.svelte'
   import Modal from '../../lib/components/ui/Modal.svelte'
+  import type { Config } from '../../lib/api/device'
+
+  interface Channel {
+    key: 'release' | 'prerelease' | 'daily'
+    rel: GitHubRelease | null
+  }
+  interface ChannelRow {
+    key: 'release' | 'prerelease' | 'daily'
+    version: string
+    asset: GitHubAsset | null
+  }
 
   let busy = $state(false)
   let confirmReset = $state(false)
-  let firmwareFile = $state(null)
+  let firmwareFile = $state<File | null>(null)
   let uploading = $state(false)
   // The currently-pending install confirmation, or null if no dialog is open.
   // Carries the channel + asset so the dialog can show the version it'll flash.
-  let pendingInstall = $state(null)
+  let pendingInstall = $state<ChannelRow | null>(null)
   // The last install attempted — kept so the Retry button after a failed OTA
   // can re-fire confirmInstall() with the same channel/asset.
-  let lastInstall = $state(null)
+  let lastInstall = $state<ChannelRow | null>(null)
   // The user clicked "Close" on a failed OTA modal. We hide the modal until
   // a new install fires (which clears this) or the device pushes a different
   // ota state.
@@ -63,7 +74,7 @@
   })
 
   // ── online (GitHub) updates ─────────────────────────────────────────────
-  let releases = $state(null) // null = loading, [] = failed/empty
+  let releases = $state<GitHubRelease[] | null>(null) // null = loading, [] = failed/empty
   let buildenv = $derived($config_store?.buildenv ?? '')
   let installed = $derived($config_store?.version ?? '')
 
@@ -74,13 +85,14 @@
   let channels = $derived(() => {
     if (!releases) return []
     const c = classifyReleases(releases)
-    return [
+    const list: Channel[] = [
       { key: 'release', rel: c.release },
       { key: 'prerelease', rel: c.prerelease },
       { key: 'daily', rel: c.daily },
     ]
+    return list
       .filter(({ rel }) => rel) // skip a channel entirely if GitHub had no release for it
-      .map(({ key, rel }) => ({
+      .map(({ key, rel }): ChannelRow => ({
         key,
         version: rel?.name ?? rel?.tag_name ?? '',
         asset: findAsset(rel, buildenv),
@@ -94,7 +106,7 @@
   let installedIsRelease = $derived(/^v\d+\.\d+/.test(installed))
 
   /** True when this channel's published version matches what's installed. */
-  function isInstalled(ch) {
+  function isInstalled(ch: ChannelRow): boolean {
     return ch.key === 'release' && installedIsRelease && !updateAvailable(ch.version, installed)
   }
 
@@ -108,17 +120,17 @@
     releases = await fetchReleases()
   })
 
-  function requestInstall(ch) {
+  function requestInstall(ch: ChannelRow): void {
     pendingInstall = ch
   }
 
-  function retryInstall() {
+  function retryInstall(): void {
     if (!lastInstall) return
     pendingInstall = lastInstall
     confirmInstall()
   }
 
-  async function confirmInstall() {
+  async function confirmInstall(): Promise<void> {
     const ch = pendingInstall
     pendingInstall = null
     if (!ch || uploading) return
@@ -126,8 +138,12 @@
     failedDismissed = false  // user is trying again — reopen the progress modal
     uploading = true
     try {
+      // The button that calls requestInstall() only renders when ch.asset is
+      // set, so this is always non-null in practice; the `!` mirrors the
+      // original JS's unguarded `ch.asset.browser_download_url`, including
+      // its throw-into-catch behaviour if that ever isn't true.
       const res = await serialQueue.add(() =>
-        httpAPI('POST', '/update', JSON.stringify({ url: ch.asset.browser_download_url })),
+        httpAPI<{ msg: string }>('POST', '/update', JSON.stringify({ url: ch.asset!.browser_download_url })),
       )
       if (!res || res === 'error') {
         showWriteError()
@@ -143,12 +159,12 @@
     }
   }
 
-  async function restart(device) {
+  async function restart(device: 'evse' | 'gateway'): Promise<void> {
     if (busy) return
     busy = true
     try {
       const res = await serialQueue.add(() =>
-        httpAPI('POST', '/restart', JSON.stringify({ device })),
+        httpAPI<{ msg: string }>('POST', '/restart', JSON.stringify({ device })),
       )
       if (!res || res === 'error') showWriteError()
     } finally {
@@ -156,13 +172,13 @@
     }
   }
 
-  async function factoryReset() {
+  async function factoryReset(): Promise<void> {
     confirmReset = false
-    const res = await serialQueue.add(() => httpAPI('GET', '/reset'))
+    const res = await serialQueue.add(() => httpAPI<{ msg: string }>('GET', '/reset'))
     if (!res || res === 'error') showWriteError()
   }
 
-  async function uploadFirmware() {
+  async function uploadFirmware(): Promise<void> {
     if (!firmwareFile || uploading) return
     uploading = true
     serialQueue.pause()
@@ -189,7 +205,7 @@
     }
   }
 
-  function backupConfig() {
+  function backupConfig(): void {
     const clean = sanitizeConfig($config_store)
     const blob = new Blob([JSON.stringify(clean, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
@@ -199,8 +215,8 @@
     URL.revokeObjectURL(a.href)
   }
 
-  async function restoreConfig(e) {
-    const file = e.currentTarget.files?.[0]
+  async function restoreConfig(e: Event): Promise<void> {
+    const file = (e.currentTarget as HTMLInputElement).files?.[0]
     if (!file) return
     const text = await file.text()
     const parsed = JSONTryParse(text)
@@ -208,7 +224,9 @@
       showWriteError()
       return
     }
-    const ok = await serialQueue.add(() => config_store.upload(parsed))
+    // File-upload boundary: the JSON came from disk, not the device, so its
+    // shape is genuinely unknown until upload() round-trips it.
+    const ok = await serialQueue.add(() => config_store.upload(parsed as Partial<Config>))
     if (!ok) showWriteError()
   }
 </script>
