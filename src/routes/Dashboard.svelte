@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { fade } from 'svelte/transition'
   import { status_store } from '../lib/stores/status'
@@ -30,12 +30,19 @@
   import ShaperDivertRow from '../lib/components/dashboard/ShaperDivertRow.svelte'
   import LoadSharingCard from '../lib/components/dashboard/LoadSharingCard.svelte'
   import ThrottleBadge from '../lib/components/dashboard/ThrottleBadge.svelte'
-  import { selectedSegment } from '../lib/dashboard/controls'
+  import { selectedSegment, type ControlSegment } from '../lib/dashboard/controls'
   import ChargeControls from '../lib/components/dashboard/ChargeControls.svelte'
   import BoostCard from '../lib/components/dashboard/BoostCard.svelte'
   import RatePill from '../lib/components/dashboard/RatePill.svelte'
   import ChargeLimitCard from '../lib/components/dashboard/ChargeLimitCard.svelte'
   import AdvisoryStrip from '../lib/components/notifications/AdvisoryStrip.svelte'
+  import type { Limit, LimitType } from '../lib/api/device'
+
+  // Matches PowerRing's own (unexported) I18nValues: the reason/detail
+  // objects below are always plain svelte-i18n interpolation data (strings,
+  // numbers) even though connectedReason()'s own return type keeps `values`
+  // as Record<string, unknown> to stay agnostic of any one caller's needs.
+  type I18nValues = Record<string, string | number | boolean | Date | null | undefined>
 
   let busy = $state(false)
   let rateNonce = $state(0)
@@ -78,6 +85,11 @@
     limitTripped
       ? { key: 'dashboard.reason.limit_reached', values: { value: formatLimit($limit_store) } }
       : connectedReason(mode, $plan_store, claimOwner ? clientid2name(claimOwner) : ''),
+  )
+  // PowerRing wants the narrower I18nValues shape; see the type's comment above.
+  let reasonValues: I18nValues = $derived(reason.values as I18nValues)
+  let reasonDetail: { key: string; values: I18nValues } | null = $derived(
+    reason.detail ? { key: reason.detail.key, values: reason.detail.values as I18nValues } : null,
   )
 
   let kw = $derived((($status_store?.power ?? 0) / 1000).toFixed(1))
@@ -173,7 +185,7 @@
     }),
   )
 
-  function formatLimit(l) {
+  function formatLimit(l: Limit | null | undefined): string {
     if (!l || !l.type || l.type === 'none') return ''
     if (l.type === 'time') return sec2time(l.value * 60)
     if (l.type === 'energy') return `${round(l.value / 1000, 1)} kWh`
@@ -187,19 +199,22 @@
     $status_store?.battery_level !== undefined && $status_store?.battery_level !== null,
   )
   let vehicleLimit = $derived(
-    Number.isFinite($status_store?.vehicle_charge_limit) ? $status_store.vehicle_charge_limit : null,
+    typeof $status_store?.vehicle_charge_limit === 'number' &&
+      Number.isFinite($status_store.vehicle_charge_limit)
+      ? $status_store.vehicle_charge_limit
+      : null,
   )
   let maxRange = $derived(estMaxRange($status_store?.battery_range, $status_store?.battery_level))
   // The bar owns soc + range limits; the row owns time + energy.
   let barLimitActive = $derived(socRangeLimit)
   // Display unit: follows the active range limit by default; the toggle overrides.
-  let userUnit = $state(null)
+  let userUnit = $state<'percent' | 'range' | null>(null)
   let limitUnit = $derived(userUnit ?? ($limit_store?.type === 'range' ? 'range' : 'percent'))
   // Knob position is always a percent. Map the active limit back to a percent.
   let socTarget = $derived(
     $limit_store?.type === 'soc'
       ? $limit_store.value
-      : $limit_store?.type === 'range' && Number.isFinite(maxRange)
+      : $limit_store?.type === 'range' && maxRange !== null
         ? // clamp: a stale range limit above a shrunken max-range estimate must
           // not map past 100% (the knob would then auto-clear on first touch)
           Math.round(Math.min(100, ($limit_store.value / maxRange) * 100))
@@ -209,7 +224,7 @@
   let socNonce = $state(0)
 
   // ── actions (all writes serialized) ─────────────────────────────────────
-  async function setSegment(seg) {
+  async function setSegment(seg: ControlSegment): Promise<void> {
     if (busy) return
     busy = true
     try {
@@ -258,7 +273,7 @@
     }
   }
 
-  async function setChargeAmps(val) {
+  async function setChargeAmps(val: number): Promise<void> {
     if (busy) return
     busy = true
     try {
@@ -283,7 +298,7 @@
 
   // Inline editors commit device-unit values; 0 means clear. A system limit
   // is never DELETEd from here — snap the card back instead (shipped rule).
-  async function setInlineLimit({ type, value }) {
+  async function setInlineLimit({ type, value }: { type: LimitType; value: number }): Promise<void> {
     if (busy) return
     if (!value) {
       if (systemLimit) {
@@ -306,7 +321,7 @@
     }
   }
 
-  async function clearLimit() {
+  async function clearLimit(): Promise<void> {
     const ok = await serialQueue.add(() => limit_store.remove())
     if (!ok) {
       showWriteError()
@@ -316,7 +331,7 @@
 
   // Snap-to-clear: a knob at/above the vehicle limit means "no limit". Below it,
   // write a soc or range limit depending on the active display unit.
-  async function setTarget(pct) {
+  async function setTarget(pct: number): Promise<void> {
     if (busy) return
     busy = true
     try {
@@ -331,8 +346,8 @@
           ok = barLimitActive ? await serialQueue.add(() => limit_store.remove()) : true
         }
       } else {
-        const data =
-          limitUnit === 'range' && Number.isFinite(maxRange)
+        const data: Limit =
+          limitUnit === 'range' && maxRange !== null
             ? { type: 'range', value: Math.round((pct / 100) * maxRange), auto_release: true }
             : { type: 'soc', value: pct, auto_release: true }
         ok = await serialQueue.add(() => limit_store.upload(data))
@@ -367,17 +382,17 @@
   // uses. Hidden (not just disabled) when absent; the 422 backstop still runs.
   let canRange = $derived(hasSoc && Number.isFinite(maxRange))
 
-  async function armBoost({ type, value }) {
+  async function armBoost({ type, value }: { type: LimitType; value: number }): Promise<void> {
     if (busy) return
     busy = true
     try {
       const res = await serialQueue.add(() => boost_store.upload({ type, value }))
-      if (res && res.msg === 'done') {
+      if (res && res !== 'error' && res.msg === 'done') {
         // Reconcile from the device rather than trusting the 201: an
         // already-met soc/range target also returns 201 but leaves nothing
         // running, so flipping to "active" here would show a ghost boost.
         await serialQueue.add(boost_store.download)
-      } else if (res && res.msg) {
+      } else if (res && res !== 'error' && res.msg) {
         showBoostError(res.msg) // 422 (no vehicle source) / 400 (bad value)
       } else {
         showWriteError() // network / parse failure
@@ -387,7 +402,7 @@
     }
   }
 
-  async function cancelBoost() {
+  async function cancelBoost(): Promise<void> {
     if (busy) return
     busy = true
     try {
@@ -485,8 +500,8 @@
         {kw}
         maxKw={charging ? maxKw : ''}
         reasonKey={reason.key}
-        reasonValues={reason.values}
-        reasonDetail={reason.detail ?? null}
+        {reasonValues}
+        {reasonDetail}
         faultText={getStateDesc($status_store?.state) ?? ''}
       />
     </div>

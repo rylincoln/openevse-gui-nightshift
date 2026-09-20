@@ -69,7 +69,7 @@ describe('RFID page', () => {
     config_store.set({ rfid_enabled: true, rfid_storage: '' })
     const { getByText } = render(Rfid)
     await fireEvent.click(getByText('config.rfid.scan'))
-    expect(httpAPI).toHaveBeenCalledWith('GET', '/rfid/add', null, 'txt', 60000)
+    expect(httpAPI).toHaveBeenCalledWith('GET', '/rfid/add', null, 'text', 60000)
   })
 
   it('registers a freshly scanned tag', async () => {

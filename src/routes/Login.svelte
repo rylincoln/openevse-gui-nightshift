@@ -10,7 +10,7 @@
   session cookie and we return to the dashboard, where the normal data
   fetch retries — now authenticated.
 -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { redirect } from '../lib/router'
   import Card from '../lib/components/ui/Card.svelte'

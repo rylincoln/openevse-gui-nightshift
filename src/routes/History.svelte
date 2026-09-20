@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { onMount } from 'svelte'
   import { history_store } from '../lib/stores/history'
@@ -10,7 +10,7 @@
   import { formatDate, getStateDesc } from '../lib/utils'
   import {
     pageRange, logTypeIcon, logTypeTone, logStateInfo, logEnergyKwh, logTempC,
-    logPilotAmps, logReason,
+    logPilotAmps, logReason, type LogReason, type LogRowModel,
   } from '../lib/history/logs'
   import { isKnownAdvisory } from '../lib/notifications/notifications'
   import { formatTemp } from '../lib/temperature'
@@ -19,33 +19,41 @@
   import Button from '../lib/components/ui/Button.svelte'
   import ProgressBar from '../lib/components/ui/ProgressBar.svelte'
   import LogList from '../lib/components/history/LogList.svelte'
+  import type { LogEntry } from '../lib/api/device'
 
-  let phase = $state('loading')
+  // GET /logs's page-index response — only this page reads it.
+  interface LogsIndex {
+    min?: number
+    max?: number
+    msg?: string
+  }
+
+  let phase = $state<'loading' | 'error' | 'ready'>('loading')
   let progress = $state(0)
 
   // Resolve the "User" cell for one log entry from the RFID name map.
-  function userTextFor(entry) {
+  function userTextFor(entry: LogEntry | undefined): string {
     const uid = entry?.rfidTag
     if (!uid) return '—'
     return $rfid_users_store.users[uid] ?? uid
   }
 
   // Translate a logReason() descriptor into display text. null → no reason line.
-  function reasonTextFor(reason) {
+  function reasonTextFor(reason: LogReason | null): string | null {
     if (!reason || reason.code === 'periodic') return null
     if (reason.code === 'notification') {
       // Advisory ids are stable and locale-independent; the prose is ours, and
       // it is the same prose the bell panel shows. A row written by a firmware
       // that added an id this build has no copy for falls back to the raw id
       // rather than a missing-key placeholder.
-      const id = reason.params?.id ?? ''
+      const id = String(reason.params?.id ?? '')
       const advisory = isKnownAdvisory(id) ? $_('notifications.title.' + id) : id
       return $_('history.reason.notification', { values: { advisory } })
     }
     return $_('history.reason.' + reason.code, { values: reason.params ?? {} })
   }
 
-  let rows = $derived(
+  let rows: LogRowModel[] = $derived(
     (Array.isArray($history_store) ? $history_store : []).map((e, i, arr) => {
       const state = logStateInfo(e.evseState)
       const t = formatTemp(logTempC(e), $config_store?.temp_unit ?? 'c')
@@ -77,7 +85,7 @@
     }),
   )
 
-  function exportCsv() {
+  function exportCsv(): void {
     // Hit the dev proxy when running under vite (/api/* → /*) and the bare
     // device path in production. Same pattern as the v2 PR. Letting the
     // browser drive the download keeps the streamed CSV out of memory.
@@ -90,11 +98,11 @@
     setTimeout(() => link.remove(), 100)
   }
 
-  async function load() {
+  async function load(): Promise<void> {
     phase = 'loading'
     progress = 0
     try {
-      const index = await serialQueue.add(() => httpAPI('GET', '/logs'))
+      const index = await serialQueue.add(() => httpAPI<LogsIndex>('GET', '/logs'))
       if (
         !index || index === 'error' || index.msg === 'error' ||
         typeof index.min !== 'number' || typeof index.max !== 'number'

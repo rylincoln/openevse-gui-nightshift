@@ -1,5 +1,5 @@
 <!-- src/routes/settings/Mqtt.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
@@ -18,6 +18,14 @@
   import Select from '../../lib/components/ui/Select.svelte'
   import Toggle from '../../lib/components/ui/Toggle.svelte'
   import Button from '../../lib/components/ui/Button.svelte'
+  import type { Status } from '../../lib/api/device'
+
+  // GET /mqtt's response shape — the same fields the WebSocket carries on
+  // Status, reused rather than duplicated.
+  type MqttStatus = Partial<Pick<Status,
+    | 'mqtt_connected' | 'mqtt_status' | 'mqtt_broker_ip' | 'mqtt_broker_version'
+    | 'mqtt_connected_since' | 'mqtt_last_rx' | 'mqtt_error' | 'mqtt_error_detail'
+  >>
 
   const form = createConfigForm()
   const ss = form.saveState
@@ -36,12 +44,12 @@
 
   // ── Live MQTT status (polled + WebSocket merged) ─────────────────────────
   // Polled snapshot from GET /mqtt — authoritative; merges every 10 s
-  let mqttData = $state(null)
+  let mqttData = $state<MqttStatus | null>(null)
 
-  async function refreshMqttStatus() {
+  async function refreshMqttStatus(): Promise<void> {
     // The device web server is single-threaded — route through serialQueue so
     // this poll can't collide with concurrent store downloads (see queue.js).
-    const res = await serialQueue.add(() => httpAPI('GET', '/mqtt'))
+    const res = await serialQueue.add(() => httpAPI<MqttStatus>('GET', '/mqtt'))
     // Only accept responses that include mqtt_connected — guards against old
     // firmware returning a generic 404 JSON that would corrupt mqttData.
     if (res && res !== 'error' && 'mqtt_connected' in res) {
@@ -86,19 +94,19 @@
     return 'disconnected'
   })
 
-  const STATUS_COLOR = {
+  const STATUS_COLOR: Record<string, string> = {
     disabled:     'text-text-dim',
     disconnected: 'text-error',
     connecting:   'text-warning',
     connected:    'text-accent',
   }
-  const STATUS_I18N = {
+  const STATUS_I18N: Record<string, string> = {
     disabled:     'config.mqtt.status_disabled',
     disconnected: 'config.mqtt.status_disconnected',
     connecting:   'config.mqtt.status_connecting',
     connected:    'config.mqtt.status_connected',
   }
-  const ERROR_I18N = {
+  const ERROR_I18N: Record<string, string> = {
     auth:        'config.mqtt.err_auth',
     unavailable: 'config.mqtt.err_unavailable',
     id_rejected: 'config.mqtt.err_id_rejected',
@@ -118,7 +126,7 @@
   let errorDetailText = $derived(
     mqttStatus === 'disconnected' && errorDetail && errorDetail !== 'CLOSED'
       ? errorDetail
-      : null,
+      : undefined,
   )
 
   // Connected-since: formatted time + elapsed detail (counts up)
@@ -135,7 +143,7 @@
 
   // Reset MQTT connection: force immediate reconnect and refresh status
   let resetBusy = $state(false)
-  async function resetMqtt() {
+  async function resetMqtt(): Promise<void> {
     if (resetBusy) return
     resetBusy = true
     // Optimistically show "Connecting" while the reset is in-flight

@@ -1,5 +1,5 @@
 <!-- src/routes/settings/Shaper.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'

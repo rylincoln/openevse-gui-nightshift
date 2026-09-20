@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { onMount } from 'svelte'
   import { get } from 'svelte/store'
@@ -65,8 +65,8 @@
       : []),
     // Gated on the config flag as well as the store: the poll above stops when
     // the feature is turned off, but the store keeps its last readings.
-    ...($config_store?.cable_temp && showCableTemp($cabletemp_store)
-      ? [{ group: cableTempMetrics($cabletemp_store, $config_store?.temp_unit ?? 'c'), expanded: desktop }]
+    ...($config_store?.cable_temp && showCableTemp($cabletemp_store ?? undefined)
+      ? [{ group: cableTempMetrics($cabletemp_store ?? undefined, $config_store?.temp_unit ?? 'c'), expanded: desktop }]
       : []),
     { group: serviceMetrics($status_store, $config_store), expanded: desktop },
   ])

@@ -8,7 +8,7 @@
   Step state is local — we don't use URL params because the app's hash
   router only does exact-match lookups (see lib/router.js).
 -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../lib/stores/config'
   import { status_store } from '../lib/stores/status'
@@ -40,7 +40,7 @@
   // state). If the WiFi module can't reach it over serial the device reports
   // evse_connected: 0, and those reads/writes are meaningless — so hold the
   // wizard on this step until comms are restored (gui-nightshift#17).
-  let evseConnected = $derived($status_store?.evse_connected ?? true)
+  let evseConnected = $derived(!!($status_store?.evse_connected ?? true))
   let commsBlocked = $derived(STEPS[step] === 'evse' && !evseConnected)
 
   // Escape hatch: a charger may be genuinely absent (bench-flashing a module,

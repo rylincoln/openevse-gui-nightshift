@@ -1,7 +1,8 @@
 <!-- src/routes/settings/Display.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
+  import type { ConfigState } from '../../lib/stores/config'
   import { createConfigForm } from '../../lib/config/configForm.svelte'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
@@ -23,7 +24,7 @@
   // `tft_standby_brightness` and `lcd_backlight_timeout` are validly 0
   // (backlight off / never sleep) and a truthiness gate would wrongly hide
   // those configurations.
-  let cfg = $derived($config_store ?? {})
+  let cfg: Partial<ConfigState> = $derived($config_store ?? {})
   let hasTft = $derived('tft_theme' in cfg)
   let hasBrightness = $derived('tft_brightness' in cfg)
   let hasStandby = $derived('tft_standby_brightness' in cfg)
@@ -64,8 +65,8 @@
   // blank the backlight on idle.
   let brightness = $derived(cfg.tft_brightness ?? 100)
   let standby = $derived(cfg.tft_standby_brightness ?? 15)
-  let pct = (v) => `${v}%`
-  let standbyFmt = (v) => (v === 0 ? $_('config.display.standby_off') : `${v}%`)
+  let pct = (v: number) => `${v}%`
+  let standbyFmt = (v: number) => (v === 0 ? $_('config.display.standby_off') : `${v}%`)
 
   // Idle timeout, seconds. 0 = never sleep (Never toggle). The slider works in
   // 5–3600s; we remember the last non-zero value so toggling Never off restores
@@ -78,15 +79,25 @@
   })
   let sliderSecs = $derived(never ? lastSecs : timeout)
 
-  function fmtTimeout(secs) {
+  function fmtTimeout(secs: number): string {
     if (secs <= 0) return $_('config.display.never')
     if (secs % 3600 === 0) return `${secs / 3600}h`
     if (secs % 60 === 0) return `${secs / 60}m`
     return `${secs}s`
   }
 
-  function setNever(on) {
+  function setNever(on: boolean): void {
     form.saveField('lcd_backlight_timeout', on ? 0 : lastSecs)
+  }
+
+  // SegmentedControl emits string | number (its value union is shared with
+  // Select); every option here is string-valued, so this is always a string —
+  // named so the narrowing lives in the script, not the markup.
+  function pickTheme(value: string | number): void {
+    form.saveField('tft_theme', String(value))
+  }
+  function pickLcdType(value: string | number): void {
+    form.saveField('lcd_type', String(value))
   }
 </script>
 
@@ -101,7 +112,7 @@
       <SegmentedControl
         options={themeOptions}
         value={theme}
-        onchange={(v) => form.saveField('tft_theme', v)}
+        onchange={pickTheme}
       />
     </FormField>
 
@@ -195,7 +206,7 @@
         <SegmentedControl
           options={lcdTypeOptions}
           value={lcdType}
-          onchange={(v) => form.saveField('lcd_type', v)}
+          onchange={pickLcdType}
         />
       </FormField>
     </ConfigSection>

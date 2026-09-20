@@ -1,5 +1,5 @@
 <!-- src/routes/settings/Certificates.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { certificate_store } from '../../lib/stores/certificates'
   import { serialQueue } from '../../lib/queue'
@@ -9,13 +9,14 @@
   import CertificateModal from '../../lib/components/config/CertificateModal.svelte'
   import Button from '../../lib/components/ui/Button.svelte'
   import IconButton from '../../lib/components/ui/IconButton.svelte'
+  import type { Certificate } from '../../lib/api/device'
 
   let modalOpen = $state(false)
   let busy = $state(false)
 
   let certificates = $derived(Array.isArray($certificate_store) ? $certificate_store : [])
 
-  async function addCertificate(cert) {
+  async function addCertificate(cert: Partial<Certificate>): Promise<void> {
     if (busy) return
     busy = true
     try {
@@ -31,7 +32,7 @@
     }
   }
 
-  async function generateSelfSigned() {
+  async function generateSelfSigned(): Promise<void> {
     if (busy) return
     busy = true
     try {
@@ -48,7 +49,7 @@
     }
   }
 
-  async function remove(id) {
+  async function remove(id: string): Promise<void> {
     if (busy) return
     busy = true
     try {

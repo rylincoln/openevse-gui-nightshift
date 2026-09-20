@@ -1,9 +1,9 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { schedule_store } from '../lib/stores/schedule'
   import { serialQueue } from '../lib/queue'
   import { showWriteError } from '../lib/alerts'
-  import { nextTimerId } from '../lib/schedule/timers'
+  import { nextTimerId, type Timer } from '../lib/schedule/timers'
   import Button from '../lib/components/ui/Button.svelte'
   import TimerList from '../lib/components/schedule/TimerList.svelte'
   import TimerModal from '../lib/components/schedule/TimerModal.svelte'
@@ -11,22 +11,22 @@
   const MAX_TIMERS = 50
 
   let editorOpen = $state(false)
-  let editingTimer = $state(null)
+  let editingTimer = $state<Timer | null>(null)
   let busy = $state(false)
-  let removingId = $state(null)
+  let removingId = $state<number | null>(null)
 
   let timers = $derived(Array.isArray($schedule_store) ? $schedule_store : [])
 
-  function openAdd() {
+  function openAdd(): void {
     editingTimer = null
     editorOpen = true
   }
-  function openEdit(timer) {
+  function openEdit(timer: Timer): void {
     editingTimer = timer
     editorOpen = true
   }
 
-  async function save(data) {
+  async function save(data: Pick<Timer, 'state' | 'time' | 'days'>): Promise<void> {
     if (busy) return
     busy = true
     try {
@@ -45,7 +45,7 @@
     }
   }
 
-  async function remove(id) {
+  async function remove(id: number): Promise<void> {
     if (busy) return
     busy = true
     removingId = id

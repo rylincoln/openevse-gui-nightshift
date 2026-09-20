@@ -1,5 +1,5 @@
 <!-- src/routes/settings/Network.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
@@ -13,7 +13,7 @@
   import { serialQueue } from '../../lib/queue'
   import { httpAPI } from '../../lib/api/httpAPI'
   import { showWriteError } from '../../lib/alerts'
-  import { normalizeNetworks, signalIcon, signalPercent, isSecured } from '../../lib/config/wifi'
+  import { normalizeNetworks, signalIcon, signalPercent, isSecured, type WifiNetwork } from '../../lib/config/wifi'
   import Icon from '../../lib/icons/Icon.svelte'
   import Button from '../../lib/components/ui/Button.svelte'
 
@@ -33,23 +33,23 @@
   )
 
   // ── WiFi scan / join ────────────────────────────────────────────────────
-  let networks = $state([])
+  let networks = $state<WifiNetwork[]>([])
   let scanning = $state(false)
   let scanError = $state(false)
-  let selected = $state(null) // the picked network object
+  let selected = $state<WifiNetwork | null>(null) // the picked network object
   let wifiPass = $state('')
   let manual = $state(false)
   let manualSsid = $state('')
   let joining = $state(false)
   let joined = $state(false)
 
-  async function scanWifi() {
+  async function scanWifi(): Promise<void> {
     if (scanning) return
     scanning = true
     scanError = false
     networks = []
     selected = null
-    const res = await serialQueue.add(() => httpAPI('GET', '/scan'))
+    const res = await serialQueue.add(() => httpAPI<WifiNetwork[]>('GET', '/scan'))
     scanning = false
     if (!res || res === 'error' || !Array.isArray(res)) {
       scanError = true
@@ -58,19 +58,19 @@
     networks = normalizeNetworks(res)
   }
 
-  function pickNetwork(n) {
+  function pickNetwork(n: WifiNetwork): void {
     selected = n
     manual = false
     wifiPass = ''
   }
 
-  function toggleManual() {
+  function toggleManual(): void {
     manual = !manual
     selected = null
     wifiPass = ''
   }
 
-  async function joinSsid(ssid) {
+  async function joinSsid(ssid: string): Promise<void> {
     const normalizedSsid = ssid.trim()
     if (joining || !normalizedSsid) return
     joining = true
@@ -87,11 +87,11 @@
     }
   }
 
-  function joinWifi() {
+  function joinWifi(): void {
     if (selected) joinSsid(selected.ssid)
   }
 
-  function joinManualWifi() {
+  function joinManualWifi(): void {
     joinSsid(manualSsid)
   }
 </script>

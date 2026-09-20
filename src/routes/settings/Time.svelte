@@ -1,5 +1,5 @@
 <!-- src/routes/settings/Time.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
@@ -17,6 +17,17 @@
   import Select from '../../lib/components/ui/Select.svelte'
   import Button from '../../lib/components/ui/Button.svelte'
 
+  // GET /time's response shape — only this page reads it.
+  interface NtpStatus {
+    sntp_enabled?: boolean
+    time?: string
+    time_zone?: string
+    ntp_status?: 'disabled' | 'waiting' | 'connecting' | 'synchronized' | 'retry'
+    ntp_last_sync?: number | null
+    ntp_next_sync_ms?: number | null
+    ntp_server_ip?: string | null
+  }
+
   const form = createConfigForm()
   const ss = form.saveState
 
@@ -30,11 +41,11 @@
   let busy = $state(false)
 
   // ── NTP status card ──────────────────────────────────────────────────────
-  let ntpData = $state(null)       // response from GET /time
+  let ntpData = $state<NtpStatus | null>(null)       // response from GET /time
   let ntpFetchedAt = $state(0)     // Date.now() when ntpData arrived
   let nowMs = $state(Date.now())   // ticks every second for live countdowns
   let syncBusy = $state(false)
-  let shownIp = $state(null)       // DNS badge; cleared when hostname changes
+  let shownIp = $state<string | null>(null)       // DNS badge; cleared when hostname changes
 
   // Clear the DNS badge whenever the configured NTP hostname changes
   $effect(() => {
@@ -42,10 +53,10 @@
     shownIp = null
   })
 
-  async function refreshNtpStatus() {
+  async function refreshNtpStatus(): Promise<void> {
     // The device web server is single-threaded — route through serialQueue so
     // this poll can't collide with concurrent store downloads (see queue.js).
-    const res = await serialQueue.add(() => httpAPI('GET', '/time'))
+    const res = await serialQueue.add(() => httpAPI<NtpStatus>('GET', '/time'))
     if (res && res !== 'error') {
       ntpData = res
       ntpFetchedAt = Date.now()
@@ -53,7 +64,7 @@
     }
   }
 
-  async function syncNow() {
+  async function syncNow(): Promise<void> {
     if (syncBusy) return
     syncBusy = true
     shownIp = null   // clear DNS badge immediately on every Update Now press
@@ -83,7 +94,7 @@
     return () => { clearInterval(poll); clearInterval(tick) }
   })
 
-  const STATUS_COLOR = {
+  const STATUS_COLOR: Record<string, string> = {
     disabled:     'text-text-dim',
     waiting:      'text-warning',
     connecting:   'text-blue-400',
@@ -92,6 +103,7 @@
   }
 
   let ntpStatus = $derived(ntpData?.ntp_status ?? null)
+  let ntpStatusColor = $derived(STATUS_COLOR[ntpStatus ?? ''] ?? 'text-text')
 
   // Milliseconds remaining until next event (sync or retry), adjusted for elapsed
   let remainingMs = $derived(
@@ -100,7 +112,7 @@
       : null
   )
 
-  function fmtAgo(unixTs) {
+  function fmtAgo(unixTs: number | null | undefined): string | null {
     if (!unixTs) return null
     const s = Math.max(0, Math.floor(nowMs / 1000) - unixTs)
     if (s < 60)   return `${s}s ago`
@@ -108,7 +120,7 @@
     return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`
   }
 
-  function fmtCountdown(ms) {
+  function fmtCountdown(ms: number | null | undefined): string {
     if (ms == null) return '—'
     const s = Math.ceil(ms / 1000)
     if (s <= 0)   return '—'
@@ -118,7 +130,7 @@
   }
   // ── end NTP status ───────────────────────────────────────────────────────
 
-  async function setClockNow() {
+  async function setClockNow(): Promise<void> {
     if (busy) return
     busy = true
     try {
@@ -127,7 +139,7 @@
         time: new Date().toISOString(),
         time_zone: $config_store?.time_zone,
       })
-      const res = await serialQueue.add(() => httpAPI('POST', '/time', body))
+      const res = await serialQueue.add(() => httpAPI<{ msg: string }>('POST', '/time', body))
       if (!res || res === 'error' || res.msg !== 'done') showWriteError()
     } finally {
       busy = false
@@ -196,7 +208,7 @@
       <!-- Status row with coloured badge -->
       <div class="flex items-center justify-between gap-3 py-2 text-sm">
         <span class="text-text-dim">{$_('config.time.ntp_status_label')}</span>
-        <span class="font-semibold {STATUS_COLOR[ntpStatus] ?? 'text-text'}">
+        <span class="font-semibold {ntpStatusColor}">
           {$_('config.time.ntp_' + (ntpStatus ?? 'waiting'))}
           {#if ntpStatus === 'synchronized'}✓{/if}
         </span>

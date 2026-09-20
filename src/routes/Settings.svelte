@@ -1,5 +1,5 @@
 <!-- src/routes/Settings.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Card from '../lib/components/ui/Card.svelte'
   import Icon from '../lib/icons/Icon.svelte'
