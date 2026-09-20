@@ -146,13 +146,8 @@ export function vehicleMetrics(status: Status | undefined, config: ConfigState |
 /** Whether the Vehicle metric group should render. */
 export function showVehicle(status: Status | undefined, config: ConfigState | undefined): boolean {
   const s: Partial<Status> = status ?? {}
-  const c: Partial<ConfigState> = config ?? {}
-  // `time_to_full_charge` is a Status field (see device.ts); checking it on
-  // config here matches the JS as written — /config never actually sends
-  // this key, so the branch is dormant in production, but the local cast
-  // keeps the check without widening ConfigState for one unreachable field.
-  const configTimeToFullCharge = (c as { time_to_full_charge?: number }).time_to_full_charge
-  return s.battery_level !== undefined || s.battery_range !== undefined || !!configTimeToFullCharge
+  // time_to_full_charge lives on /status (device.ts), same as vehicleMetrics above.
+  return s.battery_level !== undefined || s.battery_range !== undefined || !!s.time_to_full_charge
 }
 
 export function homeBatteryMetrics(status: Status | undefined): MetricGroupModel {
