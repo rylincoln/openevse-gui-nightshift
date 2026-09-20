@@ -14,14 +14,10 @@
     "skipLibCheck": true,
     // Vite/esbuild transpile; the checker never emits.
     "noEmit": true,
-    // Strict from day one. checkJs stays off so unconverted .js files are
-    // parsed for inference but never reported — the gate is green at every
-    // commit and each file is checked strictly the moment it becomes .ts.
-    "strict": true,
-    "allowJs": true,
-    "checkJs": false
+    // Strict from day one.
+    "strict": true
   },
-  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "src/**/*.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.svelte", "src/**/*.d.ts"],
   // Tests stay JavaScript and are not type-checked.
-  "exclude": ["src/**/__tests__/**", "src/test-setup.js"]
+  "exclude": ["src/**/__tests__/**"]
 }

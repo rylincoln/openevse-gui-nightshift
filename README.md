@@ -155,7 +155,7 @@ pnpm test:coverage # with a coverage report
 ```
 
 Tests use Vitest and `@testing-library/svelte`. Coverage is scoped to the pure logic
-in `src/lib/**/*.js`.
+in `src/lib/**/*.ts`.
 
 ## Screenshots
 
@@ -182,7 +182,7 @@ src/
     config/          pure config-page logic (validators, helpers) — unit-tested
     data/            WebSocket / FetchData / DataManager — the live data layer
     i18n/            en / es / fr / hu translation files
-    routes.js        the exact-match route table
+    routes.ts        the exact-match route table
 dev/
   mock-plugin.js     the mock-mode Vite plugin
   fixtures/          canned device responses for mock mode
