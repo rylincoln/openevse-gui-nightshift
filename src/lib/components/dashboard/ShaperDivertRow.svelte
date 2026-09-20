@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   // Live shaper / solar-divert readouts for the dashboard — the at-a-glance
   // numbers that explain why the charge rate is what it is. Mirrors the old
   // UI's status footer: house load + available current when the current

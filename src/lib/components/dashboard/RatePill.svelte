@@ -1,9 +1,17 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Popover from '../ui/Popover.svelte'
   import Slider from '../ui/Slider.svelte'
 
-  let { amps = 6, min = 6, max = 48, claimedBy = '', disabled = false, onchange = () => {} } = $props()
+  interface Props {
+    amps?: number
+    min?: number
+    max?: number
+    claimedBy?: string
+    disabled?: boolean
+    onchange?: (value: number) => void
+  }
+  let { amps = 6, min = 6, max = 48, claimedBy = '', disabled = false, onchange = () => {} }: Props = $props()
 
   let open = $state(false)
   // Live value while the slider is being dragged (touch gives no hover
@@ -11,10 +19,10 @@
   // committed value only round-trips through the device after onchange, and
   // falling back to the stale `amps` prop in the meantime reads as "it
   // ignored me". A failed write remounts the pill (rateNonce), clearing this.
-  let liveAmps = $state(null)
+  let liveAmps = $state<number | null>(null)
   let shown = $derived(liveAmps ?? amps)
 
-  function toggle() {
+  function toggle(): void {
     if (disabled) return
     open = !open
   }

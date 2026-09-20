@@ -1,10 +1,13 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
 
   // Whether a vehicle is plugged in (derived from the firmware `vehicle` flag —
   // see vehicleConnected() in lib/dashboard/state.js). Styled to mirror the
   // RatePill shell so the two pills read as a balanced pair framing the ring.
-  let { connected = false } = $props()
+  interface Props {
+    connected?: boolean
+  }
+  let { connected = false }: Props = $props()
 </script>
 
 <div

@@ -1,15 +1,27 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import RuleCard from './RuleCard.svelte'
+  import type { Rule } from '../../charge_manager/rules'
 
+  interface Props {
+    rules?: Rule[]
+    removingId?: string | null
+    // firmware's currently-active schedule event id
+    activeEventId?: number | null
+    busy?: boolean
+    // called with rule object
+    onedit?: (rule: Rule) => void
+    // called with rule object
+    ondelete?: (rule: Rule) => void
+  }
   let {
     rules = [],
     removingId = null,
-    activeEventId = null,  // firmware's currently-active schedule event id
+    activeEventId = null,
     busy = false,
-    onedit = () => {},    // called with rule object
-    ondelete = () => {},  // called with rule object
-  } = $props()
+    onedit = () => {},
+    ondelete = () => {},
+  }: Props = $props()
 </script>
 
 <div class="mb-4">

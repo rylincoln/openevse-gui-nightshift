@@ -1,9 +1,18 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import IconButton from '../ui/IconButton.svelte'
   import Icon from '../../icons/Icon.svelte'
+  import type { Limit } from '../../api/device'
 
+  interface Props {
+    featureKey?: string
+    limit?: Limit
+    busy?: boolean
+    removing?: boolean
+    onedit?: () => void
+    onremove?: () => void
+  }
   let {
     featureKey = '',
     limit = { type: 'none', value: 0, auto_release: true },
@@ -11,9 +20,9 @@
     removing = false,
     onedit = () => {},
     onremove = () => {},
-  } = $props()
+  }: Props = $props()
 
-  function formatLimitValue(limit) {
+  function formatLimitValue(limit: Limit): string {
     if (limit.type === 'time') {
       const mins = limit.value
       return mins >= 60 ? `${Math.round(mins / 60)} h` : `${mins} min`
@@ -24,7 +33,7 @@
 
   // Hide the description instead of rendering the raw key when a
   // feature_*_desc translation is missing (same fallback as RuleCard).
-  function featureDesc(key) {
+  function featureDesc(key: string): string {
     const k = 'charge_manager.feature_' + key + '_desc'
     return $_(k) !== k ? $_(k) : ''
   }

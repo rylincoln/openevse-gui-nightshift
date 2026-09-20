@@ -1,13 +1,16 @@
-<script>
+<script lang="ts">
   // Home-page load sharing: one grey line while nothing is limited, a card
   // with a bar and one reason when it is, red when the reason is a lost
   // controller. The full breakdown lives on Settings → Load sharing; this is
   // the glance, not the feature.
   import { _ } from 'svelte-i18n'
   import { formatDuration } from '../../format/duration'
+  import type { LoadSharingView } from '../../dashboard/loadsharing'
 
-  /** @type {{ view: import('../../dashboard/loadsharing').loadSharingView extends (...a: any) => infer R ? NonNullable<R> : never }} */
-  let { view } = $props()
+  interface Props {
+    view: LoadSharingView
+  }
+  let { view }: Props = $props()
 
   let fillPct = $derived(
     view.limit !== null && view.localMax > 0 ? Math.max(0, Math.min(100, (view.limit / view.localMax) * 100)) : 0,

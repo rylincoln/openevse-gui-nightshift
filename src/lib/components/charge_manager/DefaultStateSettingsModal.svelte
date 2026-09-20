@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Modal from '../ui/Modal.svelte'
   import Button from '../ui/Button.svelte'
@@ -6,27 +6,46 @@
   import Slider from '../ui/Slider.svelte'
   import NumberInput from '../ui/NumberInput.svelte'
 
+  interface Props {
+    open?: boolean
+    busy?: boolean
+    // Default state on power-up
+    active?: boolean
+    // Heartbeat supervision (only when firmware exposes it)
+    heartbeatSupported?: boolean
+    heartbeatEnabled?: boolean
+    heartbeatInterval?: number
+    heartbeatCurrent?: number
+    maxCurrent?: number
+    // Boot lock (only when firmware exposes it)
+    bootLockSupported?: boolean
+    bootLock?: boolean
+    onDefaultStateChange?: (active: boolean) => void
+    onHeartbeatChange?: (enabled: boolean) => void
+    // NumberInput's onchange emits `number | null`
+    onHeartbeatInterval?: (seconds: number | null) => void
+    onHeartbeatCurrent?: (amps: number) => void
+    onBootLockChange?: (enabled: boolean) => void
+    onclose?: () => void
+  }
   let {
     open    = false,
     busy    = false,
-    // Default state on power-up
     active  = true,
-    // Heartbeat supervision (only when firmware exposes it)
     heartbeatSupported = false,
     heartbeatEnabled   = false,
     heartbeatInterval  = 5,
     heartbeatCurrent   = 6,
     maxCurrent         = 32,
-    // Boot lock (only when firmware exposes it)
     bootLockSupported  = false,
     bootLock           = false,
-    onDefaultStateChange = () => {},  // (active: boolean) => void
-    onHeartbeatChange    = () => {},  // (enabled: boolean) => void
-    onHeartbeatInterval  = () => {},  // (seconds: number) => void
-    onHeartbeatCurrent   = () => {},  // (amps: number) => void
-    onBootLockChange     = () => {},  // (enabled: boolean) => void
+    onDefaultStateChange = () => {},
+    onHeartbeatChange    = () => {},
+    onHeartbeatInterval  = () => {},
+    onHeartbeatCurrent   = () => {},
+    onBootLockChange     = () => {},
     onclose = () => {},
-  } = $props()
+  }: Props = $props()
 
   // Missing-heartbeat fail current tops out at half the hardware maximum.
   let heartbeatMax = $derived(Math.max(6, Math.floor((maxCurrent ?? 12) / 2)))

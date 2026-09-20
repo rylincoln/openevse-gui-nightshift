@@ -1,16 +1,23 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Modal from '../ui/Modal.svelte'
   import { GLOBAL_FEATURE_KEYS } from '../../charge_manager/rules'
 
+  interface Props {
+    open?: boolean
+    enabledKeys?: string[]
+    // key → reason i18n key for features that can't be added (greyed out)
+    unavailableKeys?: Record<string, string>
+    onpick?: (key: string) => void
+    onclose?: () => void
+  }
   let {
     open = false,
     enabledKeys = [],
-    // key → reason i18n key for features that can't be added (greyed out)
     unavailableKeys = {},
     onpick = () => {},
     onclose = () => {},
-  } = $props()
+  }: Props = $props()
 
   // Features not yet added (excludes already-enabled global features).
   // 'schedule' is always available — it creates a new scheduled rule.

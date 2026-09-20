@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { claims_target_store } from '../../stores/claims_target'
   import { EvseClients } from '../../vars'

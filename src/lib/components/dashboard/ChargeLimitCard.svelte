@@ -1,8 +1,31 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import VehicleSocBar from './VehicleSocBar.svelte'
   import LimitSliderBar from './LimitSliderBar.svelte'
+  import type { Limit, LimitType } from '../../api/device'
 
+  interface Props {
+    // vehicle-bar inputs
+    hasSoc?: boolean
+    soc?: number
+    vehicleLimit?: number | null
+    target?: number
+    range?: number | null
+    rangeMiles?: boolean
+    timeToFull?: number
+    charging?: boolean
+    estMaxRange?: number | null
+    disabled?: boolean
+    ontarget?: (value: number) => void
+    onunit?: (unit: 'percent' | 'range') => void
+    // limit state + inline editors
+    limit?: Limit
+    elapsedSec?: number
+    sessionWh?: number
+    systemLimit?: boolean
+    maxEnergyKwh?: number
+    onlimit?: (data: { type: LimitType; value: number }) => void
+  }
   let {
     // vehicle-bar inputs
     hasSoc = false,
@@ -18,33 +41,36 @@
     ontarget = () => {},
     onunit = () => {},
     // limit state + inline editors
-    limit = { type: 'none' },
+    limit = { type: 'none' } as Limit,
     elapsedSec = 0,
     sessionWh = 0,
     systemLimit = false,
     maxEnergyKwh = 100,
     onlimit = () => {},
-  } = $props()
+  }: Props = $props()
+
+  // The card's own pill ids — every non-'none' LimitType this editor offers.
+  type LimitPillId = Exclude<LimitType, 'none'>
 
   let canRange = $derived(hasSoc && Number.isFinite(estMaxRange))
   let pills = $derived([
-    ...(hasSoc ? [{ id: 'soc', labelKey: 'dashboard.limit.type_soc' }] : []),
-    ...(canRange ? [{ id: 'range', labelKey: 'dashboard.limit.type_range' }] : []),
-    { id: 'time', labelKey: 'dashboard.limit.type_time' },
-    { id: 'energy', labelKey: 'dashboard.limit.type_energy' },
+    ...(hasSoc ? [{ id: 'soc' as LimitPillId, labelKey: 'dashboard.limit.type_soc' }] : []),
+    ...(canRange ? [{ id: 'range' as LimitPillId, labelKey: 'dashboard.limit.type_range' }] : []),
+    { id: 'time' as LimitPillId, labelKey: 'dashboard.limit.type_time' },
+    { id: 'energy' as LimitPillId, labelKey: 'dashboard.limit.type_energy' },
   ])
 
   // The active limit's pill is the default; a manual pick overrides it (same
   // userUnit pattern as the Dashboard). Clamp to an available pill in case a
   // range limit is active but the range estimate has gone away.
   let activeType = $derived(limit?.type && limit.type !== 'none' ? limit.type : null)
-  let userPick = $state(null)
+  let userPick = $state<LimitPillId | null>(null)
   let selected = $derived.by(() => {
     const want = userPick ?? activeType ?? (hasSoc ? 'soc' : 'time')
     return pills.some((p) => p.id === want) ? want : pills[0].id
   })
 
-  function pick(id) {
+  function pick(id: LimitPillId): void {
     userPick = id
     if (id === 'soc') onunit('percent')
     else if (id === 'range') onunit('range')
@@ -53,7 +79,7 @@
   // Only the editor of the ACTIVE system limit is read-only; other editors
   // stay usable (committing them overrides the default for this session and
   // leaves the config untouched).
-  let editorDisabled = $derived((id) => disabled || (systemLimit && activeType === id))
+  let editorDisabled = $derived((id: LimitPillId) => disabled || (systemLimit && activeType === id))
 </script>
 
 {#snippet pillRow()}

@@ -1,22 +1,31 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import IconButton from '../ui/IconButton.svelte'
   import Icon from '../../icons/Icon.svelte'
   import { formatDayChips } from '../../schedule/timers'
   import { formatWindow } from '../../charge_manager/rules'
+  import type { Rule, RuleLimit } from '../../charge_manager/rules'
 
-  let { rule, active = false, removing = false, disabled = false, onedit = () => {}, ondelete = () => {} } = $props()
+  interface Props {
+    rule: Rule
+    active?: boolean
+    removing?: boolean
+    disabled?: boolean
+    onedit?: () => void
+    ondelete?: () => void
+  }
+  let { rule, active = false, removing = false, disabled = false, onedit = () => {}, ondelete = () => {} }: Props = $props()
 
   let chips  = $derived(formatDayChips(rule?.days))
   let window = $derived(formatWindow(rule?.startTime, rule?.stopTime))
 
-  function actionLabel(action) {
+  function actionLabel(action: string): string {
     const key = 'charge_manager.rule_action_' + action
     return $_(key) !== key ? $_(key) : action
   }
 
-  function limitLabel(limit) {
+  function limitLabel(limit: RuleLimit | null | undefined): string | null {
     if (!limit || limit.type === 'none' || !limit.value) return null
     if (limit.type === 'time') {
       const mins = limit.value
@@ -29,7 +38,7 @@
 
   let limitChip = $derived(limitLabel(rule?.limit))
   // Fixed charge current set on the timer (scheduled "charge" rules).
-  let currentChip = $derived(rule?.chargeCurrent > 0 ? `${rule.chargeCurrent} A` : null)
+  let currentChip = $derived((rule?.chargeCurrent ?? 0) > 0 ? `${rule.chargeCurrent} A` : null)
 </script>
 
 <Card class="mb-3 p-4">
