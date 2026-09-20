@@ -129,8 +129,7 @@
     return f.temp ? Math.round(cToUnit(c, tempUnit, f.temp === 'delta') ?? 0) : c
   }
   // NumberInput emits null when the field is cleared; a calibration value
-  // has no sane "cleared" meaning (unlike the shaper/divert fields, which
-  // treat a blank box as "use the firmware default"), so don't write one.
+  // has no sane "cleared" meaning, so don't write one.
   function calSave(source: CableTempSource, f: Calibration, v: number | null): void {
     if (v === null) return
     const wire = f.temp ? unitToC10(v, tempUnit, f.temp === 'delta') : v

@@ -24,6 +24,23 @@
   const form = createConfigForm()
   const ss = form.saveState
 
+  // NumberInput emits null when a field is cleared to empty; every one of
+  // these is shown blank (no numeric fallback), so clearing must not write
+  // a literal null — matching the mqtt_port/divert/shaper fixes.
+  function saveGroupField(
+    name: 'loadsharing_group_max_current' | 'loadsharing_safety_factor' | 'loadsharing_heartbeat_timeout' | 'loadsharing_failsafe_safe_current' | 'loadsharing_failsafe_peer_assumed_current',
+    v: number | null,
+  ): void {
+    if (v !== null) form.saveField(name, v)
+  }
+
+  // loadsharing_rotation_interval shows a real default (1800) rather than a
+  // blank box, so clearing it should restore that default, not send null —
+  // same as www_https_port.
+  function saveRotationInterval(v: number | null): void {
+    form.saveField('loadsharing_rotation_interval', v ?? 1800)
+  }
+
   // Labs-gated page: if the OpenEVSE Labs switch is off, a deep link here
   // bounces back to the settings index rather than exposing the surface.
   $effect(() => {
@@ -241,7 +258,7 @@
           min={0}
           step={0.1}
           revert={form.revert}
-          onchange={(v) => form.saveField('loadsharing_group_max_current', v)}
+          onchange={(v) => saveGroupField('loadsharing_group_max_current', v)}
         />
       </FormField>
       {#if hasSafetyFactor}
@@ -254,7 +271,7 @@
             min={0}
             step={0.01}
             revert={form.revert}
-            onchange={(v) => form.saveField('loadsharing_safety_factor', v)}
+            onchange={(v) => saveGroupField('loadsharing_safety_factor', v)}
           />
         </FormField>
       {/if}
@@ -268,7 +285,7 @@
             min={0}
             step={1}
             revert={form.revert}
-            onchange={(v) => form.saveField('loadsharing_heartbeat_timeout', v)}
+            onchange={(v) => saveGroupField('loadsharing_heartbeat_timeout', v)}
           />
         </FormField>
       {/if}
@@ -294,7 +311,7 @@
             min={0}
             step={0.1}
             revert={form.revert}
-            onchange={(v) => form.saveField('loadsharing_failsafe_safe_current', v)}
+            onchange={(v) => saveGroupField('loadsharing_failsafe_safe_current', v)}
           />
         </FormField>
       {/if}
@@ -308,7 +325,7 @@
             min={0}
             step={0.1}
             revert={form.revert}
-            onchange={(v) => form.saveField('loadsharing_failsafe_peer_assumed_current', v)}
+            onchange={(v) => saveGroupField('loadsharing_failsafe_peer_assumed_current', v)}
           />
         </FormField>
       {/if}
@@ -321,7 +338,7 @@
           min={0}
           step={1}
           revert={form.revert}
-          onchange={(v) => form.saveField('loadsharing_rotation_interval', v)}
+          onchange={saveRotationInterval}
         />
       </FormField>
     </ConfigSection>

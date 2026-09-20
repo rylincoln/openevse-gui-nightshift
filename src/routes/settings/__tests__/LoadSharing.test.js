@@ -75,6 +75,42 @@ describe('LoadSharing page', () => {
     expect(queryByText('config.loadsharing.priority')).not.toBeInTheDocument()
   })
 
+  // NumberInput emits null when a field is cleared to empty. Five of these
+  // fields are shown blank (no numeric fallback) so clearing must not write
+  // a literal null; loadsharing_rotation_interval shows a real default
+  // (1800) so clearing it must write that default back, like www_https_port.
+  it('does not save null for blank-style fields, but saves the default for rotation_interval', async () => {
+    config_store.set({
+      loadsharing_enabled: true,
+      loadsharing_role: 'controller',
+      loadsharing_group_id: 'main',
+      loadsharing_group_max_current: 50,
+      loadsharing_safety_factor: 0.9,
+      loadsharing_heartbeat_timeout: 15,
+      loadsharing_failsafe_mode: 'safe_current',
+      loadsharing_failsafe_safe_current: 6,
+      loadsharing_failsafe_peer_assumed_current: 6,
+      loadsharing_rotation_interval: 3600,
+    })
+    const { getAllByRole } = render(LoadSharing)
+    const blankKeys = [
+      'loadsharing_group_max_current', 'loadsharing_safety_factor', 'loadsharing_heartbeat_timeout',
+      'loadsharing_failsafe_safe_current', 'loadsharing_failsafe_peer_assumed_current',
+    ]
+    const numbers = getAllByRole('spinbutton')
+    for (const [i, key] of blankKeys.entries()) {
+      httpAPI.mockClear()
+      await fireEvent.input(numbers[i], { target: { value: '' } })
+      await fireEvent.blur(numbers[i])
+      expect(httpAPI).not.toHaveBeenCalledWith('POST', '/config', expect.stringContaining(key))
+    }
+    httpAPI.mockClear()
+    const rotation = numbers[blankKeys.length]
+    await fireEvent.input(rotation, { target: { value: '' } })
+    await fireEvent.blur(rotation)
+    expect(httpAPI).toHaveBeenCalledWith('POST', '/config', JSON.stringify({ loadsharing_rotation_interval: 1800 }))
+  })
+
   it('renders peer management for controller role', async () => {
     loadsharing_store.set({
       peers: [{ id: 'peer-1', name: 'Garage', host: 'garage.local', url: 'http://garage.local', online: true, joined: true }],
@@ -102,9 +138,9 @@ describe('LoadSharing page', () => {
     expect(queryByText('config.loadsharing.controlled_by')).not.toBeInTheDocument()
   })
 
-  // NumberInput emits null when a peer's priority field is cleared to empty;
-  // priority has no "use the firmware default" meaning (no placeholder is
-  // shown), so clearing it must not PUT a null priority to the device.
+  // NumberInput emits null when a peer's priority field is cleared to empty
+  // (no placeholder is shown), so clearing it must not PUT a null priority
+  // to the device.
   it('does not save a peer priority cleared to empty', async () => {
     loadsharing_store.set({
       peers: [{ id: 'peer-1', name: 'Garage', host: 'garage.local', url: 'http://garage.local', online: true, joined: true, priority: 5 }],

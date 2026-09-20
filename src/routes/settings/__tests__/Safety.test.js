@@ -425,9 +425,8 @@ describe('Safety page — Cable Temperature Monitoring', () => {
     })
   })
 
-  // NumberInput emits null when a calibration field is cleared to empty.
-  // Unlike the shaper/divert fields elsewhere, a cleared calibration value
-  // has no "use the firmware default" meaning, so it must not be written.
+  // NumberInput emits null when a calibration field is cleared to empty; a
+  // cleared calibration value has no sane meaning, so it must not be written.
   it('does not write a calibration field cleared to empty', async () => {
     config_store.set({ ...ALL_ON, cable_temp: true })
     const assigned = UNASSIGNED_SOURCES.map((s) =>

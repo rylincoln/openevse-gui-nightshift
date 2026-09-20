@@ -229,10 +229,9 @@ export interface Config {
   loadsharing_enabled?: boolean
   loadsharing_role?: string
   loadsharing_group_id?: string
-  /** amps. Nullable: settings/LoadSharing.svelte's NumberInput sends null
-   *  when the field is cleared, meaning "use the firmware default". */
-  loadsharing_group_max_current?: number | null
-  loadsharing_safety_factor?: number | null
+  /** amps */
+  loadsharing_group_max_current?: number
+  loadsharing_safety_factor?: number
   mqtt_supported_protocols: string[]
   http_supported_protocols: string[]
   buildenv: string
@@ -284,9 +283,7 @@ export interface Config {
   emoncms_apikey: string
   emoncms_fingerprint: string
   mqtt_server: string
-  /** Nullable: settings/Mqtt.svelte's NumberInput sends null when the field
-   *  is cleared, meaning "use the firmware default" (placeholder 1883). */
-  mqtt_port: number | null
+  mqtt_port: number
   mqtt_topic: string
   mqtt_user: string
   mqtt_pass: string
@@ -311,19 +308,17 @@ export interface Config {
   ocpp_authkey?: string
   ocpp_idtag?: string
   ohm: string
-  /** Absent on firmware without solar/divert mode. Nullable: settings/Solar.svelte's
-   *  NumberInputs send null when a field is cleared, meaning "use the firmware default". */
+  /** Absent on firmware without solar/divert mode. */
   divert_type?: number
-  divert_PV_ratio?: number | null
-  divert_attack_smoothing_time?: number | null
-  divert_decay_smoothing_time?: number | null
-  divert_min_charge_time?: number | null
-  /** Absent on firmware without the current shaper. Nullable: settings/Shaper.svelte's
-   *  NumberInputs send null when a field is cleared, meaning "use the firmware default". */
-  current_shaper_max_pwr?: number | null
-  current_shaper_smoothing_time?: number | null
-  current_shaper_min_pause_time?: number | null
-  current_shaper_data_maxinterval?: number | null
+  divert_PV_ratio?: number
+  divert_attack_smoothing_time?: number
+  divert_decay_smoothing_time?: number
+  divert_min_charge_time?: number
+  /** Absent on firmware without the current shaper. */
+  current_shaper_max_pwr?: number
+  current_shaper_smoothing_time?: number
+  current_shaper_min_pause_time?: number
+  current_shaper_data_maxinterval?: number
   vehicle_data_src: number
   /** Absent on firmware without Tesla integration. */
   tesla_access_token?: string
@@ -459,15 +454,14 @@ export interface Config {
   psram_size?: number
   loadsharing_controller_host?: string
   loadsharing_failsafe_mode?: string
-  /** amps. Nullable: settings/LoadSharing.svelte's NumberInputs send null
-   *  when a field is cleared, meaning "use the firmware default". */
-  loadsharing_failsafe_safe_current?: number | null
   /** amps */
-  loadsharing_failsafe_peer_assumed_current?: number | null
+  loadsharing_failsafe_safe_current?: number
+  /** amps */
+  loadsharing_failsafe_peer_assumed_current?: number
   /** seconds */
-  loadsharing_heartbeat_timeout?: number | null
+  loadsharing_heartbeat_timeout?: number
   /** seconds */
-  loadsharing_rotation_interval?: number | null
+  loadsharing_rotation_interval?: number
 }
 
 export type LimitType = 'none' | 'time' | 'energy' | 'soc' | 'range'
