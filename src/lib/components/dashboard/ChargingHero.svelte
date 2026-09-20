@@ -1,9 +1,29 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import PlugPill from './PlugPill.svelte'
   import RatePill from './RatePill.svelte'
   import SessionChart from './SessionChart.svelte'
+  import type { EnergySample } from '../../api/device'
 
+  interface Props {
+    kw?: string
+    soc?: number | null
+    target?: number | null
+    hasSoc?: boolean
+    amps?: number
+    minAmps?: number
+    maxAmps?: number
+    rateClaimedBy?: string
+    rateNonce?: number
+    samples?: EnergySample[]
+    voltage?: number
+    phases?: 1 | 3
+    sessionElapsed?: number
+    chartError?: boolean
+    rateDisabled?: boolean
+    connected?: boolean
+    onrate?: (value: number) => void
+  }
   let {
     kw = '0.0',
     soc = null,
@@ -22,7 +42,7 @@
     rateDisabled = false,
     connected = false,
     onrate = () => {},
-  } = $props()
+  }: Props = $props()
 </script>
 
 <div>

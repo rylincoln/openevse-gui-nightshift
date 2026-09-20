@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import Slider from '../ui/Slider.svelte'
@@ -7,19 +7,31 @@
 
   import { untrack } from 'svelte'
 
+  interface Props {
+    current?: number
+    minCurrent?: number
+    maxCurrent?: number
+    busy?: boolean
+    // Status indicators (the switches themselves live in the settings page).
+    heartbeatSupported?: boolean
+    heartbeatActive?: boolean // red heart when heartbeat supervision is on
+    bootLockSupported?: boolean // show the lock/unlock icon at all
+    bootLock?: boolean // locked padlock when on, open padlock when off
+    onCurrentChange?: (amps: number) => void
+    onEdit?: () => void // open the settings page
+  }
   let {
     current     = 32,
     minCurrent  = 6,
     maxCurrent  = 32,
     busy        = false,
-    // Status indicators (the switches themselves live in the settings page).
     heartbeatSupported = false,
-    heartbeatActive    = false,   // red heart when heartbeat supervision is on
-    bootLockSupported  = false,   // show the lock/unlock icon at all
-    bootLock           = false,   // locked padlock when on, open padlock when off
-    onCurrentChange = () => {},   // (amps: number) => void
-    onEdit          = () => {},   // open the settings page
-  } = $props()
+    heartbeatActive    = false,
+    bootLockSupported  = false,
+    bootLock           = false,
+    onCurrentChange = () => {},
+    onEdit          = () => {},
+  }: Props = $props()
 
   // Live value shown large above the slider — tracks the thumb while dragging.
   let liveCurrent = $state(untrack(() => current))

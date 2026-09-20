@@ -1,20 +1,35 @@
 <!-- src/lib/components/dashboard/LimitSliderBar.svelte -->
-<script>
+<script lang="ts">
+  import type { Snippet } from 'svelte'
   import { _ } from 'svelte-i18n'
   import { hmsShort } from '../../dashboard/soc'
   import { clampEnergyMax } from '../../dashboard/state'
 
+  interface Props {
+    kind?: 'time' | 'energy'
+    // device units: minutes (time) | Wh (energy); 0 = no limit
+    value?: number
+    // session elapsed seconds | session energy Wh
+    progress?: number
+    charging?: boolean
+    disabled?: boolean
+    // device units; 0 = clear
+    onchange?: (value: number) => void
+    // top of the energy scale, in kWh (user-configurable)
+    maxEnergyKwh?: number
+    // optional snippet rendered at the header's right edge (the card's pills)
+    headerEnd?: Snippet | null
+  }
   let {
-    kind = 'time', // 'time' | 'energy'
-    value = 0, // device units: minutes (time) | Wh (energy); 0 = no limit
-    progress = 0, // session elapsed seconds | session energy Wh
+    kind = 'time',
+    value = 0,
+    progress = 0,
     charging = false,
     disabled = false,
-    onchange = () => {}, // device units; 0 = clear
-    maxEnergyKwh = 100, // top of the energy scale, in kWh (user-configurable)
-    // optional snippet rendered at the header's right edge (the card's pills)
+    onchange = () => {},
+    maxEnergyKwh = 100,
     headerEnd = null,
-  } = $props()
+  }: Props = $props()
 
   // The slider operates in tick space — each notch is an equal drag distance,
   // but the time stops coarsen as they grow (15-min steps to 4 h, 30-min to
@@ -41,7 +56,7 @@
   let active = $derived(value > 0)
 
   /** Display value -> fractional tick position (for the fill + off-stop limits). */
-  function fracTick(v) {
+  function fracTick(v: number): number {
     if (!(v > 0)) return 0
     if (v >= stops[maxTick]) return maxTick
     let i = 0
@@ -57,16 +72,16 @@
     current = Math.round(fracTick(display))
   })
 
-  function fmt(v) {
+  function fmt(v: number): string {
     if (kind === 'time') return `${Math.floor(v / 60)}:${String(v % 60).padStart(2, '0')}`
     return `${v} ${$_('units.kwh')}`
   }
 
-  function handleInput(e) {
-    current = Number(e.currentTarget.value)
+  function handleInput(e: Event): void {
+    current = Number((e.currentTarget as HTMLInputElement).value)
   }
-  function handleChange(e) {
-    const v = stops[Number(e.currentTarget.value)]
+  function handleChange(e: Event): void {
+    const v = stops[Number((e.currentTarget as HTMLInputElement).value)]
     // No-change commits never emit (an idle editor must not clear) — except a
     // 0-commit while a limit is genuinely active: a sub-step limit (e.g.
     // 400 Wh) displays as 0 but must still be clearable.

@@ -1,24 +1,39 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { untrack } from 'svelte'
   import Card from '../ui/Card.svelte'
   import Icon from '../../icons/Icon.svelte'
   import { cToF } from '../../temperature'
 
+  interface Props {
+    // card heading (defaults to "Temperature Protection")
+    title?: string | null
+    throttle?: number // temp_throttle_setpoint °C (lower thumb)
+    panic?: number // over_temp_shutdown °C (upper thumb)
+    min?: number
+    max?: number
+    gap?: number // panic must stay at least `gap` °C above throttle
+    busy?: boolean
+    checksAllOn?: boolean | null // null = hide banner; true/false = show on/off banner
+    temperature?: number | null // current EVSE temperature °C (marker on the track)
+    unit?: string // display unit for the labels: 'c' | 'f' (device is always °C)
+    onThrottleChange?: (celsius: number) => void
+    onPanicChange?: (celsius: number) => void
+  }
   let {
-    title    = null,      // card heading (defaults to "Temperature Protection")
-    throttle = 65,        // temp_throttle_setpoint °C (lower thumb)
-    panic    = 72,        // over_temp_shutdown °C (upper thumb)
+    title    = null,
+    throttle = 65,
+    panic    = 72,
     min      = 40,
     max      = 82,
-    gap      = 2,         // panic must stay at least `gap` °C above throttle
+    gap      = 2,
     busy     = false,
-    checksAllOn  = null,  // null = hide banner; true/false = show on/off banner
-    temperature  = null,  // current EVSE temperature °C (marker on the track)
-    unit     = 'c',       // display unit for the labels: 'c' | 'f' (device is always °C)
-    onThrottleChange = () => {},   // (°C) => void
-    onPanicChange    = () => {},   // (°C) => void
-  } = $props()
+    checksAllOn  = null,
+    temperature  = null,
+    unit     = 'c',
+    onThrottleChange = () => {},
+    onPanicChange    = () => {},
+  }: Props = $props()
 
   // The device stores/streams every temperature in °C — only the *labels* here
   // follow the device temp_unit config. The slider itself keeps
@@ -26,7 +41,10 @@
   // numbers are converted.
   let isF = $derived(unit === 'f')
   let unitLabel = $derived(isF ? $_('units.fahrenheit') : $_('units.celsius'))
-  const disp = (c) => Math.round(isF ? cToF(c) : c)
+  // cToF(c) is typed number|null (its signature accepts `unknown`), but a
+  // finite `c` (every call site here) always returns a number — non-null
+  // assertion, no behaviour change.
+  const disp = (c: number): number => Math.round(isF ? cToF(c)! : c)
 
   // Live thumb positions during a drag (committed on change). Same prop-mirror
   // pattern as Slider.svelte / LimitSliderBar.
@@ -40,39 +58,44 @@
 
   // EVSE temperature marker, clamped to the slider's range.
   let hasTemp = $derived(typeof temperature === 'number' && Number.isFinite(temperature))
+  // `temperature ?? 0`: this branch only runs when hasTemp is true (temperature
+  // is a finite number), so the fallback never actually fires.
   let tempPct = $derived(
-    hasTemp ? Math.min(100, Math.max(0, ((temperature - min) / (max - min)) * 100)) : 0
+    hasTemp ? Math.min(100, Math.max(0, (((temperature ?? 0) - min) / (max - min)) * 100)) : 0
   )
   // Reading pill offset — shifted by -pillShift% of its own width (clamped 20–80%,
   // the same treatment as the limit sliders' value pill) so a reading near the
   // rails doesn't spill past the card edge. Placing the stem at pillShift% across
   // the shifted pill cancels the offset, so it still points at the true tempPct.
   let pillShift = $derived(Math.min(80, Math.max(20, tempPct)))
+  // Rendered only inside {#if hasTemp}, so `temperature` is always a finite
+  // number there — `?? 0` covers the type without changing behaviour.
+  let tempDisplay = $derived(disp(temperature ?? 0))
 
   // Lower thumb may not cross within `gap` of the upper, and vice-versa.
   // Instead of stopping the dragged thumb at the gap, push the other thumb
   // along (within [min, max]) so the two can never cross.
-  function handleLoInput(e) {
-    lo = Math.min(Number(e.currentTarget.value), max - gap)
+  function handleLoInput(e: Event): void {
+    lo = Math.min(Number((e.currentTarget as HTMLInputElement).value), max - gap)
     if (hi < lo + gap) hi = lo + gap
   }
-  function handleHiInput(e) {
-    hi = Math.max(Number(e.currentTarget.value), min + gap)
+  function handleHiInput(e: Event): void {
+    hi = Math.max(Number((e.currentTarget as HTMLInputElement).value), min + gap)
     if (lo > hi - gap) lo = hi - gap
   }
   // Commit reads the event value (not just the live `lo`/`hi` state) so a
   // change event that didn't fire input still emits the pushed values, and
   // emits both thumbs when the push moved the other one.
-  function commitLo(e) {
-    const v = Math.min(Number(e.currentTarget.value), max - gap)
+  function commitLo(e: Event): void {
+    const v = Math.min(Number((e.currentTarget as HTMLInputElement).value), max - gap)
     lo = v
     const newHi = Math.max(hi, v + gap)
     hi = newHi
     if (v !== throttle) onThrottleChange(v)
     if (newHi !== panic) onPanicChange(newHi)
   }
-  function commitHi(e) {
-    const v = Math.max(Number(e.currentTarget.value), min + gap)
+  function commitHi(e: Event): void {
+    const v = Math.max(Number((e.currentTarget as HTMLInputElement).value), min + gap)
     hi = v
     const newLo = Math.min(lo, v - gap)
     lo = newLo
@@ -116,7 +139,7 @@
         style="left: {tempPct}%; transform: translateX(-{pillShift}%)"
       >
         <Icon icon="mdi:thermometer" size={11} />
-        {disp(temperature)}{unitLabel}
+        {tempDisplay}{unitLabel}
         <!-- Stem points down at the reading on the track. At pillShift% across the
              edge-clamped pill it lands on the true tempPct (the shift cancels). -->
         <span

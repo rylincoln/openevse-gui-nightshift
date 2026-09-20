@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Modal from '../ui/Modal.svelte'
   import Button from '../ui/Button.svelte'
@@ -8,29 +8,57 @@
   import DayPicker from '../schedule/DayPicker.svelte'
   import { daysToFlags, flagsToDays, DAYS } from '../../schedule/timers'
   import { isNextDay } from '../../charge_manager/rules'
+  import type { Rule } from '../../charge_manager/rules'
+  import type { LimitType } from '../../api/device'
 
+  // The object save() builds and hands to onsave: every Rule field except
+  // `id` (which only survives the `...rule` spread when editing an existing
+  // rule — a brand-new rule from the picker has none at all).
+  type RuleSave = Omit<Rule, 'id'> & { id?: string | null }
+
+  interface Props {
+    open?: boolean
+    rule?: Rule | null
+    busy?: boolean
+    socAvailable?: boolean
+    rangeAvailable?: boolean
+    // range limit unit: miles when true, km otherwise
+    rangeMiles?: boolean
+    // Feature availability — greys out the matching action option when false.
+    ocppAvailable?: boolean
+    rfidAvailable?: boolean
+    minCurrent?: number
+    maxCurrent?: number
+    // Global safety config surfaced contextually on certain action cards.
+    bootLockSupported?: boolean
+    bootLock?: boolean
+    heartbeatSupported?: boolean
+    heartbeatEnabled?: boolean
+    onBootLockChange?: (enabled: boolean) => void
+    onHeartbeatChange?: (enabled: boolean) => void
+    onclose?: () => void
+    onsave?: (rule: RuleSave) => void
+  }
   let {
     open = false,
     rule = null,
     busy = false,
     socAvailable = false,
     rangeAvailable = false,
-    rangeMiles = false,   // range limit unit: miles when true, km otherwise
-    // Feature availability — greys out the matching action option when false.
+    rangeMiles = false,
     ocppAvailable = true,
     rfidAvailable = true,
     minCurrent = 6,
     maxCurrent = 80,
-    // Global safety config surfaced contextually on certain action cards.
     bootLockSupported  = false,
     bootLock           = false,
     heartbeatSupported = false,
     heartbeatEnabled   = false,
-    onBootLockChange   = () => {},   // (enabled: boolean) => void
-    onHeartbeatChange  = () => {},   // (enabled: boolean) => void
+    onBootLockChange   = () => {},
+    onHeartbeatChange  = () => {},
     onclose = () => {},
     onsave = () => {},
-  } = $props()
+  }: Props = $props()
 
   // ── Form state ────────────────────────────────────────────────────────────
   let alwaysOn    = $state(true)
@@ -39,7 +67,7 @@
   let stopTime    = $state('18:00')
   let hasStopTime = $state(false)
   let action      = $state('charge')
-  let limitType   = $state('none')
+  let limitType   = $state<LimitType>('none')
   let limitValue  = $state(0)
   let chargeCurrent = $state(16)
   let showDayError   = $state(false)
@@ -81,7 +109,7 @@
     null
   )
 
-  function validate() {
+  function validate(): boolean {
     if (!alwaysOn && !flags.some((f) => f)) { showDayError = true; return false }
     // Equal start/stop would silently become a 24h window (isNextDay uses <=).
     if (!alwaysOn && hasStopTime && stopTime === startTime) { showTimeError = true; return false }
@@ -90,7 +118,16 @@
     return true
   }
 
-  function save() {
+  // DayPicker stays plain JS (out of this task's scope), so its `onchange`
+  // prop infers no parameter type — name the handler here instead of an
+  // inline arrow in the markup, so `f` gets an explicit type without putting
+  // TypeScript syntax in the template.
+  function handleDaysChange(f: boolean[]): void {
+    flags = f
+    showDayError = false
+  }
+
+  function save(): void {
     if (!validate()) return
     const days  = alwaysOn ? [...DAYS] : flagsToDays(flags)
     const limit = (showLimit && limitType !== 'none' && limitValue > 0)
@@ -134,7 +171,7 @@
 
   <!-- Schedule section (greyed when Always On) -->
   <div class={alwaysOn ? 'pointer-events-none opacity-40' : ''}>
-    <DayPicker {flags} onchange={(f) => { flags = f; showDayError = false }} />
+    <DayPicker {flags} onchange={handleDaysChange} />
     {#if showDayError}
       <p class="mt-2 text-xs text-error">{$_('charge_manager.rule_error_no_day')}</p>
     {/if}

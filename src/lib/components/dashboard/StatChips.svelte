@@ -1,11 +1,43 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import StatChip from '../ui/StatChip.svelte'
+
+  interface StatChipsLive {
+    sessionKwh: string
+    elapsed: string
+    currentA: string
+    voltage: number
+    temp: number | null
+    tempUnit: string
+    pilotA: number
+    toFull: string
+  }
+  interface StatChipsSummary {
+    todayKwh: number
+    totalKwh: number
+  }
+  interface Props {
+    charging?: boolean
+    live?: StatChipsLive
+    summary?: StatChipsSummary
+    sessionCost?: string | null
+    currentLimited?: boolean
+  }
 
   // `currentLimited`: load sharing is holding the current below this
   // charger's own max — say so on the number itself, so 6.0 A reads as
   // "limited" without scrolling to the card that explains why.
-  let { charging = false, live = {}, summary = {}, sessionCost = null, currentLimited = false } = $props()
+  // `live`/`summary` default to `{}`: the two branches that read their
+  // fields are each gated on `charging`, so the empty default is never
+  // actually rendered from — cast to keep that dead-default's runtime value
+  // unchanged while satisfying the fully-shaped type used in the markup.
+  let {
+    charging = false,
+    live = {} as StatChipsLive,
+    summary = {} as StatChipsSummary,
+    sessionCost = null,
+    currentLimited = false,
+  }: Props = $props()
 </script>
 
 <!-- Fixed-height band: the charging layout (chips + sensor row) is taller

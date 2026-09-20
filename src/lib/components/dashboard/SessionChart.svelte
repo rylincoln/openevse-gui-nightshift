@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import UplotChart from '../charts/UplotChart.svelte'
   import { readChartTheme } from '../charts/chartTheme'
@@ -8,9 +8,16 @@
     kwAxisMax,
     buildSessionOpts,
   } from '../../dashboard/sessionChart'
+  import type { EnergySample } from '../../api/device'
 
-  /** @type {{ samples: Array<{ts:number,a:number,t:number,e:number,s:number}>, voltage:number, target:number|null, sessionElapsed:number, phases:number }} */
-  let { samples = [], voltage = 0, target = null, sessionElapsed = 0, phases = 1 } = $props()
+  interface Props {
+    samples?: EnergySample[]
+    voltage?: number
+    target?: number | null
+    sessionElapsed?: number
+    phases?: 1 | 3
+  }
+  let { samples = [], voltage = 0, target = null, sessionElapsed = 0, phases = 1 }: Props = $props()
 
   // Size the chart to the viewport so it grows on taller windows: ~42% of the
   // window height, clamped to 150–520px. Passed straight to uPlot as a pixel

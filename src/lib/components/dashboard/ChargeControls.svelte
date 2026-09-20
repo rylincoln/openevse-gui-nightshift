@@ -1,7 +1,16 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { controlSegments } from '../../dashboard/controls'
+  import type { ControlSegment } from '../../dashboard/controls'
 
+  interface Props {
+    segment?: ControlSegment
+    divertEnabled?: boolean
+    locked?: boolean
+    lockLabel?: string
+    disabled?: boolean
+    onsegment?: (segment: ControlSegment) => void
+  }
   let {
     segment = 'auto',
     divertEnabled = false,
@@ -9,9 +18,9 @@
     lockLabel = '',
     disabled = false,
     onsegment = () => {},
-  } = $props()
+  }: Props = $props()
 
-  const SEG_LABELS = {
+  const SEG_LABELS: Record<ControlSegment, string> = {
     off: 'dashboard.mode.off',
     auto: 'dashboard.mode.auto',
     eco: 'dashboard.eco',

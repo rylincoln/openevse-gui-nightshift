@@ -1,7 +1,24 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import ProgressRing from '../ui/ProgressRing.svelte'
+  import type { DisplayState } from '../../dashboard/state'
 
+  // Matches svelte-i18n's InterpolationValues (minus its FormatXMLElementFn
+  // branch, which nothing here ever passes) — every reason/detail value is a
+  // plain interpolation primitive (a time string, a count, a formatted limit).
+  type I18nValues = Record<string, string | number | boolean | Date | null | undefined>
+
+  interface Props {
+    display?: DisplayState
+    fill?: number
+    kw?: string
+    maxKw?: string
+    reasonKey?: string
+    reasonValues?: I18nValues
+    // optional emphasized second line under the reason (e.g. the timer's resume time)
+    reasonDetail?: { key: string; values: I18nValues } | null
+    faultText?: string
+  }
   let {
     display = 'starting',
     fill = 0,
@@ -12,7 +29,7 @@
     // optional emphasized second line under the reason (e.g. the timer's resume time)
     reasonDetail = null,
     faultText = '',
-  } = $props()
+  }: Props = $props()
 
   // Ring colour tracks the charge state: accent while charging/idle,
   // amber when paused (connected but not charging), red on a fault,

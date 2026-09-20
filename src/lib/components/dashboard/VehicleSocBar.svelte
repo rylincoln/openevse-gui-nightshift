@@ -1,7 +1,23 @@
-<script>
+<script lang="ts">
+  import type { Snippet } from 'svelte'
   import { _ } from 'svelte-i18n'
   import { socBarSegments, isCapped, socCeiling, hmsShort } from '../../dashboard/soc'
 
+  interface Props {
+    soc?: number
+    vehicleLimit?: number | null
+    target?: number
+    range?: number | null
+    rangeMiles?: boolean
+    timeToFull?: number
+    charging?: boolean
+    disabled?: boolean
+    unit?: 'percent' | 'range'
+    estMaxRange?: number | null
+    onchange?: (value: number) => void
+    // optional snippet rendered at the header's right edge (the card's pills)
+    headerEnd?: Snippet | null
+  }
   let {
     soc = 0,
     vehicleLimit = null,
@@ -14,9 +30,8 @@
     unit = 'percent',
     estMaxRange = null,
     onchange = () => {},
-    // optional snippet rendered at the header's right edge (the card's pills)
     headerEnd = null,
-  } = $props()
+  }: Props = $props()
 
   // Live knob position during a drag (percent). Initialise from the prop so the
   // first paint is correct; the $effect re-syncs on later prop changes, including
@@ -27,11 +42,11 @@
     current = target
   })
 
-  function handleInput(e) {
-    current = Number(e.currentTarget.value)
+  function handleInput(e: Event): void {
+    current = Number((e.currentTarget as HTMLInputElement).value)
   }
-  function handleChange(e) {
-    const v = Number(e.currentTarget.value)
+  function handleChange(e: Event): void {
+    const v = Number((e.currentTarget as HTMLInputElement).value)
     if (v >= ceiling) current = ceiling // at/above the vehicle limit = no limit
     onchange(v)
   }
@@ -45,15 +60,18 @@
   let rangeMode = $derived(unit === 'range' && Number.isFinite(estMaxRange))
 
   // Format a bar percentage in the active unit: "60%" or "167 km".
-  function fmt(pct) {
-    if (rangeMode) return `${Math.round((pct / 100) * estMaxRange)} ${rangeUnitLabel}`
+  // `estMaxRange ?? 0`: rangeMode already guarantees it's finite here
+  // (Number.isFinite isn't a type guard TS recognises), so the fallback
+  // never actually fires.
+  function fmt(pct: number): string {
+    if (rangeMode) return `${Math.round((pct / 100) * (estMaxRange ?? 0))} ${rangeUnitLabel}`
     return `${Math.round(pct)}%`
   }
 
   // "74% → 80%" / "206 → 223 km" while charging toward the target; collapses to
   // just the current value once SOC has reached/passed the effective target.
-  function rangeAt(pct) {
-    return Math.round((pct / 100) * estMaxRange)
+  function rangeAt(pct: number): number {
+    return Math.round((pct / 100) * (estMaxRange ?? 0))
   }
   let progress = $derived.by(() => {
     if (rangeMode) {

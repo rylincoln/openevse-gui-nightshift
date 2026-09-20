@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   // Boost surface: pick a dimension (time / energy / soc / range) and a value,
   // then arm a device-side "charge NOW until target" claim. The firmware owns
   // the countdown — this component never runs a client timer as the source of
@@ -7,31 +7,50 @@
   // boost can't leave a phantom counting down.
   import { _ } from 'svelte-i18n'
   import Button from '../ui/Button.svelte'
+  import type { Boost, LimitType } from '../../api/device'
 
+  interface Props {
+    // live boost {type, value, remaining, started} or null
+    active?: Boost | null
+    hasSoc?: boolean
+    canRange?: boolean
+    // current battery %, to floor the soc target
+    soc?: number
+    // current range, to floor the range target
+    range?: number | null
+    // range estimate, ceilings the range slider
+    estMaxRange?: number | null
+    rangeMiles?: boolean
+    maxEnergyKwh?: number
+    disabled?: boolean
+    // ({type, value}) — value already in device units
+    onarm?: (arg: { type: LimitType; value: number }) => void
+    oncancel?: () => void
+  }
   let {
-    active = null,          // live boost {type, value, remaining, started} or null
+    active = null,
     hasSoc = false,
     canRange = false,
-    soc = 0,                // current battery %, to floor the soc target
-    range = null,           // current range, to floor the range target
-    estMaxRange = null,     // range estimate, ceilings the range slider
+    soc = 0,
+    range = null,
+    estMaxRange = null,
     rangeMiles = false,
     maxEnergyKwh = 100,
     disabled = false,
-    onarm = () => {},       // ({type, value}) — value already in device units
+    onarm = () => {},
     oncancel = () => {},
-  } = $props()
+  }: Props = $props()
 
   const rangeUnit = $derived($_(rangeMiles ? 'units.miles' : 'units.km'))
 
   // ── dimension selection ────────────────────────────────────────────────
   let dims = $derived([
-    { id: 'time', labelKey: 'dashboard.boost.type_time' },
-    { id: 'energy', labelKey: 'dashboard.boost.type_energy' },
-    ...(hasSoc ? [{ id: 'soc', labelKey: 'dashboard.boost.type_soc' }] : []),
-    ...(canRange ? [{ id: 'range', labelKey: 'dashboard.boost.type_range' }] : []),
+    { id: 'time' as LimitType, labelKey: 'dashboard.boost.type_time' },
+    { id: 'energy' as LimitType, labelKey: 'dashboard.boost.type_energy' },
+    ...(hasSoc ? [{ id: 'soc' as LimitType, labelKey: 'dashboard.boost.type_soc' }] : []),
+    ...(canRange ? [{ id: 'range' as LimitType, labelKey: 'dashboard.boost.type_range' }] : []),
   ])
-  let userPick = $state('time')
+  let userPick = $state<LimitType>('time')
   let selected = $derived(dims.some((d) => d.id === userPick) ? userPick : 'time')
 
   // The picker stays collapsed behind a single "Boost" button until tapped, so
@@ -52,15 +71,25 @@
     if (socTarget < socMin) socTarget = socMin
   })
   let energyMax = $derived(Math.max(5, Math.round(maxEnergyKwh)))
+  // `typeof estMaxRange === 'number'` ahead of Number.isFinite: additive
+  // narrowing only (Number.isFinite already returns false for null, so the
+  // combined check is boolean-identical to the original) — Number.isFinite
+  // isn't a type guard TS recognises, so estMaxRange stays possibly-null for
+  // the arithmetic below without it.
   let rangeMax = $derived(
-    Number.isFinite(estMaxRange) && estMaxRange > 0 ? Math.ceil(estMaxRange / 10) * 10 : 400,
+    typeof estMaxRange === 'number' && Number.isFinite(estMaxRange) && estMaxRange > 0
+      ? Math.ceil(estMaxRange / 10) * 10
+      : 400,
   )
   // Floor the range target just above the current range (10-unit steps), the
   // same guard socMin gives soc — otherwise an already-met range target arms,
   // returns 201, and silently reconciles to nothing with no user explanation.
   // Kept a step below the ceiling so the slider always has a usable span.
   let rangeMin = $derived.by(() => {
-    const floor = Number.isFinite(range) && range > 0 ? Math.ceil((range + 1) / 10) * 10 : 10
+    const floor =
+      typeof range === 'number' && Number.isFinite(range) && range > 0
+        ? Math.ceil((range + 1) / 10) * 10
+        : 10
     return Math.max(10, Math.min(floor, rangeMax - 10))
   })
   $effect(() => {
@@ -71,17 +100,17 @@
   let cfg = $derived.by(() => {
     switch (selected) {
       case 'energy':
-        return { min: 1, max: energyMax, step: 1, get: () => energyKwh, set: (v) => (energyKwh = v) }
+        return { min: 1, max: energyMax, step: 1, get: () => energyKwh, set: (v: number) => (energyKwh = v) }
       case 'soc':
-        return { min: socMin, max: 100, step: 5, get: () => socTarget, set: (v) => (socTarget = v) }
+        return { min: socMin, max: 100, step: 5, get: () => socTarget, set: (v: number) => (socTarget = v) }
       case 'range':
-        return { min: rangeMin, max: rangeMax, step: 10, get: () => rangeVal, set: (v) => (rangeVal = v) }
+        return { min: rangeMin, max: rangeMax, step: 10, get: () => rangeVal, set: (v: number) => (rangeVal = v) }
       default: // time
-        return { min: 15, max: 480, step: 15, get: () => timeMin, set: (v) => (timeMin = v) }
+        return { min: 15, max: 480, step: 15, get: () => timeMin, set: (v: number) => (timeMin = v) }
     }
   })
 
-  function fmtDur(sec) {
+  function fmtDur(sec: number): string {
     sec = Math.max(0, Math.round(sec))
     const h = Math.floor(sec / 3600)
     const m = Math.floor((sec % 3600) / 60)
@@ -89,7 +118,7 @@
     if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
     return `${m}:${String(s).padStart(2, '0')}`
   }
-  function fmtMins(min) {
+  function fmtMins(min: number): string {
     const h = Math.floor(min / 60)
     const m = min % 60
     if (h > 0) return m > 0 ? `${h} h ${m} min` : `${h} h`
@@ -104,11 +133,11 @@
     return `${rangeVal} ${rangeUnit}`
   })
 
-  function onSlide(e) {
-    cfg.set(Number(e.currentTarget.value))
+  function onSlide(e: Event): void {
+    cfg.set(Number((e.currentTarget as HTMLInputElement).value))
   }
 
-  function arm() {
+  function arm(): void {
     if (disabled) return
     if (selected === 'time') onarm({ type: 'time', value: timeMin * 60 })
     else if (selected === 'energy') onarm({ type: 'energy', value: energyKwh * 1000 })
@@ -124,7 +153,7 @@
   // Interpolate only the time countdown. base resets whenever the device
   // reports a fresh `remaining`, keeping the device authoritative.
   let now = $state(Date.now())
-  let base = $state(null)
+  let base = $state<{ remaining: number; at: number } | null>(null)
   $effect(() => {
     if (active && active.type === 'time' && typeof active.remaining === 'number') {
       base = { remaining: active.remaining, at: Date.now() }
@@ -154,7 +183,7 @@
     if (!active) return ''
     const left = $_('dashboard.limit.left')
     if (active.type === 'time') return `${fmtDur(liveRemaining)} ${left}`
-    if (active.type === 'energy') return `${(active.remaining / 1000).toFixed(1)} ${$_('units.kwh')} ${left}`
+    if (active.type === 'energy') return `${(active.remaining! / 1000).toFixed(1)} ${$_('units.kwh')} ${left}`
     if (active.type === 'soc') return `${active.remaining}${$_('units.percent')} ${left}`
     return `${active.remaining} ${rangeUnit} ${left}`
   })
