@@ -178,6 +178,21 @@ describe('HTTP page', () => {
     expect(queryByText('Root CA')).not.toBeInTheDocument()
   })
 
+  // NumberInput emits null when the field is cleared to empty; www_https_port
+  // is optional but had no null fallback, which would have sent a literal
+  // null port to the device instead of restoring the 443 shown as its value.
+  it('saves 443 for the HTTPS port when the field is cleared', async () => {
+    config_store.set({
+      www_username: '', www_password: '', lang: 'en',
+      www_https_enabled: true, www_https_port: 8443,
+    })
+    const { getAllByRole } = render(Http)
+    const port = getAllByRole('spinbutton')[0]
+    await fireEvent.input(port, { target: { value: '' } })
+    await fireEvent.blur(port)
+    expect(httpAPI).toHaveBeenCalledWith('POST', '/config', JSON.stringify({ www_https_port: 443 }))
+  })
+
   it('surfaces the write-error alert on a failed save', async () => {
     httpAPI.mockResolvedValue('error')
     config_store.set({ www_username: 'admin', www_password: '••••••••••', lang: 'en' })

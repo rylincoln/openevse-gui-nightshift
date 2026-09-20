@@ -1,5 +1,5 @@
 <!-- src/routes/settings/Http.svelte -->
-<script>
+<script lang="ts">
   import { _, locales } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { certificate_store } from '../../lib/stores/certificates'
@@ -14,6 +14,7 @@
   import Select from '../../lib/components/ui/Select.svelte'
   import SegmentedControl from '../../lib/components/ui/SegmentedControl.svelte'
   import Toggle from '../../lib/components/ui/Toggle.svelte'
+  import type { Config } from '../../lib/api/device'
 
   const form = createConfigForm()
   const ss = form.saveState
@@ -27,7 +28,7 @@
     authOn = !!$config_store?.www_password
   })
 
-  function toggleAuth(next) {
+  function toggleAuth(next: boolean): void {
     authOn = next
     // Turning auth off clears both credentials; turning it on only reveals
     // the fields — the user then fills and saves them per-field.
@@ -74,7 +75,7 @@
   // the section can say so instead of leaving the user to discover it.
   let restartPending = $state(false)
 
-  async function saveServerField(name, value) {
+  async function saveServerField<K extends keyof Config>(name: K, value: Config[K]): Promise<void> {
     if (await form.saveField(name, value)) restartPending = true
   }
 
@@ -87,11 +88,18 @@
     { value: 'f', label: $_('config.http.temp_fahrenheit') },
   ])
 
-  function setEnergyRate(rate) {
+  // SegmentedControl emits string | number (its value union is shared with
+  // Select); every option here is string-valued, so this is always a string —
+  // named so the narrowing lives in the script, not the markup.
+  function pickTempUnit(value: string | number): void {
+    form.saveField('temp_unit', String(value))
+  }
+
+  function setEnergyRate(rate: number | null): void {
     uisettings_store.update((s) => ({ ...s, energy_rate: rate ?? 0 }))
   }
 
-  function setCurrency(symbol) {
+  function setCurrency(symbol: string): void {
     uisettings_store.update((s) => ({ ...s, currency_symbol: symbol || '$' }))
   }
 
@@ -155,7 +163,7 @@
           min={1}
           max={65535}
           step={1}
-          onchange={(v) => saveServerField('www_https_port', v)}
+          onchange={(v) => saveServerField('www_https_port', v ?? 443)}
         />
       </FormField>
       {#if httpsIncomplete}
@@ -206,7 +214,7 @@
       <SegmentedControl
         options={tempUnitOptions}
         value={$config_store?.temp_unit ?? 'c'}
-        onchange={(v) => form.saveField('temp_unit', v)}
+        onchange={pickTempUnit}
       />
     </FormField>
     <!-- Local-only tariff — used to show cost on Dashboard + History.
