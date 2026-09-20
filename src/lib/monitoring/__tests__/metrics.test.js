@@ -72,7 +72,8 @@ describe('showVehicle', () => {
     expect(showVehicle({}, {})).toBe(false)
     expect(showVehicle({ battery_level: 80 }, {})).toBe(true)
     expect(showVehicle({ battery_range: 200 }, {})).toBe(true)
-    expect(showVehicle({}, { time_to_full_charge: 3600 })).toBe(true)
+    expect(showVehicle({ time_to_full_charge: 3600 }, {})).toBe(true)
+    expect(showVehicle({}, { time_to_full_charge: 3600 })).toBe(false)
   })
 })
 
