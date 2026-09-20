@@ -57,6 +57,19 @@ describe('MQTT page', () => {
     expect(httpAPI).toHaveBeenCalledWith('POST', '/config', JSON.stringify({ mqtt_server: 'broker.local' }))
   })
 
+  // NumberInput emits null when the port field is cleared to empty; it's
+  // shown blank (no numeric fallback), so clearing it must not write
+  // anything at all — not a literal null.
+  it('does not save a null mqtt_port when the field is cleared', async () => {
+    config_store.set({ mqtt_enabled: true, mqtt_protocol: 'mqtt', mqtt_port: 1883, mqtt_supported_protocols: ['mqtt'] })
+    const { getByRole } = render(Mqtt)
+    httpAPI.mockClear()
+    const port = getByRole('spinbutton')
+    await fireEvent.input(port, { target: { value: '' } })
+    await fireEvent.blur(port)
+    expect(httpAPI).not.toHaveBeenCalledWith('POST', '/config', expect.stringContaining('mqtt_port'))
+  })
+
   it('surfaces the write-error alert on a failed save', async () => {
     httpAPI.mockResolvedValue('error')
     config_store.set({ mqtt_enabled: true, mqtt_protocol: 'mqtt', mqtt_server: 'old', mqtt_supported_protocols: ['mqtt'] })
