@@ -136,6 +136,19 @@ describe('Terminal — Memory & health', () => {
     status_store.set({})
   })
 
+  // Button only supports variant="primary"|"ghost"; "secondary" was a typo
+  // that fell through to no variant class at all (unstyled button).
+  it('renders the format button with the ghost variant, not an unstyled one', () => {
+    config_store.set({ espflash: 16777216, sd_size: 31914983424, sd_used: 33554432, sd_log_size: 33554432 })
+    status_store.set({ sd_status: 'mounted' })
+    const { getByText } = render(Terminal)
+    const button = getByText('config.terminal.sd_format_button')
+    expect(button.className).toContain('border')
+    expect(button.className).not.toContain('undefined')
+    config_store.set({ espflash: 16777216 })
+    status_store.set({})
+  })
+
   it('shows the format phase from sd_status while the card is unmounted', () => {
     config_store.set({ espflash: 16777216 })
     status_store.set({ sd_status: 'creating log' })
