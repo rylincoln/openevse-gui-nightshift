@@ -1,5 +1,5 @@
 <!-- src/routes/settings/Vehicle.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { createConfigForm } from '../../lib/config/configForm.svelte'
@@ -14,6 +14,23 @@
   import PasswordInput from '../../lib/components/ui/PasswordInput.svelte'
   import Select from '../../lib/components/ui/Select.svelte'
   import Button from '../../lib/components/ui/Button.svelte'
+
+  interface TeslaVehicle {
+    id: string
+    name: string
+  }
+  interface TeslaVehiclesResponse {
+    vehicles?: TeslaVehicle[]
+  }
+  // The auth.openevse.com Tesla login proxy's response shape — only this
+  // page reads it.
+  interface TeslaLoginResponse {
+    ok?: boolean
+    access_token?: string
+    refresh_token?: string
+    created_at?: number
+    expires_in?: number
+  }
 
   const form = createConfigForm()
   const ss = form.saveState
@@ -43,7 +60,7 @@
   let advancedOpen = $state(false)
 
   // vehicle list
-  let vehicles = $state([])
+  let vehicles = $state<TeslaVehicle[]>([])
   let vehiclesError = $state(false)
 
   let vehiclesLoaded = $state(false)
@@ -55,9 +72,9 @@
     if (!loggedIn) vehiclesLoaded = false
   })
 
-  async function loadVehicles() {
+  async function loadVehicles(): Promise<void> {
     vehiclesError = false
-    const res = await serialQueue.add(() => httpAPI('GET', '/tesla/vehicles'))
+    const res = await serialQueue.add(() => httpAPI<TeslaVehiclesResponse>('GET', '/tesla/vehicles'))
     if (!res || res === 'error' || !Array.isArray(res.vehicles)) {
       vehiclesError = true
       vehicles = []
@@ -66,12 +83,12 @@
     vehicles = res.vehicles
   }
 
-  async function teslaLogin() {
+  async function teslaLogin(): Promise<void> {
     if (loggingIn || !teslaUser || !teslaPass) return
     loggingIn = true
     loginFailed = false
     const res = await serialQueue.add(() =>
-      httpAPI('POST', TESLA_LOGIN_URL, JSON.stringify({ username: teslaUser, password: teslaPass })),
+      httpAPI<TeslaLoginResponse>('POST', TESLA_LOGIN_URL, JSON.stringify({ username: teslaUser, password: teslaPass })),
     )
     loggingIn = false
     if (res && res !== 'error' && res.ok) {
@@ -90,14 +107,16 @@
     }
   }
 
-  function teslaLogout() {
+  function teslaLogout(): Promise<boolean> {
     vehicles = []
     return form.saveFields({
       tesla_enabled: false,
       tesla_access_token: '',
       tesla_refresh_token: '',
-      tesla_created_at: '',
-      tesla_expires_in: '',
+      // tesla_created_at/tesla_expires_in are numbers (epoch seconds /
+      // duration); '' was silently sending the wrong wire type here.
+      tesla_created_at: 0,
+      tesla_expires_in: 0,
     })
   }
 
