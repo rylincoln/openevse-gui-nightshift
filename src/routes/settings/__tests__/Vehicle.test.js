@@ -112,6 +112,32 @@ describe('Vehicle page', () => {
     await vi.waitFor(() => expect(getByText('config.vehicle.select_vehicle')).toBeInTheDocument())
   })
 
+  // tesla_created_at/tesla_expires_in are numbers on the wire; logout used to
+  // send '' for them instead of 0.
+  it('logs out with numeric tesla_created_at/tesla_expires_in, not empty strings', async () => {
+    httpAPI.mockImplementation((m, url) =>
+      url === '/tesla/vehicles'
+        ? Promise.resolve({ count: 1, vehicles: [{ id: 'v1', name: 'My Tesla' }] })
+        : Promise.resolve({ msg: 'done' }),
+    )
+    config_store.set({
+      vehicle_data_src: 1,
+      tesla_access_token: 'a', tesla_refresh_token: 'r',
+      tesla_created_at: 1700000000, tesla_expires_in: 3600,
+    })
+    const { getByText } = render(Vehicle)
+    await vi.waitFor(() => expect(getByText('config.vehicle.logout')).toBeInTheDocument())
+    httpAPI.mockClear()
+    await fireEvent.click(getByText('config.vehicle.logout'))
+    expect(httpAPI).toHaveBeenCalledWith('POST', '/config', JSON.stringify({
+      tesla_enabled: false,
+      tesla_access_token: '',
+      tesla_refresh_token: '',
+      tesla_created_at: 0,
+      tesla_expires_in: 0,
+    }))
+  })
+
   it('calls the login endpoint and saves tokens on success', async () => {
     httpAPI.mockImplementation((m, url) => {
       if (url === 'https://auth.openevse.com/login')
