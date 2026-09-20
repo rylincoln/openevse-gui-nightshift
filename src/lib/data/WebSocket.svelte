@@ -1,13 +1,15 @@
-<script>
+<script lang="ts">
   import { onMount, onDestroy } from 'svelte'
   import { DateTime } from 'luxon'
   import { uistates_store } from '../stores/uistates'
   import { status_store } from '../stores/status'
   import { JSONTryParse } from '../utils'
+  import type { Status } from '../api/device'
+  import type { UiStates } from '../stores/uistates'
 
-  let socket
-  let timerId
-  let lastmsg
+  let socket: WebSocket | null = null
+  let timerId: ReturnType<typeof setTimeout> | null = null
+  let lastmsg: number
   let ping_cnt = 0
 
   // Exponential backoff: doubles on each failed reconnect attempt, capped at
@@ -16,7 +18,7 @@
   const RECONNECT_MIN = 1000
   const RECONNECT_MAX = 30000
   let reconnectDelay = RECONNECT_MIN
-  let reconnectTimer
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
   // Diagnostics surfaced in the disconnect overlay's details panel. The browser
   // WS API hides why a connect failed (close code is almost always 1006), so
@@ -24,7 +26,7 @@
   // we've burned — tracked here and mirrored into the store.
   let attempts = 0
   let everConnected = false
-  function publishDebug(extra = {}) {
+  function publishDebug(extra: Partial<UiStates['ws_debug']> = {}) {
     $uistates_store.ws_debug = {
       attempts,
       ever_connected: everConnected,
@@ -149,7 +151,7 @@
     teardownAndReconnect()
   }
 
-  function parseMessage(msg) {
+  function parseMessage(msg: string): boolean {
     const jsondata = JSONTryParse(msg)
     if (!jsondata) return false
     lastmsg = DateTime.now().toUnixInteger()
@@ -164,12 +166,15 @@
       if (jsondata.notifications) {
         $uistates_store.notification_event = ($uistates_store.notification_event ?? 0) + 1
       }
-      status_store.update((cur) => ({ ...(cur || {}), ...jsondata }))
+      // jsondata is JSONTryParse's Record<string, unknown> — a frame over an
+      // undefined store is a partial status, exactly as the JS did.
+      const frame = jsondata as Partial<Status>
+      status_store.update((cur) => ({ ...(cur || {}), ...frame }) as Status)
     }
     return true
   }
 
-  function keepAlive(s) {
+  function keepAlive(s: WebSocket) {
     if (s !== socket) return // stale recursion from a torn-down socket
     const now = DateTime.now().toUnixInteger()
     const timing = now - lastmsg
