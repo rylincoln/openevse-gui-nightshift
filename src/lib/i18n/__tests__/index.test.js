@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { get } from 'svelte/store'
 import { dictionary, waitLocale } from 'svelte-i18n'
-import { setupI18n } from '../index.js'
+import { setupI18n } from '../index'
 import esSource from '../source/es.json'
 import frSource from '../source/fr.json'
 import huSource from '../source/hu.json'

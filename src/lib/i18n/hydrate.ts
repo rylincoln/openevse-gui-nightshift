@@ -8,6 +8,8 @@
 // keys at load time removes that duplication — see the flash-budget note in
 // the OpenEVSE firmware repo issue #1224.
 
+export type Catalog = { [key: string]: string | Catalog }
+
 // Separator for an encoded key path. A NUL byte never occurs in a JSON key we
 // ship, so joining and splitting on it is unambiguous even if a key ever
 // contained svelte-i18n's own nesting delimiter ('.'). The array-building
@@ -20,27 +22,29 @@ export const PATH_SEP = '\0'
  * traversal both the array-building script and this hydrator rely on; keeping
  * it in a single place is what guarantees position N is the same key on both
  * ends. */
-export function keyEntries(obj, prefix = '') {
+export function keyEntries(obj: Catalog, prefix = ''): [string, string][] {
   return Object.entries(obj).flatMap(([k, v]) =>
-    v && typeof v === 'object' ? keyEntries(v, prefix + k + PATH_SEP) : [[prefix + k, v]],
+    v && typeof v === 'object'
+      ? keyEntries(v, prefix + k + PATH_SEP)
+      : ([[prefix + k, v]] as [string, string][]),
   )
 }
 
 /** Just the leaf key paths, in that same fixed traversal order. */
-export function keyPaths(obj) {
+export function keyPaths(obj: Catalog): string[] {
   return keyEntries(obj).map(([path]) => path)
 }
 
 /** Rebuild a nested translation dictionary from a flat values array, using
  * keySource (typically en.json) for the shape and key order. */
-export function hydrateLocale(keySource, values) {
+export function hydrateLocale(keySource: Catalog, values: string[]): Catalog {
   const paths = keyPaths(keySource)
-  const out = {}
+  const out: Catalog = {}
   paths.forEach((path, i) => {
     const parts = path.split(PATH_SEP)
     let node = out
     for (let j = 0; j < parts.length - 1; j++) {
-      node = node[parts[j]] ??= {}
+      node = (node[parts[j]] ??= {}) as Catalog
     }
     node[parts[parts.length - 1]] = values[i]
   })
