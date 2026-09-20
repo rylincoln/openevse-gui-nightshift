@@ -38,6 +38,16 @@
     const values = presetValues(String(id))
     if (values) form.saveFields(values)
   }
+
+  // NumberInput emits null when a tuning field is cleared to empty; every one
+  // of these is shown blank (no numeric fallback), so clearing must not write
+  // a literal null — matching the cable-temp calibration and mqtt_port fixes.
+  function saveTuningField(
+    name: 'divert_PV_ratio' | 'divert_min_charge_time' | 'divert_attack_smoothing_time' | 'divert_decay_smoothing_time',
+    v: number | null,
+  ): void {
+    if (v !== null) form.saveField(name, v)
+  }
 </script>
 
 <ConfigPage title={$_('config.pages.solar')}>
@@ -122,7 +132,7 @@
         step={0.01}
         placeholder="1.1"
         revert={form.revert}
-        onchange={(v) => form.saveField('divert_PV_ratio', v)}
+        onchange={(v) => saveTuningField('divert_PV_ratio', v)}
       />
     </FormField>
     <FormField
@@ -135,7 +145,7 @@
         min={0}
         placeholder="600"
         revert={form.revert}
-        onchange={(v) => form.saveField('divert_min_charge_time', v)}
+        onchange={(v) => saveTuningField('divert_min_charge_time', v)}
       />
     </FormField>
     <FormField
@@ -148,7 +158,7 @@
         min={0}
         max={600}
         revert={form.revert}
-        onchange={(v) => form.saveField('divert_attack_smoothing_time', v)}
+        onchange={(v) => saveTuningField('divert_attack_smoothing_time', v)}
       />
     </FormField>
     <FormField
@@ -161,7 +171,7 @@
         min={0}
         max={600}
         revert={form.revert}
-        onchange={(v) => form.saveField('divert_decay_smoothing_time', v)}
+        onchange={(v) => saveTuningField('divert_decay_smoothing_time', v)}
       />
     </FormField>
   </ConfigSection>

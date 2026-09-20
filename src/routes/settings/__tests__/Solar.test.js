@@ -89,4 +89,24 @@ describe('Solar page', () => {
       }))
     })
   })
+
+  // NumberInput emits null when a tuning field is cleared to empty; every
+  // one of these is shown blank (no numeric fallback), so clearing must not
+  // write a literal null.
+  it('does not save null for a tuning field cleared to empty', async () => {
+    config_store.set({
+      divert_enabled: true, divert_type: 0,
+      divert_PV_ratio: 1.1, divert_min_charge_time: 600,
+      divert_attack_smoothing_time: 20, divert_decay_smoothing_time: 600,
+    })
+    const { getAllByRole } = render(Solar)
+    const keys = ['divert_PV_ratio', 'divert_min_charge_time', 'divert_attack_smoothing_time', 'divert_decay_smoothing_time']
+    const numbers = getAllByRole('spinbutton')
+    for (const [i, key] of keys.entries()) {
+      httpAPI.mockClear()
+      await fireEvent.input(numbers[i], { target: { value: '' } })
+      await fireEvent.blur(numbers[i])
+      expect(httpAPI).not.toHaveBeenCalledWith('POST', '/config', expect.stringContaining(key))
+    }
+  })
 })
