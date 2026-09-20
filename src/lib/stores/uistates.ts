@@ -24,6 +24,13 @@ export interface UiStates {
   schedule_version: number
   schedule_plan_version: number
   limit_version: number
+  // Written by DataManager.svelte's refreshBoostStore/refreshCertificateStore
+  // (Task 15) alongside the *_version fields above; missing until now.
+  // certificate_version's writer (refreshCertificateStore) is exported but
+  // not wired to any $effect — kept for parity with the store's other
+  // *_version counters.
+  boost_version: number
+  certificate_version: number
   // "<count>:<severity>@<nonce>" — the advisory list's stand-in for a
   // version counter. null until the first frame from a charger that has
   // the advisory engine; stays null forever on one that doesn't.
@@ -59,10 +66,13 @@ export interface UiStates {
   breakpoint?: string
   has_fetched: boolean
   wizard_step: number
-  vehicle_state_update: number
-  divert_update: number
-  rfid_waiting: number
-  elapsed: number
+  // undefined on a charger without the matching capability (vehicle-data
+  // integration, solar/divert mode, an RFID reader) — the source /status
+  // fields are optional, and DataManager copies them through as-is.
+  vehicle_state_update: number | undefined
+  divert_update: number | undefined
+  rfid_waiting: number | undefined
+  elapsed: number | undefined
   alertbox: AlertBox
   networks: WifiNetwork[]
 }
@@ -79,6 +89,8 @@ const model: UiStates = {
   schedule_version: 0,
   schedule_plan_version: 0,
   limit_version: 0,
+  boost_version: 0,
+  certificate_version: 0,
   notification_badge: null,
   notification_event: 0,
   logidx_min: 0,

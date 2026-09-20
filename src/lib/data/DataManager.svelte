@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { derived } from 'svelte/store'
   import { limit_store } from '../stores/limit'
   import { boost_store } from '../stores/boost'
@@ -21,11 +21,12 @@
   import { locale, locales } from 'svelte-i18n'
   import { _ } from 'svelte-i18n'
 
-  // setTimeout instances
-  let counter_divert_update
-  let counter_vehicle_update
-  let counter_rfid_scan
-  let counter_elapsed
+  // setTimeout instances (actually set with setInterval below; same handle
+  // type as setTimeout in both the DOM and Node lib typings)
+  let counter_divert_update: ReturnType<typeof setTimeout> | undefined
+  let counter_vehicle_update: ReturnType<typeof setTimeout> | undefined
+  let counter_rfid_scan: ReturnType<typeof setTimeout> | undefined
+  let counter_elapsed: ReturnType<typeof setTimeout> | undefined
 
   // derived stores replacing keyed stores (keyed stores do not trigger an update if the same value is published)
   const time = derived(status_store, ($s) => $s?.time)
@@ -64,72 +65,80 @@
   let refresh_limit = false
   let refresh_boost = false
   let refresh_notifications = false
-  let prev_ip
+  let prev_ip: string | undefined
   let ip_changed = false
 
   onMount(() => {
     getMode($claims_target_store?.properties?.state, $claims_target_store?.claims?.state)
   })
 
-  export function refreshDateTime(t, tz) { // params: time (isostring) , timezone
-    $uistates_store.time_localestring = formatDate(t, tz)
+  export function refreshDateTime(t: string | undefined, tz: string | undefined): void { // params: time (isostring) , timezone
+    // t is undefined only before status_store's first download; App.svelte
+    // never mounts DataManager until FetchData.svelte has completed that
+    // download (see src/lib/data/FetchData.svelte), so by the time this
+    // effect can fire with a real frame, t is a string. formatDate's `t` is
+    // untyped for undefined (utils.ts), so this asserts that invariant.
+    $uistates_store.time_localestring = formatDate(t!, tz)
   }
 
-  export async function refreshConfigStore(ver) {
+  export async function refreshConfigStore(ver: number | undefined): Promise<boolean | undefined> {
     if (refresh_config)
       return
     if (ver != $uistates_store.config_version) {
       refresh_config = true
       const res = await serialQueue.add(config_store.download)
       if (res)
-        $uistates_store.config_version = ver
+        // ver is undefined only before status_store's first download, which
+        // App.svelte's FetchData completes before DataManager ever mounts
+        // (see refreshDateTime above for the same invariant).
+        $uistates_store.config_version = ver!
       refresh_config = false
       return res
     }
   }
 
-  export async function refreshSchedulestore(ver) {
+  export async function refreshSchedulestore(ver: number | undefined): Promise<boolean | undefined> {
     if (refresh_schedule)
       return
     if (ver != $uistates_store.schedule_version) {
       refresh_schedule = true
-      $uistates_store.schedule_version = ver
+      $uistates_store.schedule_version = ver! // see refreshConfigStore
       const res = await serialQueue.add(schedule_store.download)
       refresh_schedule = false
       return res
     }
   }
 
-  export async function refreshCertificateStore(ver) {
+  export async function refreshCertificateStore(ver: number | undefined): Promise<boolean | undefined> {
     if (refresh_certificate)
       return
     if (ver != $uistates_store.certificate_version) {
       refresh_certificate = true
-      $uistates_store.certificate_version = ver
+      $uistates_store.certificate_version = ver! // see refreshConfigStore
       const res = await serialQueue.add(certificate_store.download)
       refresh_certificate = false
       return res
     }
   }
 
-  export async function refreshPlanStore(ver) {
+  export async function refreshPlanStore(ver: number | undefined): Promise<boolean | undefined> {
     if (refresh_plan)
       return
     if (ver != $uistates_store.schedule_plan_version) {
       refresh_plan = true
-      $uistates_store.schedule_plan_version = ver
+      $uistates_store.schedule_plan_version = ver! // see refreshConfigStore
       const res = await serialQueue.add(plan_store.download)
       refresh_plan = false
       return res
     }
   }
 
-  export async function refreshClaimsTargetStore(ver) {
+  export async function refreshClaimsTargetStore(ver: number | undefined): Promise<boolean | undefined> {
     if (refresh_target)
       return
     if (ver != $uistates_store.claims_version) {
       refresh_target = true
-      $uistates_store.claims_version = ver
+      $uistates_store.claims_version = ver! // see refreshConfigStore
       const res = await serialQueue.add(claims_target_store.download)
       // The claims list (with real per-claim priorities) changes in lockstep
       // with the target, so refresh it on the same version bump.
@@ -143,12 +152,12 @@
     return false
   }
 
-  export async function refreshOverrideStore(version) {
+  export async function refreshOverrideStore(version: number | undefined): Promise<boolean | undefined> {
     if (refresh_override)
       return
     if ($uistates_store.override_version != version) {
       refresh_override = true
-      $uistates_store.override_version = version
+      $uistates_store.override_version = version! // see refreshConfigStore
       const res = await serialQueue.add(override_store.download)
       refresh_override = false
       if (res)
@@ -158,12 +167,12 @@
     else return true
   }
 
-  export async function refreshStatusStore() {
+  export async function refreshStatusStore(): Promise<boolean> {
     const res = await serialQueue.add(status_store.download)
     return res
   }
 
-  export async function refreshLimitStore(version) {
+  export async function refreshLimitStore(version: number | undefined): Promise<boolean | undefined> {
     if (refresh_limit)
       return
     if ($uistates_store.limit_version != version) {
@@ -172,7 +181,7 @@
         const res = await serialQueue.add(limit_store.download)
         refresh_limit = false
         if (res) {
-          $uistates_store.limit_version = version
+          $uistates_store.limit_version = version! // see refreshConfigStore
           return res
         }
         else {
@@ -181,13 +190,13 @@
       }
       else {
         limit_store.reset()
-        $uistates_store.limit_version = version
+        $uistates_store.limit_version = version! // see refreshConfigStore
       }
     }
     else return true
   }
 
-  export async function refreshBoostStore(version) {
+  export async function refreshBoostStore(version: number | undefined): Promise<boolean | undefined> {
     if (refresh_boost)
       return
     // No boost_version in /status → firmware predates Boost; leave the store
@@ -212,7 +221,7 @@
     else return true
   }
 
-  export async function refreshNotificationStore(signature) {
+  export async function refreshNotificationStore(signature: string | null): Promise<boolean | undefined> {
     if (refresh_notifications)
       return
     // null → no `notifications` object in /status → firmware predates
@@ -234,11 +243,11 @@
     return false
   }
 
-  export function refreshChargingState(val) {
+  export function refreshChargingState(val: boolean): void {
     $uistates_store.charging = val
   }
 
-  function getMode(evseState, clientid) {
+  function getMode(evseState: string | null | undefined, clientid: number | null | undefined): void {
     $uistates_store.stateclaimfrom = clientid2name(clientid)
     if (clientid == EvseClients["manual"].id) {
       // Mode Manual
@@ -259,44 +268,53 @@
     }
   }
 
-  function countDivertUpdate(val) {
+  function countDivertUpdate(val: number | undefined): void {
     $uistates_store.divert_update = val
     clearInterval(counter_divert_update)
     counter_divert_update = setInterval(() => {
-      $uistates_store.divert_update++
+      // val (and so the running total) is undefined on firmware without
+      // solar/divert mode; ?? 0 keeps the interval counting instead of
+      // latching onto NaN — this field is never read back by the app.
+      $uistates_store.divert_update = ($uistates_store.divert_update ?? 0) + 1
     }, 1000);
   }
 
-  function countVehicleUpdate(val) {
+  function countVehicleUpdate(val: number | undefined): void {
     $uistates_store.vehicle_state_update = val
     clearInterval(counter_vehicle_update)
     counter_vehicle_update = setInterval(() => {
-      $uistates_store.vehicle_state_update++
+      // See countDivertUpdate: undefined on firmware without vehicle-data
+      // integration; never read back by the app.
+      $uistates_store.vehicle_state_update = ($uistates_store.vehicle_state_update ?? 0) + 1
     }, 1000);
   }
 
-  function countRFIDScan(val) {
+  function countRFIDScan(val: number | undefined): void {
     $uistates_store.rfid_waiting = val
     clearInterval(counter_rfid_scan)
     counter_rfid_scan = setInterval(() => {
-      $uistates_store.rfid_waiting--
+      // See countDivertUpdate: undefined without an RFID reader; Rfid.svelte
+      // already reads this store field with `?? 0`.
+      $uistates_store.rfid_waiting = ($uistates_store.rfid_waiting ?? 0) - 1
       if ($uistates_store.rfid_waiting == 0) {
         clearInterval(counter_rfid_scan)
       }
     }, 1000);
   }
 
-  function countElapsed(val, charging) {
+  function countElapsed(val: number | undefined, charging: boolean): void {
     $uistates_store.elapsed = val
     clearInterval(counter_elapsed)
     if (charging) {
       counter_elapsed = setInterval(() => {
-        $uistates_store.elapsed++
+        // val is undefined only before status_store's first download (see
+        // refreshDateTime); never read back by the app.
+        $uistates_store.elapsed = ($uistates_store.elapsed ?? 0) + 1
       }, 1000);
     }
   }
 
-  function refreshLocale(lang) {
+  function refreshLocale(lang: string | undefined): void {
     // The device reports its configured language; an empty string means
     // "no preference". Only adopt a language this build actually ships —
     // setting an empty/unbundled locale breaks message formatting.
@@ -307,7 +325,7 @@
     }
   }
 
-  async function redirect2ip(ip) {
+  async function redirect2ip(ip: string | undefined): Promise<void> {
     if (ip != prev_ip) {
       if (ip && ip != "192.168.4.1" && prev_ip) {
         uistates_store.resetAlertBox()
@@ -323,8 +341,8 @@
     }
   }
 
-  function setErrorState(evseState) {
-    if (evseState >= 4 && evseState <= 11) {
+  function setErrorState(evseState: number | undefined): void {
+    if ((evseState ?? 0) >= 4 && (evseState ?? 0) <= 11) {
       // error state
       $uistates_store.error = true
     }
