@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { ComponentProps } from 'svelte'
   import { _ } from 'svelte-i18n'
   import { fade } from 'svelte/transition'
   import { status_store } from '../lib/stores/status'
@@ -38,11 +39,13 @@
   import AdvisoryStrip from '../lib/components/notifications/AdvisoryStrip.svelte'
   import type { Limit, LimitType } from '../lib/api/device'
 
-  // Matches PowerRing's own (unexported) I18nValues: the reason/detail
-  // objects below are always plain svelte-i18n interpolation data (strings,
-  // numbers) even though connectedReason()'s own return type keeps `values`
-  // as Record<string, unknown> to stay agnostic of any one caller's needs.
-  type I18nValues = Record<string, string | number | boolean | Date | null | undefined>
+  // Derived from PowerRing's own Props (its I18nValues type is unexported),
+  // so this isn't a second, hand-copied declaration of the same shape. The
+  // reason/detail objects below are always plain svelte-i18n interpolation
+  // data (strings, numbers) even though connectedReason()'s own return type
+  // keeps `values` as Record<string, unknown> to stay agnostic of any one
+  // caller's needs.
+  type I18nValues = NonNullable<ComponentProps<typeof PowerRing>['reasonValues']>
 
   let busy = $state(false)
   let rateNonce = $state(0)

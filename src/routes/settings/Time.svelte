@@ -16,6 +16,7 @@
   import TextInput from '../../lib/components/ui/TextInput.svelte'
   import Select from '../../lib/components/ui/Select.svelte'
   import Button from '../../lib/components/ui/Button.svelte'
+  import type { WriteResponse } from '../../lib/api/device'
 
   // GET /time's response shape — only this page reads it.
   interface NtpStatus {
@@ -139,7 +140,7 @@
         time: new Date().toISOString(),
         time_zone: $config_store?.time_zone,
       })
-      const res = await serialQueue.add(() => httpAPI<{ msg: string }>('POST', '/time', body))
+      const res = await serialQueue.add(() => httpAPI<WriteResponse>('POST', '/time', body))
       if (!res || res === 'error' || res.msg !== 'done') showWriteError()
     } finally {
       busy = false

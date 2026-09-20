@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { ComponentProps } from 'svelte'
   import { hardMaxCurrent } from '../lib/utils'
   import { _ } from 'svelte-i18n'
   import { schedule_store } from '../lib/stores/schedule'
@@ -260,7 +261,7 @@
   const saveBootLock = (enabled: boolean) => saveConfigParam('boot_lock', enabled)
   // 0 means "disabled" throughout the stack, so route it through the same
   // path as the toggle (also zeroes the fail current and flips the toggle).
-  const saveHeartbeatInterval = (sec: number | null) => ((sec ?? 0) > 0 ? saveConfigParam('heartbeat_interval', sec as number) : saveHeartbeat(false))
+  const saveHeartbeatInterval = (sec: number | null) => (sec !== null && sec > 0 ? saveConfigParam('heartbeat_interval', sec) : saveHeartbeat(false))
   const saveHeartbeatCurrent  = (amps: number) => saveConfigParam('heartbeat_current', amps)
 
   async function saveHeartbeat(enabled: boolean): Promise<void> {
@@ -386,12 +387,15 @@
     }
   }
 
-  // Mirrors RuleModal's own (unexported) RuleSave, plus the `_prevAction`
-  // extension: RuleModal's save() spreads the Rule object we handed it as
-  // `editingRule` into this payload, so _prevAction survives at runtime even
-  // though RuleSave's own declared type (in RuleModal, which knows nothing
+  // Derived from RuleModal's own Props (its RuleSave type is unexported), so
+  // this isn't a second, hand-copied declaration of the same shape — plus
+  // the `_prevAction` extension: RuleModal's save() spreads the Rule object
+  // we handed it as `editingRule` into this payload, so _prevAction survives
+  // at runtime even though RuleModal's onsave type (which knows nothing
   // about our local extension) doesn't carry it statically.
-  type RuleSave = Omit<Rule, 'id'> & { id?: string | null; _prevAction?: string }
+  type RuleSave = Parameters<NonNullable<ComponentProps<typeof RuleModal>['onsave']>>[0] & {
+    _prevAction?: string
+  }
   function handleRuleSave(rule: RuleSave): void {
     editorOpen = false
     saveCard(rule as EditableRule)
