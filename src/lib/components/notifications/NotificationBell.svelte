@@ -1,5 +1,5 @@
 <!-- src/lib/components/notifications/NotificationBell.svelte -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import IconButton from '../ui/IconButton.svelte'
   import NotificationPanel from './NotificationPanel.svelte'

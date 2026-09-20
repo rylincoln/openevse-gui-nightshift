@@ -1,12 +1,20 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Modal from '../ui/Modal.svelte'
   import Button from '../ui/Button.svelte'
   import SegmentedControl from '../ui/SegmentedControl.svelte'
   import DayPicker from './DayPicker.svelte'
   import { daysToFlags, flagsToDays, hasAnyDay, DAYS } from '../../schedule/timers'
+  import type { Timer } from '../../schedule/timers'
 
-  let { open = false, timer = null, busy = false, onclose = () => {}, onsave = () => {} } = $props()
+  interface Props {
+    open?: boolean
+    timer?: Timer | null
+    busy?: boolean
+    onclose?: () => void
+    onsave?: (data: Pick<Timer, 'state' | 'time' | 'days'>) => void
+  }
+  let { open = false, timer = null, busy = false, onclose = () => {}, onsave = () => {} }: Props = $props()
 
   let flags = $state(DAYS.map(() => true))
   let time = $state('08:00')
@@ -27,12 +35,19 @@
     { value: 'disabled', label: $_('schedule.disabled') },
   ])
 
-  function save() {
+  function save(): void {
     if (!hasAnyDay(flags)) {
       showDayError = true
       return
     }
     onsave({ state: timerState, time, days: flagsToDays(flags) })
+  }
+
+  // SegmentedControl emits string | number (its value union is shared with
+  // Select); every option here is string-valued, so this is always a string —
+  // named so the narrowing lives in the script, not the markup.
+  function pickState(value: string | number): void {
+    timerState = String(value)
   }
 </script>
 
@@ -57,7 +72,7 @@
 
   <div class="mt-4">
     <span class="mb-1 block text-[10px] tracking-wide text-text-dim uppercase">{$_('schedule.state')}</span>
-    <SegmentedControl options={stateOptions} value={timerState} onchange={(v) => (timerState = v)} />
+    <SegmentedControl options={stateOptions} value={timerState} onchange={pickState} />
   </div>
 
   <div class="mt-5 flex gap-2">

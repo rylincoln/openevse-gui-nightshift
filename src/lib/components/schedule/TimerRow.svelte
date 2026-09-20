@@ -1,12 +1,20 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import IconButton from '../ui/IconButton.svelte'
   import Icon from '../../icons/Icon.svelte'
   import { displayTime } from '../../utils'
   import { formatDayChips } from '../../schedule/timers'
+  import type { Timer } from '../../schedule/timers'
 
-  let { timer, removing = false, disabled = false, onedit = () => {}, ondelete = () => {} } = $props()
+  interface Props {
+    timer: Timer
+    removing?: boolean
+    disabled?: boolean
+    onedit?: () => void
+    ondelete?: () => void
+  }
+  let { timer, removing = false, disabled = false, onedit = () => {}, ondelete = () => {} }: Props = $props()
 
   let active = $derived(timer?.state === 'active')
   let chips = $derived(formatDayChips(timer?.days))

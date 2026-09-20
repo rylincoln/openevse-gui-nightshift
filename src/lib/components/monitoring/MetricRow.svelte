@@ -1,7 +1,9 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
+  import type { MetricRowModel } from '../../monitoring/metrics'
 
-  let { labelKey, value, unit = '', textKey = '' } = $props()
+  interface Props extends MetricRowModel {}
+  let { labelKey, value, unit = '', textKey = '' }: Props = $props()
 
   let display = $derived(
     textKey ? $_(textKey)

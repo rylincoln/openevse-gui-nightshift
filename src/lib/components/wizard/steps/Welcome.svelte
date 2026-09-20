@@ -5,11 +5,11 @@
   surfaces on mobile UAs that may have launched us inside a captive
   portal webview where the next-step buttons would otherwise dead-end.
 -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import ChargePointMark from '../../../../assets/ChargePointMark.svelte'
 
-  function openInBrowser() {
+  function openInBrowser(): void {
     const host = window.location.host
     if (/Android/i.test(navigator.userAgent)) {
       window.location.href = `intent://${host}/#/wizard#Intent;scheme=http;end`

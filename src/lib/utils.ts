@@ -116,7 +116,7 @@ export let getBreakpoint = function (): 'mobilemini' | 'mobile' | 'tablet' | 'de
     return bp;
 };
 
-export function clientid2name(id: number): string {
+export function clientid2name(id: number | null | undefined): string {
 	let output = "null"
 	Object.keys(EvseClients).forEach(key => {
 		if (id == EvseClients[key].id) {

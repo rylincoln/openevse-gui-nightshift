@@ -1,5 +1,5 @@
 <!-- src/lib/components/notifications/NotificationPanel.svelte -->
-<script>
+<script lang="ts">
   // The advisory list: everything the charger is currently reporting, newest
   // first, muted entries included and marked as such.
   //
@@ -12,22 +12,27 @@
   import IconButton from '../ui/IconButton.svelte'
   import { notification_store } from '../../stores/notifications'
   import { sortNewestFirst, advisoryRoute, isKnownAdvisory } from '../../notifications/notifications'
+  import type { NormalizedNotification } from '../../notifications/notifications'
   import { formatDuration } from '../../format/duration'
   import { serialQueue } from '../../queue'
   import { showWriteError } from '../../alerts'
 
-  let { visible = false, onclose = () => {} } = $props()
+  interface Props {
+    visible?: boolean
+    onclose?: () => void
+  }
+  let { visible = false, onclose = () => {} }: Props = $props()
 
   let rows = $derived(sortNewestFirst($notification_store.items))
   let busyId = $state('')
 
   // Amber for warning, red only for critical (the fault screen owns red).
-  const TONE = {
+  const TONE: Record<string, string> = {
     critical: 'bg-error/15 text-error',
     warning: 'bg-warning/15 text-warning',
     info: 'bg-surface-3 text-text-dim',
   }
-  const ROUTE_LABEL = {
+  const ROUTE_LABEL: Record<string, string> = {
     '/settings/safety': 'notifications.link.safety',
     '/monitoring/health': 'notifications.link.health',
   }
@@ -35,14 +40,14 @@
   // Ids are stable and locale-independent; all display text is ours. A
   // firmware that adds one ships an id this build has no copy for, so fall
   // back to the raw id rather than a missing-key placeholder.
-  function title(id) {
+  function title(id: string): string {
     return isKnownAdvisory(id) ? $_('notifications.title.' + id) : id
   }
-  function detail(id) {
+  function detail(id: string): string {
     return isKnownAdvisory(id) ? $_('notifications.detail.' + id) : ''
   }
 
-  function raisedLabel(item) {
+  function raisedLabel(item: NormalizedNotification): string {
     // first_seen is null when the clock had not synced at the moment the
     // charger recorded this — unknown, never 1970.
     if (!item.first_seen) return $_('notifications.time_unknown')
@@ -54,7 +59,7 @@
     return $_('notifications.raised', { values: { ago } })
   }
 
-  async function ack(id) {
+  async function ack(id: string): Promise<void> {
     if (busyId) return
     busyId = id
     try {

@@ -1,12 +1,16 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { DAYS } from '../../schedule/timers'
 
-  let { flags = [false, false, false, false, false, false, false], onchange = () => {} } = $props()
+  interface Props {
+    flags?: boolean[]
+    onchange?: (flags: boolean[]) => void
+  }
+  let { flags = [false, false, false, false, false, false, false], onchange = () => {} }: Props = $props()
 
   let allOn = $derived(flags.every((f) => f === true))
 
-  function toggle(i) {
+  function toggle(i: number): void {
     const next = flags.slice()
     next[i] = !next[i]
     onchange(next)

@@ -1,16 +1,24 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import Icon from '../../icons/Icon.svelte'
   import TimerRow from './TimerRow.svelte'
+  import type { Timer } from '../../schedule/timers'
 
+  interface Props {
+    timers?: Timer[]
+    removingId?: number | null
+    disabled?: boolean
+    onedit?: (timer: Timer) => void
+    ondelete?: (id: number) => void
+  }
   let {
     timers = [],
     removingId = null,
     disabled = false,
     onedit = () => {},
     ondelete = () => {},
-  } = $props()
+  }: Props = $props()
 </script>
 
 {#if timers.length === 0}

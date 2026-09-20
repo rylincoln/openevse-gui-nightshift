@@ -1,8 +1,10 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import Icon from '../../icons/Icon.svelte'
+  import type { LogRowModel, LogTone } from '../../history/logs'
 
+  interface Props extends LogRowModel {}
   let {
     stateIcon, stateTone = 'muted', stateDesc = '',
     typeIcon, typeTone = 'muted', typeLabel = '',
@@ -14,9 +16,9 @@
     reasonText = null,
     periodic = false,
     periodicLabel = '',
-  } = $props()
+  }: Props = $props()
 
-  const toneClass = {
+  const toneClass: Record<LogTone, string> = {
     info: 'text-accent',
     ok: 'text-accent',
     charging: 'text-warning',

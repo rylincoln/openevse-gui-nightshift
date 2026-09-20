@@ -1,10 +1,14 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import Icon from '../../icons/Icon.svelte'
   import LogRow from './LogRow.svelte'
+  import type { ComponentProps } from 'svelte'
 
-  let { rows = [] } = $props()
+  interface Props {
+    rows?: ComponentProps<typeof LogRow>[]
+  }
+  let { rows = [] }: Props = $props()
 </script>
 
 {#if rows.length === 0}

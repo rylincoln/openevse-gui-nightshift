@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { onMount } from 'svelte'
   import { energy_store } from '../../stores/energy'
@@ -6,7 +6,7 @@
   import EnergyLiveChart from '../charts/EnergyLiveChart.svelte'
   import EnergySummaryChart from '../charts/EnergySummaryChart.svelte'
 
-  const VIEWS = ['live', 'daily', 'monthly', 'annual']
+  const VIEWS: ('live' | 'daily' | 'monthly' | 'annual')[] = ['live', 'daily', 'monthly', 'annual']
 
   let viewIndex = $state(0)
   let view = $derived(VIEWS[viewIndex])
@@ -18,13 +18,13 @@
   // Shorten the daily label (drop the year) so 40 day-ticks fit; monthly
   // gets the short month name; annual stays as the year integer.
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  function dailyLabel(dt) {
+  function dailyLabel(dt: string): string {
     if (typeof dt !== 'string' || dt.length < 10) return dt ?? ''
     const m = parseInt(dt.slice(5, 7), 10)
     const d = parseInt(dt.slice(8, 10), 10)
     return `${m}/${d}`
   }
-  function monthlyLabel(mo) {
+  function monthlyLabel(mo: string): string {
     if (typeof mo !== 'string' || mo.length < 7) return mo ?? ''
     const m = parseInt(mo.slice(5, 7), 10)
     const y = mo.slice(2, 4)
@@ -37,19 +37,19 @@
     return []
   })
 
-  function loadFor(v) {
+  function loadFor(v: 'live' | 'daily' | 'monthly' | 'annual'): Promise<boolean> | undefined {
     if (v === 'live')    return energy_store.loadRaw()
     if (v === 'daily')   return energy_store.loadDaily()
     if (v === 'monthly') return energy_store.loadMonthly()
     if (v === 'annual')  return energy_store.loadAnnual()
   }
 
-  function onTabChange(i) { viewIndex = i; loadFor(VIEWS[i]) }
+  function onTabChange(i: number): void { viewIndex = i; loadFor(VIEWS[i]) }
 
   onMount(() => { loadFor('live') })
 
   // Auto-refresh the live view every 60s while not viewing historical paging
-  let timer
+  let timer: ReturnType<typeof setInterval> | undefined
   $effect(() => {
     clearInterval(timer)
     if (view === 'live') {

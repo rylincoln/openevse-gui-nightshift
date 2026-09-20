@@ -5,7 +5,7 @@
   power-on — max current, three-phase (EU), default state. Everything
   else is reachable from Settings later.
 -->
-<script>
+<script lang="ts">
   import { hardMaxCurrent } from '../../../utils'
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../../stores/config'
@@ -14,22 +14,26 @@
   import Slider from '../../ui/Slider.svelte'
   import Select from '../../ui/Select.svelte'
 
+  interface Props {
+    evseConnected?: boolean
+    bypassRemaining?: number
+  }
   // When the WiFi module can't reach the EVSE controller the config values
   // here are stale/meaningless, so the wizard hides the controls and shows an
   // error instead of letting setup continue (gui-nightshift#17).
   // `bypassRemaining` (>0) is how many more Next taps skip charger setup — the
   // wizard's triple-tap escape hatch; 0 hides the hint.
-  let { evseConnected = true, bypassRemaining = 0 } = $props()
+  let { evseConnected = true, bypassRemaining = 0 }: Props = $props()
 
   const form = createConfigForm()
   const ss = form.saveState
 
-  let liveMaxCurrent = $state(null)
+  let liveMaxCurrent = $state<number | null>(null)
   let shownMaxCurrent = $derived(
     liveMaxCurrent ?? $config_store?.max_current_soft ?? 6,
   )
 
-  async function saveMaxCurrent(value) {
+  async function saveMaxCurrent(value: number): Promise<void> {
     liveMaxCurrent = value
     await form.saveField('max_current_soft', value)
     liveMaxCurrent = null

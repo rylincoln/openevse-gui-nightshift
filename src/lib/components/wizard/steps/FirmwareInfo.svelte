@@ -4,7 +4,7 @@
   Step 4: read-only firmware versions + reassurance that updates live
   on the Settings page after first-run.
 -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../../stores/config'
   import ReadOnlyRow from '../../config/ReadOnlyRow.svelte'

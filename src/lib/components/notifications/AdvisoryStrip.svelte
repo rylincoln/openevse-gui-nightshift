@@ -1,5 +1,5 @@
 <!-- src/lib/components/notifications/AdvisoryStrip.svelte -->
-<script>
+<script lang="ts">
   // The status page's strip for critical advisories.
   //
   // Only criticals reach here, and only unmuted ones: this is the loudest
@@ -20,7 +20,7 @@
   let key = $derived(items.map((n) => n.id).join(','))
   let visible = $derived(items.length > 0 && dismissedKey !== key)
 
-  function title(id) {
+  function title(id: string): string {
     return isKnownAdvisory(id) ? $_('notifications.title.' + id) : id
   }
 </script>
