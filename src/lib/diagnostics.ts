@@ -1,4 +1,4 @@
-// src/lib/diagnostics.js
+// src/lib/diagnostics.ts
 // Collect a snapshot of every store into a single JSON blob the user can
 // download for a bug report. Secrets are scrubbed automatically so the file
 // is safe-by-default to share.

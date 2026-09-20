@@ -1,5 +1,5 @@
 /** Pure helpers for the History screen. Self-contained — no store/DOM/utils imports. */
-import type { LogEntry } from '../api/device'
+import type { LogEntry, EvseState } from '../api/device'
 
 /** The inclusive list of page indices [min … max], or [] for an invalid range. */
 export function pageRange(min: number | undefined, max: number | undefined): number[] {
@@ -38,13 +38,8 @@ export interface LogStateInfo {
   tone: LogTone
 }
 
-/**
- * An mdi icon name + tone for an EVSE state code.
- *
- * `evseState` is typed as a plain number, not device.ts's `EvseState`: history
- * rows can carry a legacy/boot value (0) the live wire type doesn't enumerate.
- */
-export function logStateInfo(evseState: number): LogStateInfo {
+/** An mdi icon name + tone for an EVSE state code. */
+export function logStateInfo(evseState: EvseState): LogStateInfo {
   switch (evseState) {
     case 0: return { icon: 'mdi:rocket-launch-outline', tone: 'info' }
     case 1: return { icon: 'mdi:car-off', tone: 'muted' }

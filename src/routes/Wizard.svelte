@@ -6,7 +6,7 @@
   of the UI until they've at least walked through the steps once.
 
   Step state is local — we don't use URL params because the app's hash
-  router only does exact-match lookups (see lib/router.js).
+  router only does exact-match lookups (see lib/router.ts).
 -->
 <script lang="ts">
   import { _ } from 'svelte-i18n'

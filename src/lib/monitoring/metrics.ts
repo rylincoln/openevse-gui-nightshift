@@ -144,7 +144,7 @@ export function vehicleMetrics(status: Status | undefined, config: ConfigState |
 }
 
 /** Whether the Vehicle metric group should render. */
-export function showVehicle(status: Status | undefined, config: ConfigState | undefined): boolean {
+export function showVehicle(status: Status | undefined, _config: ConfigState | undefined): boolean {
   const s: Partial<Status> = status ?? {}
   // time_to_full_charge lives on /status (device.ts), same as vehicleMetrics above.
   return s.battery_level !== undefined || s.battery_range !== undefined || !!s.time_to_full_charge

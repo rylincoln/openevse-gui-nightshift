@@ -33,10 +33,8 @@ export type DisplayState = 'starting' | 'idle' | 'off' | 'charging' | 'error' | 
  * = 'sleeping'.
  */
 export function displayState(status: Status | null | undefined, mode: number = 0): DisplayState {
-  // Widened beyond EvseState: a charger can report 0 before its state
-  // machine has initialised, which the wire type doesn't enumerate.
-  const s: number | null | undefined = status?.state
-  if (s === undefined || s === null || s === 0) return 'starting'
+  const s = status?.state
+  if (s === undefined || s === 0) return 'starting'
   if (s === 1) return mode === 2 ? 'off' : 'idle'
   if (s === 3) return 'charging'
   if (s >= 4 && s <= 11) return 'error'
