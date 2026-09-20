@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import { setupI18n } from './lib/i18n/index.js'
+  import { setupI18n } from './lib/i18n/index'
   import { theme } from './lib/stores/theme'
   import Loader from './lib/components/ui/Loader.svelte'
   import AppShell from './lib/components/shell/AppShell.svelte'

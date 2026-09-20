@@ -6,7 +6,7 @@
 // is dead weight once gzipped per-locale bundle: the key text doesn't need
 // to travel more than once. So translators keep editing full nested JSON
 // under source/ for readable diffs, and this projects each locale onto en's
-// key order and writes just the values. src/lib/i18n/hydrate.js reverses this
+// key order and writes just the values. src/lib/i18n/hydrate.ts reverses this
 // at load time using en.json, which every locale already loads as the
 // svelte-i18n fallback.
 //
@@ -17,12 +17,12 @@
 
 import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { keyPaths, keyEntries, PATH_SEP } from '../src/lib/i18n/hydrate.js'
+import { keyPaths, keyEntries, PATH_SEP } from '../src/lib/i18n/hydrate.ts'
 
 const i18nDir = fileURLToPath(new URL('../src/lib/i18n/', import.meta.url))
 const locales = ['es', 'fr', 'hu']
 
-// Encoded paths use a NUL separator (see hydrate.js); show them dotted so the
+// Encoded paths use a NUL separator (see hydrate.ts); show them dotted so the
 // out-of-sync error names keys the way a translator reads them.
 const showPath = (p) => p.replaceAll(PATH_SEP, '.')
 
