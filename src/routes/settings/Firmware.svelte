@@ -18,7 +18,7 @@
   import Button from '../../lib/components/ui/Button.svelte'
   import ProgressBar from '../../lib/components/ui/ProgressBar.svelte'
   import Modal from '../../lib/components/ui/Modal.svelte'
-  import type { Config } from '../../lib/api/device'
+  import type { Config, WriteResponse } from '../../lib/api/device'
 
   interface Channel {
     key: 'release' | 'prerelease' | 'daily'
@@ -143,7 +143,7 @@
       // original JS's unguarded `ch.asset.browser_download_url`, including
       // its throw-into-catch behaviour if that ever isn't true.
       const res = await serialQueue.add(() =>
-        httpAPI<{ msg: string }>('POST', '/update', JSON.stringify({ url: ch.asset!.browser_download_url })),
+        httpAPI<WriteResponse>('POST', '/update', JSON.stringify({ url: ch.asset!.browser_download_url })),
       )
       if (!res || res === 'error') {
         showWriteError()
@@ -164,7 +164,7 @@
     busy = true
     try {
       const res = await serialQueue.add(() =>
-        httpAPI<{ msg: string }>('POST', '/restart', JSON.stringify({ device })),
+        httpAPI<WriteResponse>('POST', '/restart', JSON.stringify({ device })),
       )
       if (!res || res === 'error') showWriteError()
     } finally {
@@ -174,7 +174,7 @@
 
   async function factoryReset(): Promise<void> {
     confirmReset = false
-    const res = await serialQueue.add(() => httpAPI<{ msg: string }>('GET', '/reset'))
+    const res = await serialQueue.add(() => httpAPI<WriteResponse>('GET', '/reset'))
     if (!res || res === 'error') showWriteError()
   }
 

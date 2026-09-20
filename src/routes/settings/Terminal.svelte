@@ -20,7 +20,7 @@
   import ProgressBar from '../../lib/components/ui/ProgressBar.svelte'
   import { downloadDiagnostics } from '../../lib/diagnostics'
   import { formatBytes } from '../../lib/utils'
-  import type { Status } from '../../lib/api/device'
+  import type { Status, WriteResponse } from '../../lib/api/device'
 
   // GET /debug/crash's decoded-summary response — only this page reads it.
   interface CrashSummary {
@@ -84,7 +84,7 @@
     expanding = true
     try {
       const res = await serialQueue.add(() =>
-        httpAPI<{ msg: string }>('POST', '/migrate/expand16mb', JSON.stringify({})),
+        httpAPI<WriteResponse>('POST', '/migrate/expand16mb', JSON.stringify({})),
       )
       if (!res || res === 'error' || res.msg !== 'started') {
         showWriteError()
@@ -154,7 +154,7 @@
     formatting = true
     try {
       const res = await serialQueue.add(() =>
-        httpAPI<{ msg: string }>('POST', '/sdcard/format', JSON.stringify({})),
+        httpAPI<WriteResponse>('POST', '/sdcard/format', JSON.stringify({})),
       )
       if (!res || res === 'error' || res.msg !== 'started') {
         showWriteError()
@@ -289,7 +289,7 @@
       // Only {"msg":"erased"} means the flash erase succeeded. A failure
       // answers 500 {"msg":"error"}, which still parses as JSON — accepting
       // any object here would hide the dump while it is still on the device.
-      const res = await serialQueue.add(() => httpAPI<{ msg: string }>('DELETE', '/debug/crash'))
+      const res = await serialQueue.add(() => httpAPI<WriteResponse>('DELETE', '/debug/crash'))
       if (res && res !== 'error' && res.msg === 'erased') crash = null
       else showWriteError()
     } catch {
