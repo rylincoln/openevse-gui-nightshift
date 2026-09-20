@@ -102,6 +102,27 @@ describe('LoadSharing page', () => {
     expect(queryByText('config.loadsharing.controlled_by')).not.toBeInTheDocument()
   })
 
+  // NumberInput emits null when a peer's priority field is cleared to empty;
+  // priority has no "use the firmware default" meaning (no placeholder is
+  // shown), so clearing it must not PUT a null priority to the device.
+  it('does not save a peer priority cleared to empty', async () => {
+    loadsharing_store.set({
+      peers: [{ id: 'peer-1', name: 'Garage', host: 'garage.local', url: 'http://garage.local', online: true, joined: true, priority: 5 }],
+      status: {
+        peers: [{ id: 'peer-1', name: 'Garage', host: 'garage.local', url: 'http://garage.local', online: true, joined: true, priority: 5 }],
+        allocations: [{ id: 'peer-1', target_current: 12, reason: 'equal_share' }],
+      },
+    })
+    config_store.set({ loadsharing_enabled: true, loadsharing_role: 'controller' })
+    const { getAllByRole } = render(LoadSharing)
+    httpAPI.mockClear()
+    const numbers = getAllByRole('spinbutton')
+    const priority = numbers[numbers.length - 1] // last: the peer table's priority input
+    await fireEvent.input(priority, { target: { value: '' } })
+    await fireEvent.blur(priority)
+    expect(httpAPI).not.toHaveBeenCalledWith('PUT', expect.stringContaining('/loadsharing/peers/'), expect.anything())
+  })
+
   it('renders controlled-by panel for member role', async () => {
     loadsharing_store.set({
       peers: [{ id: 'peer-controller', name: 'Main Panel', host: 'controller.local', url: 'http://controller.local', online: true }],
