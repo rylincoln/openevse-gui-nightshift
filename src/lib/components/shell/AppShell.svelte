@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { currentPath } from '../../router'
   import { routes, NotFound, LEGACY_ROUTES } from '../../routes'
   import { status_store } from '../../stores/status'
@@ -10,7 +10,10 @@
   import DisconnectOverlay from './DisconnectOverlay.svelte'
 
   let deviceName = $derived($status_store?.name || 'OpenEVSE')
-  let evseConnected = $derived($status_store?.evse_connected ?? true)
+  // evse_connected is the device's wire encoding of a boolean (0/1, like its
+  // mqtt_connected/rapi_connected siblings) — coerce so it type-checks as the
+  // boolean Header/ConnectionBanners declare; 0/1 truthiness is unchanged.
+  let evseConnected = $derived(Boolean($status_store?.evse_connected ?? true))
   let wsConnected = $derived($uistates_store?.ws_connected ?? true)
   let error = $derived($uistates_store?.error ?? false)
 
@@ -18,7 +21,7 @@
   // index → Firmware) would land the user wherever the previous page was
   // scrolled to. Reset the main scroll container's position whenever the
   // route changes.
-  let mainEl
+  let mainEl: HTMLElement | undefined
   $effect(() => {
     $currentPath
     if (mainEl) mainEl.scrollTop = 0

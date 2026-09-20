@@ -1,45 +1,51 @@
-<script>
+<script lang="ts">
   import uPlot from 'uplot'
   import 'uplot/dist/uPlot.min.css'
   import { untrack } from 'svelte'
 
+  // `opts` never needs to carry `width` (computeSize() always supplies it) and
+  // `height` is read only as an optional fallback hint (`?? 260`) — neither
+  // EnergyLiveChart's nor EnergySummaryChart's opts set it, only the session
+  // chart's `buildSessionOpts` does.
+  interface Props {
+    opts: Omit<uPlot.Options, 'width' | 'height'> & { height?: number }
+    data: uPlot.AlignedData
+    fill?: boolean
+  }
   // `fill` makes the chart size to its parent container's height (use inside
   // a flex column with min-h-0 flex-1). When false, uPlot uses opts.height.
-  let { opts, data, fill = false } = $props()
+  let { opts, data, fill = false }: Props = $props()
 
-  let container
-  /** @type {uPlot | null} */
-  let chart = null
-  /** @type {ResizeObserver | null} */
-  let ro = null
-  /** @type {MutationObserver | null} */
-  let mo = null
+  let container: HTMLDivElement | undefined
+  let chart: uPlot | null = null
+  let ro: ResizeObserver | null = null
+  let mo: MutationObserver | null = null
 
   // Cached legend height — uPlot appends a sibling .u-legend div inside the
   // container; in fill mode we have to reserve room for it so the canvas
   // doesn't push it off the bottom. Estimate up front, refine after build.
   let legendH = 28
 
-  function measureLegend() {
-    const el = container?.querySelector(':scope > .u-legend')
+  function measureLegend(): void {
+    const el = container?.querySelector<HTMLElement>(':scope > .u-legend')
     if (el) legendH = el.offsetHeight || legendH
   }
 
-  function computeSize() {
-    const width = container.clientWidth || 600
+  function computeSize(): { width: number; height: number } {
+    const width = container!.clientWidth || 600
     const fallback = (untrack(() => opts).height) ?? 260
     if (!fill) return { width, height: fallback }
-    const total = container.clientHeight || fallback
+    const total = container!.clientHeight || fallback
     return { width, height: Math.max(80, total - legendH) }
   }
 
-  function rebuild() {
+  function rebuild(): void {
     if (!container) return
     if (chart) { chart.destroy(); chart = null }
     const currentOpts = untrack(() => opts)
     const currentData = untrack(() => data)
     const { width, height } = computeSize()
-    const o = { ...currentOpts, width, height }
+    const o: uPlot.Options = { ...currentOpts, width, height }
     chart = new uPlot(o, currentData, container)
     if (fill) {
       // Re-measure now that uPlot has appended .u-legend; if the actual
@@ -59,10 +65,10 @@
     ro = new ResizeObserver(() => {
       if (chart && container) chart.setSize(computeSize())
     })
-    ro.observe(container)
+    ro.observe(container!)
     // In fill mode also observe the parent so the chart picks up height changes
     // when the surrounding flex layout reflows (e.g. window resize, tab switch).
-    if (fill && container.parentElement) ro.observe(container.parentElement)
+    if (fill && container!.parentElement) ro.observe(container!.parentElement)
     mo = new MutationObserver(() => rebuild())
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => {

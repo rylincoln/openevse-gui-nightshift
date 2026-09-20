@@ -1,9 +1,15 @@
 <!-- src/lib/components/config/ConfigPage.svelte -->
-<script>
+<script lang="ts">
+  import type { Snippet } from 'svelte'
   import { _ } from 'svelte-i18n'
   import Icon from '../../icons/Icon.svelte'
 
-  let { title = '', loading = false, children } = $props()
+  interface Props {
+    title?: string
+    loading?: boolean
+    children?: Snippet
+  }
+  let { title = '', loading = false, children }: Props = $props()
 </script>
 
 <section class="p-4 lg:mx-auto lg:max-w-2xl">

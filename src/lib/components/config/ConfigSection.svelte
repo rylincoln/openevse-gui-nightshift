@@ -1,7 +1,13 @@
 <!-- src/lib/components/config/ConfigSection.svelte -->
-<script>
+<script lang="ts">
+  import type { Snippet } from 'svelte'
   import Card from '../ui/Card.svelte'
-  let { title = '', children } = $props()
+
+  interface Props {
+    title?: string
+    children?: Snippet
+  }
+  let { title = '', children }: Props = $props()
 </script>
 
 <Card class="mb-4 p-4">

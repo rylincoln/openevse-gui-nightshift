@@ -1,10 +1,19 @@
 <!-- src/lib/components/config/FormField.svelte -->
-<script>
+<script lang="ts">
+  import type { Snippet } from 'svelte'
   import Icon from '../../icons/Icon.svelte'
+  import type { SaveStatus } from '../../config/saveState'
 
-  // `badge` is an optional snippet rendered immediately after the label — the
-  // slot an advisory marker sits in, beside the very switch it is about.
-  let { label = '', description = '', status = 'idle', badge, children } = $props()
+  interface Props {
+    label?: string
+    description?: string
+    status?: SaveStatus
+    // `badge` is an optional snippet rendered immediately after the label — the
+    // slot an advisory marker sits in, beside the very switch it is about.
+    badge?: Snippet
+    children?: Snippet
+  }
+  let { label = '', description = '', status = 'idle', badge, children }: Props = $props()
 </script>
 
 <div class="py-3">

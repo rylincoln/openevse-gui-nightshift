@@ -16,7 +16,7 @@
   no orphaned second write. A username is required whenever a password is set,
   so there's no silent `openevseadmin` default to guess.
 -->
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../stores/config'
   import { createConfigForm } from '../../config/configForm.svelte'
@@ -25,7 +25,10 @@
   import PasswordInput from '../ui/PasswordInput.svelte'
   import Button from '../ui/Button.svelte'
 
-  let { onsaved = () => {} } = $props()
+  interface Props {
+    onsaved?: () => void
+  }
+  let { onsaved = () => {} }: Props = $props()
 
   const form = createConfigForm()
 
@@ -38,7 +41,7 @@
 
   let missingUser = $derived(pass.trim() !== '' && user.trim() === '')
 
-  async function save() {
+  async function save(): Promise<void> {
     if (saving) return
     // Inputs commit on blur; commit whatever's focused before we read the drafts.
     if (document.activeElement instanceof HTMLElement) {

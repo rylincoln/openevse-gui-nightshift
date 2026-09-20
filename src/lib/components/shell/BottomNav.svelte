@@ -1,11 +1,20 @@
-<script>
+<script lang="ts">
   import { _ } from 'svelte-i18n'
   import Icon from '../../icons/Icon.svelte'
   import ChargePointMark from '../../../assets/ChargePointMark.svelte'
 
-  let { path = '/', deviceName = 'OpenEVSE' } = $props()
+  interface Props {
+    path?: string
+    deviceName?: string
+  }
+  let { path = '/', deviceName = 'OpenEVSE' }: Props = $props()
 
-  const items = [
+  interface NavItem {
+    href: string
+    key: string
+    icon: string
+  }
+  const items: NavItem[] = [
     { href: '/', key: 'nav.home', icon: 'mdi:home-outline' },
     { href: '/schedule', key: 'nav.charge_manager', icon: 'mdi:lightning-bolt-circle' },
     { href: '/monitoring', key: 'nav.monitoring', icon: 'mdi:chart-line' },
@@ -17,7 +26,7 @@
   // *and* /settings/firmware both light up the Settings tab). The Home
   // item is the special case — '/'.startsWith('/') is true for everything,
   // so it gets a strict equality check.
-  function isActive(item, p) {
+  function isActive(item: NavItem, p: string): boolean {
     if (item.href === '/') return p === '/'
     return p === item.href || p.startsWith(item.href + '/')
   }
