@@ -1,5 +1,5 @@
 <!-- src/routes/settings/Evse.svelte -->
-<script>
+<script lang="ts">
   import { hardMaxCurrent } from '../../lib/utils'
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
@@ -203,7 +203,7 @@
         min={0}
         max={3600}
         revert={form.revert}
-        onchange={(v) => form.saveField('scheduler_start_window', v)}
+        onchange={(v) => form.saveField('scheduler_start_window', v ?? 0)}
       />
     </FormField>
     {#if $config_store?.led_brightness !== undefined}
@@ -227,14 +227,14 @@
       <NumberInput
         value={$config_store?.scale ?? 0}
         revert={form.revert}
-        onchange={(v) => form.saveField('scale', v)}
+        onchange={(v) => form.saveField('scale', v ?? 0)}
       />
     </FormField>
     <FormField label={$_('config.evse.offset')} status={$ss.offset ?? 'idle'}>
       <NumberInput
         value={$config_store?.offset ?? 0}
         revert={form.revert}
-        onchange={(v) => form.saveField('offset', v)}
+        onchange={(v) => form.saveField('offset', v ?? 0)}
       />
     </FormField>
   </ConfigSection>

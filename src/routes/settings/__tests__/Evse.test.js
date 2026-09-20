@@ -138,4 +138,21 @@ describe('EVSE page', () => {
     expect(queryByText('config.evse.limit_type')).not.toBeInTheDocument()
     expect(queryByText('config.evse.energy_slider_max')).not.toBeInTheDocument()
   })
+
+  // NumberInput emits `null` when the field is cleared to empty; scale,
+  // offset and scheduler_start_window are plain `number` config fields, so
+  // clearing the box must save 0 rather than forward the null straight
+  // through to the device (the same fallback the voltage field already used).
+  it('saves 0 for scale/offset/scheduler_start_window when the field is cleared', async () => {
+    config_store.set({ ...BASE })
+    const { getAllByRole } = render(Evse)
+    const numbers = getAllByRole('spinbutton')
+    // order: scheduler_start_window, scale, offset
+    for (const [i, key] of ['scheduler_start_window', 'scale', 'offset'].entries()) {
+      httpAPI.mockClear()
+      await fireEvent.input(numbers[i], { target: { value: '' } })
+      await fireEvent.blur(numbers[i])
+      expect(httpAPI).toHaveBeenCalledWith('POST', '/config', JSON.stringify({ [key]: 0 }))
+    }
+  })
 })
