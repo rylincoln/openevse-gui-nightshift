@@ -59,6 +59,8 @@ and usually `upload()`. All HTTP goes through `src/lib/api/httpAPI.ts`: in dev
 it prefixes `/api` (which Vite proxies or the mock plugin serves), returns the
 string `'error'` on failure, and redirects to `/login` on 401. `httpAPI<T>()`
 resolves to `T | 'error'`; narrow with `res !== 'error'` and `isErrorBody()`.
+Pass `{ raw: true }` (6th argument) to get `RawResponse<T>` (`{ status, body }`)
+when the HTTP status, not the body text, tells success from failure.
 
 ## Config pages
 
@@ -85,8 +87,8 @@ Hash routing, exact match, no params (`src/lib/router.ts`,
 `src/lib/components/Router.svelte`). `routes.ts` also holds `LEGACY_ROUTES`
 (old `/configuration/*` hashes → `/settings/*`) so firmware upgrades don't 404
 bookmarks. `SETTINGS_PAGES` in `src/lib/config/pages.ts` gates pages by
-`requires` (a `/config` key that must be present) or `labs` (the client-side
-OpenEVSE Labs switch, `uisettings.dev_features`).
+`requires` (a `/config` key that must be present) or `labs` (the OpenEVSE
+Labs switch, stored on the device as `config.labs_enabled`).
 
 Adding a settings page touches: `pages.ts`, `routes.ts` (override the
 placeholder), `config.pages.<key>` in every i18n catalog, and

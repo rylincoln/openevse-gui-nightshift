@@ -2,8 +2,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { _ } from 'svelte-i18n'
-  import { httpAPI } from '../../lib/api/httpAPI'
-  import { uisettings_store } from '../../lib/stores/uisettings'
+  import { httpAPI, type ApiResult, type RawResponse } from '../../lib/api/httpAPI'
   import { config_store } from '../../lib/stores/config'
   import type { ConfigState } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
@@ -34,9 +33,18 @@
     elf_sha256?: string
   }
 
-  function setDevFeatures(on: boolean): void {
-    uisettings_store.update((s) => ({ ...s, dev_features: !!on }))
+  // Stored on the device (not browser localStorage) so the switch survives
+  // reloads and applies to every browser/hostname that opens this charger.
+  async function setLabs(on: boolean): Promise<void> {
+    if (!(await serialQueue.add(() => config_store.saveParam('labs_enabled', !!on)))) showWriteError()
   }
+
+  // What the Labs switch reveals; `href` links to it once Labs is on.
+  const LABS_FEATURES: { key: string; href?: string }[] = [
+    { key: 'loadsharing', href: '#/settings/loadsharing' },
+    { key: 'rfid_names', href: '#/settings/rfid' },
+    { key: 'probes' }, // shown above, under Memory & health
+  ]
 
   // ── Flash repartition: expand a 16MB module flashed with the 4MB layout ──
   // The gateway reports can_expand_16mb only when the chip is >=16MB, the live
@@ -293,10 +301,170 @@
     }
   }
 
+  // ── Crash reporting (spec section 3) ─────────────────────────────────────
+  // This browser sends the report to OpenEVSE, not the charger: the charger
+  // builds it (GET /debug/crash/report) and keeps the reporter identity; the
+  // page POSTs it to the broker with fetch() and erases the dump once the
+  // broker has it. So the charger needs no internet access -- this browser
+  // does.
+  //
+  // `broker` stays null until GET /debug/crash/identity answers with one; on
+  // firmware without crash reporting it never does, and nothing is shown.
+  // GET /debug/crash/identity. `delete_key` comes back only with ?key=1.
+  interface CrashIdentity {
+    broker?: string
+    reporter_id?: string
+    delete_key?: string
+  }
+  type UploadState = 'idle' | 'sending' | 'done' | 'not_erased' | 'failed' | 'unreachable'
+  type ForgetState = 'idle' | 'deleting' | 'deleted' | 'not_forgotten' | 'failed' | 'unreachable'
+
+  let broker = $state<string | null>(null)
+  let reporterId = $state<string | null>(null)
+  let uploadState = $state<UploadState>('idle')
+  let pendingUpload = $state(false)  // credentials warning open
+  let forgetState = $state<ForgetState>('idle')
+  let forgetDeleted = $state(0)
+  let pendingForget = $state(false)
+  let uploadSupported = $derived(!!broker)
+  let showSent = $derived(uploadSupported && (!!reporterId || uploadState !== 'idle' || forgetState !== 'idle'))
+
+  // The delete key comes back only when asked for (withKey), which only
+  // Delete does: it is not needed to show the page or to send a report.
+  async function loadIdentity(withKey = false): Promise<CrashIdentity | null> {
+    const url = '/debug/crash/identity' + (withKey ? '?key=1' : '')
+    const res = await serialQueue.add(() => httpAPI<CrashIdentity>('GET', url))
+    if (!res || res === 'error' || typeof res.broker !== 'string') return null
+    broker = res.broker
+    reporterId = res.reporter_id || null
+    return res
+  }
+
+  // Random hex from the browser's CSPRNG. crypto.getRandomValues() works on
+  // plain-http pages too (crypto.subtle does not), and unlike the ESP32's RNG
+  // it does not depend on the radio being on.
+  function randomHex(bytes: number): string {
+    const b = crypto.getRandomValues(new Uint8Array(bytes))
+    return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('')
+  }
+
+  // POST to the broker. 'unreachable' when this browser cannot get there at
+  // all (offline, or on the charger's own hotspot); null when it answered
+  // with an error; the parsed body when it accepted.
+  async function toBroker(
+    path: string,
+    body: unknown,
+  ): Promise<Record<string, unknown> | null | 'unreachable'> {
+    let res: Response
+    try {
+      res = await fetch(broker + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+    } catch {
+      return 'unreachable'
+    }
+    if (!res.ok) return null
+    try {
+      return await res.json()
+    } catch {
+      return {}
+    }
+  }
+
+  // HTTP status of a raw call, or null when the charger could not be reached.
+  function statusOf(res: ApiResult<RawResponse<unknown>> | false): number | null {
+    return res && res !== 'error' ? res.status : null
+  }
+
+  async function startUpload(): Promise<void> {
+    pendingUpload = false
+    uploadState = 'sending'
+    forgetState = 'idle'
+    const id = await loadIdentity()
+    if (!id) {
+      uploadState = 'failed'
+      return
+    }
+    if (!id.reporter_id) {
+      // This charger's first report: give it an identity, kept on the charger
+      // so "Delete my reports" works from any browser later.
+      const fresh = { reporter_id: randomHex(16), delete_key: randomHex(32) }
+      const stored = await serialQueue.add(() =>
+        httpAPI('POST', '/debug/crash/identity', JSON.stringify(fresh), 'json', 60000, { raw: true }))
+      if (statusOf(stored) === 409) {
+        // Another tab set one first. The charger keeps that one; carry on
+        // with it rather than fail a send that would work.
+        const again = await loadIdentity()
+        if (!again?.reporter_id) {
+          uploadState = 'failed'
+          return
+        }
+      } else if (statusOf(stored) !== 200) {
+        uploadState = 'failed'
+        return
+      } else {
+        reporterId = fresh.reporter_id
+      }
+    }
+    const report = await serialQueue.add(() =>
+      httpAPI('GET', '/debug/crash/report', null, 'json', 60000, { raw: true }))
+    if (!report || report === 'error' || report.status !== 200 || !report.body || typeof report.body !== 'object') {
+      uploadState = 'failed'
+      return
+    }
+    const sent = await toBroker('/v1/reports', report.body)
+    if (sent === 'unreachable' || !sent) {
+      uploadState = sent || 'failed'
+      return
+    }
+    // Only now that the broker has it. If the charger cannot erase its copy,
+    // say so: "removed" would invite sending the same report again.
+    const erased = await serialQueue.add(() =>
+      httpAPI('DELETE', '/debug/crash', null, 'json', 60000, { raw: true }))
+    await loadCrash()
+    uploadState = statusOf(erased) === 200 ? 'done' : 'not_erased'
+  }
+
+  // ── Deleting sent reports (GDPR Art. 17; Art. 7(3)) ──────────────────────
+  // Withdrawing consent is as easy as giving it: one click, from the page the
+  // report was sent from. The delete key lives on the charger with the
+  // reporter id; the identity is forgotten only once the broker has erased
+  // the reports, so a failure leaves Delete there to try again.
+  async function startForget(): Promise<void> {
+    pendingForget = false
+    forgetState = 'deleting'
+    uploadState = 'idle'
+    const id = await loadIdentity(true)
+    if (!id?.reporter_id || !id.delete_key) {
+      forgetState = id ? 'idle' : 'failed'
+      return
+    }
+    const res = await toBroker(`/v1/reporters/${id.reporter_id}/delete`, { delete_key: id.delete_key })
+    if (res === 'unreachable' || !res) {
+      forgetState = res || 'failed'
+      return
+    }
+    forgetDeleted = typeof res.deleted === 'number' ? res.deleted : 0
+    // The reports are gone. If the charger cannot forget its id, the next
+    // report would reuse it and be linked to the erased ones -- so say so and
+    // keep Delete there; deleting again is safe, with nothing left to erase.
+    const forgot = await serialQueue.add(() =>
+      httpAPI('DELETE', '/debug/crash/identity', null, 'json', 60000, { raw: true }))
+    if (statusOf(forgot) !== 200) {
+      forgetState = 'not_forgotten'
+      return
+    }
+    reporterId = null
+    forgetState = 'deleted'
+  }
+
   // Config is loaded globally, but refresh so the figures are current on visit.
   onMount(() => {
     config_store.download()
     loadCrash()
+    loadIdentity()
   })
 
   let command = $state('$')
@@ -536,7 +704,7 @@
         <ReadOnlyRow label={$_('config.terminal.lv_frag')} value={pct(mem.lv_frag_max)} />
       {/if}
 
-      {#if $uisettings_store?.dev_features && probes.length}
+      {#if $config_store?.labs_enabled && probes.length}
         <h3 class="mt-4 mb-1 text-xs font-semibold uppercase tracking-wide text-text-dim">{$_('config.terminal.probes')}</h3>
         <p class="mb-1 text-xs text-text-dim">{$_('config.terminal.probes_desc')}</p>
         {#each probes as p (p.i)}
@@ -605,17 +773,79 @@
     </ConfigSection>
   {/if}
 
+  {#if uploadSupported && (crash?.present || showSent)}
+    <!-- What goes to OpenEVSE: sending the stored dump, where that has got
+         to, and erasing what was sent. The dump card above is about the dump
+         itself. -->
+    <ConfigSection title={$_('config.terminal.crash.reporting_title')}>
+      <div class="mt-2 flex flex-col gap-3 text-sm">
+        {#if crash?.present}
+          <Button
+            label={$_('config.terminal.crash.upload')}
+            disabled={uploadState === 'sending' || forgetState === 'deleting'}
+            onclick={() => (pendingUpload = true)}
+          />
+        {/if}
+        {#if uploadState === 'sending'}
+          <p class="text-text-dim">{$_('config.terminal.crash.upload_sending')}</p>
+        {:else if uploadState === 'done'}
+          <p class="text-text">{$_('config.terminal.crash.upload_done')}</p>
+        {:else if uploadState === 'not_erased'}
+          <p class="text-warning">{$_('config.terminal.crash.upload_not_erased')}</p>
+        {:else if uploadState === 'unreachable'}
+          <p class="text-error">{$_('config.terminal.crash.upload_unreachable')}</p>
+        {:else if uploadState === 'failed'}
+          <p class="text-error">{$_('config.terminal.crash.upload_failed')}</p>
+        {/if}
+
+        {#if reporterId}
+          <p class="text-text-dim">{$_('config.terminal.crash.forget_reporter_id')}</p>
+          <p class="text-text-dim">{$_('config.terminal.crash.forget_reporter_id_label')} <code class="break-all text-text">{reporterId}</code></p>
+          <Button
+            label={$_('config.terminal.crash.forget')}
+            variant="ghost"
+            disabled={forgetState === 'deleting' || uploadState === 'sending'}
+            onclick={() => (pendingForget = true)}
+          />
+        {/if}
+        {#if forgetState === 'deleting'}
+          <p class="text-text-dim">{$_('config.terminal.crash.forget_deleting')}</p>
+        {:else if forgetState === 'deleted'}
+          <p class="text-text">{$_('config.terminal.crash.forget_done', { values: { count: forgetDeleted } })}</p>
+        {:else if forgetState === 'not_forgotten'}
+          <p class="text-warning">{$_('config.terminal.crash.forget_not_forgotten')}</p>
+        {:else if forgetState === 'unreachable'}
+          <p class="text-error">{$_('config.terminal.crash.forget_unreachable')}</p>
+        {:else if forgetState === 'failed'}
+          <p class="text-error">{$_('config.terminal.crash.forget_failed')}</p>
+        {/if}
+      </div>
+    </ConfigSection>
+  {/if}
+
   <ConfigSection title={$_('config.terminal.labs')}>
     <FormField
       label={$_('config.terminal.labs_enable')}
       description={$_('config.terminal.labs_desc')}
     >
       <Toggle
-        checked={!!$uisettings_store?.dev_features}
+        checked={!!$config_store?.labs_enabled}
         label={$_('config.terminal.labs_enable')}
-        onchange={setDevFeatures}
+        onchange={setLabs}
       />
     </FormField>
+    <ul class="mt-2 space-y-2 text-sm">
+      {#each LABS_FEATURES as f (f.key)}
+        <li>
+          {#if $config_store?.labs_enabled && f.href}
+            <a class="font-medium text-accent underline" href={f.href}>{$_(`config.terminal.labs_features.${f.key}`)}</a>
+          {:else}
+            <span class="font-medium text-text">{$_(`config.terminal.labs_features.${f.key}`)}</span>
+          {/if}
+          <p class="text-xs text-text-dim">{$_(`config.terminal.labs_features.${f.key}_desc`)}</p>
+        </li>
+      {/each}
+    </ul>
   </ConfigSection>
 </ConfigPage>
 
@@ -689,6 +919,37 @@
       />
     </div>
   {/if}
+</Modal>
+
+<!-- Send crash report confirmation: says plainly that this is a memory image
+     that can carry the Wi-Fi password (spec section 8). -->
+<Modal visible={pendingUpload} onclose={() => (pendingUpload = false)}>
+  <h2 class="mb-2 text-base font-semibold text-text">{$_('config.terminal.crash.upload_confirm_title')}</h2>
+  <p class="mb-2 text-sm text-text">{$_('config.terminal.crash.upload_confirm_body')}</p>
+  <ul class="mb-4 flex list-disc flex-col gap-1.5 pl-5 text-sm text-text-dim">
+    <li><span class="font-semibold text-text">{$_('config.terminal.crash.upload_confirm_sent_label')}</span> <span>{$_('config.terminal.crash.upload_confirm_sent')}</span></li>
+    <li><span class="font-semibold text-text">{$_('config.terminal.crash.upload_confirm_not_sent_label')}</span> <span>{$_('config.terminal.crash.upload_confirm_not_sent')}</span></li>
+    <li>{$_('config.terminal.crash.upload_confirm_kept')}</li>
+    <li>{$_('config.terminal.crash.upload_confirm_removed')}</li>
+  </ul>
+  <div class="flex gap-2">
+    <Button label={$_('config.terminal.crash.upload_confirm_yes')} onclick={startUpload} />
+    <Button label={$_('config.terminal.crash.clear_confirm_no')} variant="ghost" onclick={() => (pendingUpload = false)} />
+  </div>
+</Modal>
+
+<!-- Delete sent reports confirmation -->
+<Modal visible={pendingForget} onclose={() => (pendingForget = false)}>
+  <h2 class="mb-2 text-base font-semibold text-text">{$_('config.terminal.crash.forget_confirm_title')}</h2>
+  <p class="mb-2 text-sm text-text">{$_('config.terminal.crash.forget_confirm_body')}</p>
+  <ul class="mb-4 flex list-disc flex-col gap-1.5 pl-5 text-sm text-text-dim">
+    <li>{$_('config.terminal.crash.forget_confirm_now')}</li>
+    <li>{$_('config.terminal.crash.forget_confirm_unlinked')}</li>
+  </ul>
+  <div class="flex gap-2">
+    <Button label={$_('config.terminal.crash.forget_confirm_yes')} onclick={startForget} />
+    <Button label={$_('config.terminal.crash.clear_confirm_no')} variant="ghost" onclick={() => (pendingForget = false)} />
+  </div>
 </Modal>
 
 <!-- Clear core dump confirmation -->

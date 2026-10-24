@@ -24,11 +24,11 @@
     },
     "link": {
       "safety": "Safety settings",
-      "health": "Relay health"
+      "health": "Relay health",
+      "installer": "Installer tools"
     },
     "title": {
       "safety.ground_check": "Ground monitoring is off",
-      "safety.gfci_check": "GFCI self-test is off",
       "safety.relay_check": "Stuck-relay detection is off",
       "safety.diode_check": "Diode check is off",
       "safety.vent_check": "Ventilation check is off",
@@ -46,7 +46,6 @@
     },
     "detail": {
       "safety.ground_check": "The charger will not check for a missing earth connection before it starts.",
-      "safety.gfci_check": "The charger will not test its residual-current detection at the start of a session.",
       "safety.relay_check": "The charger will not check that its relay actually opened.",
       "safety.diode_check": "The charger will not verify the vehicle's pilot diode before charging.",
       "safety.vent_check": "The charger will not require ventilation for vehicles that ask for it.",
@@ -157,6 +156,7 @@
       "retained": "Retain published messages",
       "vrms": "Voltage topic",
       "vrms_desc": "Topic to read mains voltage from, when no internal sensor is present.",
+      "vrms_shelly": "Supplied by Shelly LNM while it is enabled.",
       "dns_ok": "DNS resolved: ",
       "dns_failed": "DNS lookup failed",
       "status_label": "Connection",
@@ -217,13 +217,15 @@
       "solar": "Self-production",
       "loadsharing": "Load Sharing",
       "shaper": "Load Shaper",
+      "shellylnm": "Shelly LNM",
       "emoncms": "EmonCMS",
       "firmware": "Firmware",
       "security": "Security",
       "certificates": "Certificates",
       "terminal": "Developer Tools",
       "display": "Display",
-      "about": "About"
+      "about": "About",
+      "installer": "Installer Tools"
     },
     "display": {
       "panel": "On-device display",
@@ -247,7 +249,8 @@
       "lcd_type": "Backlight type",
       "lcd_desc": "Backlight type for the controller's 2-line character display. For a JuiceBox v2 replacement, select RGB.",
       "lcd_mono": "Monochrome",
-      "lcd_rgb": "RGB"
+      "lcd_rgb": "RGB",
+      "lcd_timeout_desc": "How long the backlight stays lit before switching off. It stays on while charging or in a fault, and any state change or button press lights it again."
     },
     "validation": {
       "required": "Required",
@@ -324,7 +327,8 @@
       "temp_throttle": "Temperature throttle",
       "temp_throttle_enable": "Enable temperature throttle",
       "temp_throttle_setpoint": "Setpoint",
-      "temp_throttle_desc": "Reduce charge current automatically when the EVSE reaches the setpoint temperature."
+      "temp_throttle_desc": "Reduce charge current automatically when the EVSE reaches the setpoint temperature.",
+      "gfci_check_desc": "Disable if the circuit is protected by a GFCI."
     },
     "cabletemp": {
       "title": "Cable temperature",
@@ -374,6 +378,15 @@
       "ntp_retry": "Retry",
       "ntp_dns_ok": "DNS resolved to: ",
       "ntp_dns_failed": "DNS failed",
+      "ntp_dhcp": "Use NTP server from DHCP",
+      "ntp_dhcp_desc": "When the network's DHCP server offers an NTP server, use it. The configured server is kept as a fallback.",
+      "ntp_host_from_dhcp": "NTP server (from DHCP)",
+      "ntp_host_fallback": "Fallback NTP server",
+      "ntp_host_fallback_desc": "Used if the server from DHCP stops answering.",
+      "ntp_dhcp_none": "No NTP server offered by DHCP",
+      "ntp_server_in_use": "Server in use",
+      "ntp_source_dhcp": "from DHCP",
+      "ntp_source_config": "configured",
       "device_date": "Date"
     },
     "rfid": {
@@ -383,6 +396,7 @@
       "manage": "Scan a tag",
       "scan": "Scan",
       "place_tag": "Hold a tag against the reader…",
+      "not_enabled": "RFID isn't enabled yet — add it in Charge Manager first.",
       "uid": "UID",
       "register": "Register tag",
       "already": "This tag is already registered.",
@@ -443,6 +457,7 @@
       "feed_production_desc": "MQTT topic publishing solar production in watts.",
       "feed_grid": "Grid feed topic",
       "feed_grid_desc": "MQTT topic publishing grid import/export in watts.",
+      "feed_grid_shelly": "Supplied by Shelly LNM while it is enabled.",
       "tuning": "Tuning",
       "preset": "Preset",
       "preset_default": "Default",
@@ -477,11 +492,42 @@
       "settings": "Settings",
       "max_power": "Maximum power allowed",
       "live_topic": "Live power topic",
+      "live_shelly": "Supplied by Shelly LNM while it is enabled.",
       "min_pause": "Minimum pause time",
       "max_interval": "Maximum data interval",
       "max_interval_desc": "Failsafe if no live data arrives within this many seconds.",
       "smoothing": "Input smoothing",
       "smoothing_desc": "Filter time constant for the live power reading."
+    },
+    "shellylnm": {
+      "title": "Shelly LNM",
+      "field_single": "single-phase meter (EM / EM Pro / EM Mini)",
+      "field_total": "3-phase total",
+      "field_phase_a": "phase A",
+      "field_phase_b": "phase B",
+      "field_phase_c": "phase C",
+      "enable": "Use Shelly LNM",
+      "desc": "Read grid power and voltage locally from a Shelly energy meter over UDP multicast (Local Network Messaging). While enabled it replaces the MQTT topics for grid import/export (Self-production), live power (Load Shaper) and voltage (MQTT).",
+      "state": "Listener",
+      "listening": "Listening",
+      "not_listening": "Not listening",
+      "last_update": "Last power update",
+      "power": "Grid power",
+      "voltage": "Voltage",
+      "settings": "Settings",
+      "addr": "Multicast address",
+      "addr_desc": "IPv4 multicast group the Shelly transmits to, e.g. 239.255.55.55.",
+      "port": "Multicast port",
+      "port_desc": "UDP port of the LNM multicast group.",
+      "power_field": "Power field",
+      "power_field_desc": "Active power field in the LNM status. Positive = importing, negative = exporting.",
+      "voltage_field": "Voltage field",
+      "voltage_field_desc": "Voltage field in the LNM status.",
+      "device": "Device ID (optional)",
+      "device_desc": "Only accept messages from this device, e.g. shellypro3em-8813bfe1ab68. Leave empty to accept any device on the multicast group.",
+      "setup": "Shelly setup",
+      "setup_desc": "Create an LNM instance on the Shelly and have it transmit the energy meter component (adjust the IP and the component to your meter).",
+      "sign_note": "Grid power must be positive when importing and negative when exporting."
     },
     "loadsharing": {
       "enable": "Enable load sharing",
@@ -531,7 +577,10 @@
       "last_command_age": "Last command age",
       "assigned_limit": "Assigned limit (A)",
       "comms_status": "Comms status",
-      "role_required": "Select a load sharing role to configure controller or member details.",
+      "leave_group": "Leave group",
+      "leave_warning": "Peers should be managed from the controller. Go there to remove this device properly, or force removal here if the controller can't be reached — that only clears this device's own membership; the controller keeps its own record until it notices you're gone.",
+      "go_to_controller": "Go to controller",
+      "force_removal": "Force removal",
       "state_idle": "Idle",
       "state_connected": "Connected",
       "state_charging": "Charging",
@@ -592,7 +641,15 @@
     "terminal": {
       "labs": "OpenEVSE Labs",
       "labs_enable": "Enable Labs features",
-      "labs_desc": "Reveals in-development features that depend on matching firmware support. Leave off until the corresponding firmware is flashed.",
+      "labs_desc": "Reveals in-development features that depend on matching firmware support. Saved on the charger, so it applies to every browser.",
+      "labs_features": {
+        "loadsharing": "Load sharing",
+        "loadsharing_desc": "Share one supply circuit between several chargers on the same network.",
+        "rfid_names": "RFID tag names",
+        "rfid_names_desc": "Give registered RFID tags a friendly user name.",
+        "probes": "Fragmentation probes",
+        "probes_desc": "Extra heap diagnostics under Memory & health above."
+      },
       "rapi": "RAPI command console",
       "command": "Command",
       "send": "Send",
@@ -674,7 +731,36 @@
         "clear_confirm_title": "Clear core dump?",
         "clear_confirm_body": "This permanently deletes the stored crash dump from the device. Download it first if you still need it.",
         "clear_confirm_yes": "Clear",
-        "clear_confirm_no": "Cancel"
+        "clear_confirm_no": "Cancel",
+        "upload": "Send to OpenEVSE",
+        "upload_confirm_title": "Send this crash report?",
+        "upload_confirm_body": "Only a summary of the crash goes to OpenEVSE.",
+        "upload_confirm_sent_label": "Sent:",
+        "upload_confirm_sent": "why it crashed, where in the code, and the firmware and features this charger runs.",
+        "upload_confirm_not_sent_label": "Not sent:",
+        "upload_confirm_not_sent": "the charger's memory, so your Wi‑Fi password, MQTT password and access tokens stay here.",
+        "upload_confirm_kept": "Kept privately for 90 days, then deleted. You can delete it sooner from this page.",
+        "upload_confirm_removed": "Removed from this charger once sent.",
+        "upload_confirm_yes": "Send",
+        "upload_sending": "Sending…",
+        "upload_done": "Sent. The crash report has been removed from this charger.",
+        "upload_not_erased": "Sent, but this charger could not remove its copy. You don't need to send it again — clear it from the Crash core dump card.",
+        "upload_failed": "Could not send the report. Nothing was removed from this charger — you can try again.",
+        "upload_unreachable": "Could not reach OpenEVSE — this browser may be offline, or the service briefly unavailable. Nothing was removed from this charger; try again later.",
+        "reporting_title": "Crash reporting",
+        "forget": "Delete my reports from OpenEVSE",
+        "forget_reporter_id": "Reports sent from this charger are filed under a random reporter ID which cannot be used to identify the charger.",
+        "forget_reporter_id_label": "Current reporter ID:",
+        "forget_confirm_title": "Delete every report this charger has sent?",
+        "forget_confirm_body": "This erases everything this charger has sent to OpenEVSE.",
+        "forget_confirm_now": "Every report is erased now, not after 90 days.",
+        "forget_confirm_unlinked": "The charger gets a new reporter ID, so anything it sends later is not linked to these reports.",
+        "forget_confirm_yes": "Delete",
+        "forget_deleting": "Deleting…",
+        "forget_done": "Deleted {count} report(s) from OpenEVSE.",
+        "forget_not_forgotten": "Your reports were deleted, but this charger could not forget its reporter ID. Press Delete again so later reports are not linked to the deleted ones.",
+        "forget_failed": "Could not delete the reports. Nothing was changed — you can try again.",
+        "forget_unreachable": "Could not reach OpenEVSE — this browser may be offline, or the service briefly unavailable. Nothing was deleted; try again later."
       },
       "now": "Now",
       "min": "Min",
@@ -770,7 +856,41 @@
       "guides": "Guides",
       "discord": "Community support on Discord"
     },
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "installer": {
+      "lock_title": "Installer password required",
+      "lock_desc": "These settings are for the installer. Enter the installer password to continue.",
+      "password": "Installer password",
+      "unlock": "Unlock",
+      "lock": "Lock installer tools",
+      "wrong": "Incorrect installer password.",
+      "locked": "Too many attempts. Try again in {sec} seconds.",
+      "unreachable": "Could not reach the charger.",
+      "maxcurrent_title": "Hardware maximum current",
+      "maxcurrent_current": "Current hardware maximum",
+      "maxcurrent_note_title": "One-time setting — use caution",
+      "maxcurrent_note": "This command is one-time only. Once written, the hardware maximum current cannot be changed or erased. Use caution and set it to the station maximum or the circuit maximum, whichever is lower.",
+      "maxcurrent_note_nec": "The circuit maximum is the branch-circuit breaker rating reduced to 80% for a continuous load, as an EV charging load is treated under NEC 210.19(A)(1), 210.20(A) and 625.42. Follow the NEC edition and local code adopted where the charger is installed.",
+      "maxcurrent_input": "New hardware maximum (A)",
+      "maxcurrent_set": "Set hardware maximum",
+      "maxcurrent_sending": "Sending…",
+      "maxcurrent_applied": "Hardware maximum is now {amps} A.",
+      "maxcurrent_unchanged": "The charger did not accept the change. The hardware maximum may already have been set; it cannot be changed again.",
+      "maxcurrent_out_of_range": "Enter a whole number of amps from {min} to {max}. The limit can only be lowered.",
+      "confirm_title": "Set hardware maximum?",
+      "confirm_body": "This will permanently set the hardware maximum current to {amps} A.",
+      "confirm_yes": "Set permanently",
+      "confirm_no": "Cancel",
+      "password_title": "Installer password",
+      "password_desc": "Change the password that unlocks this page.",
+      "password_current": "Current password",
+      "password_new": "New password",
+      "password_confirm": "Confirm new password",
+      "password_change": "Change password",
+      "password_invalid": "Use {min} to {max} printable characters.",
+      "password_mismatch": "The new passwords do not match.",
+      "password_done": "Installer password changed."
+    }
   },
   "nav": {
     "home": "Home",
@@ -1191,11 +1311,13 @@
     "rfid": "RFID",
     "mqtt": "MQTT",
     "shaper": "Load shaper",
+    "evcc": "evcc",
     "null": "—"
   },
   "alert": {
     "write_failed_title": "Change not saved",
-    "write_failed_body": "The charger didn't accept the change. Please try again."
+    "write_failed_body": "The charger didn't accept the change. Please try again.",
+    "rfid_scan_failed_title": "Couldn't start scan"
   },
   "history": {
     "loading": "Loading history…",
@@ -1267,7 +1389,9 @@
       "empty": "No networks found. Tap Scan to try again.",
       "handoff_title": "You'll lose this connection",
       "handoff_body": "When you connect, the charger joins your WiFi and this setup hotspot turns off. Afterward, reconnect this phone or computer to your home WiFi to reach the charger again.",
-      "reach_at": "Then open the charger at"
+      "reach_at": "Then open the charger at",
+      "eth_title": "Ethernet connected",
+      "eth_body": "This charger already has a working connection over Ethernet. WiFi is optional — join a network below, or tap Finish to complete setup without it."
     },
     "time": {
       "title": "Time",

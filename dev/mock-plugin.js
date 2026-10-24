@@ -98,10 +98,20 @@ export function mockPlugin() {
   // In-memory state for endpoints that mutate. Seeded once per dev-server
   // run; reset by restarting the server.
   const rfidUsers = JSON.parse(loadFixture('rfid_users.json'))
+  // The real GET /loadsharing/peers and /loadsharing/status always include the
+  // local device itself (isLocal: true, joined: true) alongside remote peers
+  // (LoadSharingGroupState::getAllPeers) — mirror that here.
+  const localHostname = baseFixtures['/api/config'].hostname ?? 'openevse-mock'
   const loadsharingPeers = [
-    { id: 'peer-1', name: 'Garage', host: 'garage.local', online: true, joined: true, priority: 0 },
-    { id: 'peer-2', name: 'Yard', host: 'yard.local', online: true, joined: false, priority: 0 }
+    { id: 'local-device', name: 'This charger', host: `${localHostname}.local`, online: true, joined: true, priority: 0, isLocal: true },
+    { id: 'peer-1', name: 'Garage', host: 'garage.local', online: true, joined: true, priority: 0, isLocal: false },
+    { id: 'peer-2', name: 'Yard', host: 'yard.local', online: true, joined: false, priority: 0, isLocal: false }
   ]
+  // Bumped like the firmware's loadsharing_peers_version / _status_version
+  // counters, whose mere presence on /status is what the Settings > Load
+  // sharing page's peer-table $effect watches to know to (re)fetch.
+  let loadsharingPeersVersion = 1
+  let loadsharingStatusVersion = 1
 
   // Dev-only runtime state override. Lets the resting/charging layouts be
   // previewed without a real device: GET /api/_mock/state/<code> flips it
@@ -131,6 +141,10 @@ export function mockPlugin() {
   // #1210). Starts present so the section is visible; DELETE flips it off so
   // the "Clear dump" flow can be exercised without hardware.
   let crashPresent = true
+  // The reporter identity the browser generates before a charger's first
+  // report and stores on it; the mock starts as if one report has gone.
+  let reporterId = '5f0c2a9e41d87b3e6a1c09d4f2b7e815'
+  let deleteKey = '9d1c4e7a2b0f38d5c6e1a4f7b2d9083e5c1a7f4d2e9b0c38a6d1f5e7b3c2a940'
 
   // Advisory acks laid over whatever fixture/scenario is live. The firmware
   // persists these; here they live for the dev-server run and are dropped when
@@ -178,6 +192,8 @@ export function mockPlugin() {
       claims_version: claimsVersion,
       boost: !!boost,
       boost_version: boostVersion,
+      loadsharing_peers_version: loadsharingPeersVersion,
+      loadsharing_status_version: loadsharingStatusVersion,
       uptime: (baseStatus.uptime ?? 0) + tickCount * 2,
       session_elapsed: charging
         ? (baseStatus.session_elapsed ?? 0) + tickCount * 2
@@ -270,11 +286,16 @@ export function mockPlugin() {
                 if (existing) {
                   existing.joined = true
                 } else {
-                  loadsharingPeers.push({ id: `peer-${Date.now()}`, name: host, host, online: true, joined: true, priority: 0 })
+                  loadsharingPeers.push({ id: `peer-${Date.now()}`, name: host, host, online: true, joined: true, priority: 0, isLocal: false })
                 }
               } catch {}
+              // Real firmware replies {"msg":"done"} — loadsharing_store.addPeer()
+              // checks for exactly that string, so anything else reads as failure.
+              loadsharingPeersVersion++
+              const msg = buildStatusMessage(tickCount)
+              for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
               res.writeHead(200, { 'Content-Type': 'application/json' })
-              res.end(JSON.stringify({ msg: 'erased' }))
+              res.end(JSON.stringify({ msg: 'done' }))
             })
             return
           }
@@ -293,8 +314,11 @@ export function mockPlugin() {
                   peer.priority = priority
                 }
               } catch {}
+              loadsharingStatusVersion++
+              const msg = buildStatusMessage(tickCount)
+              for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
               res.writeHead(200, { 'Content-Type': 'application/json' })
-              res.end(JSON.stringify({ msg: 'erased' }))
+              res.end(JSON.stringify({ msg: 'done' }))
             })
             return
           }
@@ -304,8 +328,11 @@ export function mockPlugin() {
             if (idx !== -1) {
               loadsharingPeers[idx].joined = false
             }
+            loadsharingPeersVersion++
+            const msg = buildStatusMessage(tickCount)
+            for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
             res.writeHead(200, { 'Content-Type': 'application/json' })
-            res.end(JSON.stringify({ msg: 'erased' }))
+            res.end(JSON.stringify({ msg: 'done' }))
             return
           }
         }
@@ -321,7 +348,7 @@ export function mockPlugin() {
           const controllerOnline = loadsharingPeers.some(
             (p) => p.host === cfg.loadsharing_controller_host && p.online,
           )
-          const failsafe = cfg.loadsharing_role === 'member' && !controllerOnline
+          const failsafe = cfg.loadsharing_role === true && !controllerOnline
           res.writeHead(200, { 'Content-Type': 'application/json' })
           res.end(JSON.stringify({
             enabled: true,
@@ -372,6 +399,48 @@ export function mockPlugin() {
             : { present: false }))
           return
         }
+        // Crash reporting. The browser sends the report itself: the charger
+        // builds it and keeps the reporter identity. `broker` points the page
+        // at the mock broker below, never at crash.openevse.com.
+        if (url === '/api/debug/crash/identity') {
+          res.writeHead(200, { 'Content-Type': 'application/json' })
+          if (req.method === 'POST') {
+            let body = ''
+            req.on('data', (c) => { body += c })
+            req.on('end', () => {
+              const b = JSON.parse(body || '{}')
+              if (!reporterId) { reporterId = b.reporter_id; deleteKey = b.delete_key }
+              res.end(JSON.stringify({ msg: 'stored' }))
+            })
+            return
+          }
+          if (req.method === 'DELETE') {
+            reporterId = null
+            deleteKey = null
+            res.end(JSON.stringify({ msg: 'forgotten' }))
+            return
+          }
+          res.end(JSON.stringify({ reporter_id: reporterId, delete_key: deleteKey, broker: '/api/mock-broker' }))
+          return
+        }
+        if (url === '/api/debug/crash/report') {
+          const status = !crashPresent ? 404 : !reporterId ? 409 : 200
+          res.writeHead(status, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify(status === 200
+            ? { version: 'mock_12345678', buildenv: 'mock', reporter_id: reporterId, summary: { panic_reason: 'abort()' } }
+            : { msg: status === 404 ? 'no crash dump stored' : 'no reporter identity' }))
+          return
+        }
+        if (url === '/api/mock-broker/v1/reports' && req.method === 'POST') {
+          res.writeHead(200, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ report_id: 'mock-report', status: 'symbolized' }))
+          return
+        }
+        if (/^\/api\/mock-broker\/v1\/reporters\/[0-9a-f]{32}\/delete$/.test(url) && req.method === 'POST') {
+          res.writeHead(200, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ deleted: 2 }))
+          return
+        }
         if (url === '/api/debug/crash/raw') {
           if (!crashPresent) { res.writeHead(404); res.end(); return }
           res.writeHead(200, { 'Content-Type': 'application/octet-stream' })
@@ -400,7 +469,10 @@ export function mockPlugin() {
             ntp_status: 'synchronized',
             ntp_last_sync: nowSec - 312,        // 5m 12s ago
             ntp_next_sync_ms: 28440000,          // ~7h 54m
-            ntp_server_ip: '185.96.2.100',
+            ntp_server_ip: '192.168.1.1',
+            ntp_server: '192.168.1.1',           // DHCP option 42 wins over sntp_hostname
+            ntp_server_source: 'dhcp',
+            ntp_dhcp_server: '192.168.1.1',
           }))
           return
         }

@@ -5,11 +5,10 @@
   import Icon from '../lib/icons/Icon.svelte'
   import { pagesBySection } from '../lib/config/pages'
   import { config_store } from '../lib/stores/config'
-  import { uisettings_store } from '../lib/stores/uisettings'
   import { redirect } from '../lib/router'
 
   let groups = $derived(
-    pagesBySection($config_store, { dev_features: $uisettings_store?.dev_features }),
+    pagesBySection($config_store),
   )
 
   // Auth is "on" when a password is set (same test as the firmware and the HTTP

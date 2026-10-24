@@ -24,7 +24,7 @@ function num(v: unknown): number | null {
 
 /** The Home page's load-sharing line/card view-model, or null when load sharing is off. */
 export interface LoadSharingView {
-  role: 'controller' | 'member' | ''
+  role: 'controller' | 'member'
   state: 'sharing' | 'limited' | 'failsafe'
   limit: number | null
   localMax: number
@@ -61,7 +61,8 @@ export function loadSharingView({
   const c: Partial<ConfigState> = config ?? {}
   if (!c.loadsharing_enabled) return null
   const s: Partial<Status> = status ?? {}
-  const role = c.loadsharing_role === 'controller' || c.loadsharing_role === 'member' ? c.loadsharing_role : ''
+  // loadsharing_role is a bool on the wire: false = controller (default), true = member.
+  const role = c.loadsharing_role ? 'member' : 'controller'
   const controller = c.loadsharing_controller_host ?? ''
 
   // This charger's own ceiling. The dashboard's maxAmps is min(soft, hard),

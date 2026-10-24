@@ -25,8 +25,10 @@
   interface Props {
     onJoined?: (ssid: string) => void
     beforeJoin?: () => Promise<void>
+    /** Reachable over Ethernet, so leaving the setup hotspot won't strand the browser. */
+    ethConnected?: boolean
   }
-  let { onJoined = () => {}, beforeJoin = async () => {} }: Props = $props()
+  let { onJoined = () => {}, beforeJoin = async () => {}, ethConnected = false }: Props = $props()
 
   // Where to reach the charger once it leaves the setup hotspot. The DHCP IP
   // isn't known ahead of time, so we show the mDNS hostname (same as
@@ -125,6 +127,18 @@
         <p class="break-all text-sm font-semibold text-accent">http://{displayHost}</p>
       {/if}
     </div>
+  {:else if ethConnected}
+    <!-- Already reachable over Ethernet, so WiFi here is purely optional. No
+         handoff warning — connecting won't drop this session (net_manager
+         auto-stops the softAP once Connected regardless of link type, so
+         there's nothing left to lose from it either way), and the wizard can
+         also finish without it (see Finish button in WizardShell, unhidden
+         via Wizard.svelte's ethConnected). -->
+    <div class="rounded-xl border border-border bg-surface-2 p-3 text-sm">
+      <p class="font-semibold text-text">{$_('wizard.wifi.eth_title')}</p>
+      <p class="mt-1 text-text-dim">{$_('wizard.wifi.eth_body')}</p>
+    </div>
+    <p class="text-sm text-text-dim">{$_('wizard.wifi.intro')}</p>
   {:else}
     <!-- Heads-up before the AP hand-off: connecting ends this setup session. -->
     <div class="rounded-xl border border-border bg-surface-2 p-3 text-sm">

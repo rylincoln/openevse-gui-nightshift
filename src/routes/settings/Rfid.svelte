@@ -5,11 +5,10 @@
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
   import { uistates_store } from '../../lib/stores/uistates'
-  import { uisettings_store } from '../../lib/stores/uisettings'
   import { rfid_users_store } from '../../lib/stores/rfid_users'
   import { createConfigForm } from '../../lib/config/configForm.svelte'
   import { serialQueue } from '../../lib/queue'
-  import { showWriteError } from '../../lib/alerts'
+  import { showWriteError, showRfidScanError } from '../../lib/alerts'
   import { httpAPI } from '../../lib/api/httpAPI'
   import { parseTags, serializeTags, addTag, removeTag } from '../../lib/config/rfid'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
@@ -22,12 +21,13 @@
 
   // Reader present on the I2C bus, reported independent of RFID being enabled.
   let readerPresent = $derived($status_store?.rfid_reader)
+  let rfidEnabled = $derived(!!$config_store?.rfid_enabled)
   let tags = $derived(parseTags($config_store?.rfid_storage))
   let scanned = $derived($status_store?.rfid_input ?? '')
   let scanWaiting = $derived($uistates_store?.rfid_waiting ?? 0)
   let alreadyRegistered = $derived(scanned !== '' && tags.includes(scanned))
 
-  let labsOn = $derived(!!$uisettings_store?.dev_features)
+  let labsOn = $derived(!!$config_store?.labs_enabled)
   let editingUid = $state<string | null>(null)
   let editingInitial = $state('')
   let editBusy = $state(false)
@@ -39,8 +39,27 @@
   })
 
   async function scan(): Promise<void> {
-    const res = await serialQueue.add(() => httpAPI('GET', '/rfid/add', null, 'text', 60000))
-    if (!res || res === 'error') showWriteError()
+    // rfidEnabled already gates whether this can be called (see markup below),
+    // but the firmware is the source of truth, so this stays as a backstop --
+    // keyed off the response status rather than its wording, so a future
+    // change to the firmware's message text can't turn a rejected scan into a
+    // silently-ignored click again.
+    const res = await serialQueue.add(() =>
+      httpAPI<string>('GET', '/rfid/add', null, 'text', 60000, { raw: true }),
+    )
+    if (!res || res === 'error') {
+      showWriteError()
+      return
+    }
+    if (res.status !== 200) {
+      let msg: string | undefined
+      try {
+        msg = JSON.parse(res.body).msg
+      } catch {
+        // no parseable message -- showRfidScanError falls back to a generic body
+      }
+      showRfidScanError(msg)
+    }
   }
   function saveTags(next: string[]): Promise<boolean> {
     return form.saveField('rfid_storage', serializeTags(next))
@@ -108,6 +127,9 @@
   </div>
 
     <ConfigSection title={$_('config.rfid.manage')}>
+      {#if !rfidEnabled}
+        <p class="py-2 text-sm text-text-dim">{$_('config.rfid.not_enabled')}</p>
+      {:else}
       <div class="flex flex-col items-center gap-2 py-2">
         <Button
           label={scanWaiting > 0 ? String(scanWaiting) : $_('config.rfid.scan')}
@@ -126,6 +148,7 @@
           {/if}
         {/if}
       </div>
+      {/if}
     </ConfigSection>
 
     {#if tags.length > 0}

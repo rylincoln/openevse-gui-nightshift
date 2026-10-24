@@ -2,7 +2,7 @@
 
 import { nextTimerId } from '../schedule/timers'
 import type { Timer } from '../schedule/timers'
-import type { LimitType } from '../api/device'
+import type { Config, LimitType } from '../api/device'
 
 /** All supported global feature keys, in display order. */
 export const GLOBAL_FEATURE_KEYS: string[] = ['session_limit', 'eco_divert', 'shaping', 'rfid', 'ocpp']
@@ -59,6 +59,34 @@ export function actionToFeatureKey(action: string): string | null {
     case 'rfid':       return 'rfid'
     case 'ocpp':       return 'ocpp'
     default:           return null
+  }
+}
+
+/**
+ * Whether Eco divert is Always Active: solar divert is set up and the default
+ * charge mode is Eco, which is also what the firmware boots into.
+ */
+export function ecoDivertAlwaysOn(config: Partial<Config> | undefined): boolean {
+  return !!config?.divert_enabled && config?.charge_mode === 'eco'
+}
+
+/**
+ * The config write that turns an Always Active feature on or off, or null for
+ * actions with no on/off flag (session limit, charge, disable).
+ *
+ * The firmware boots into Eco only when divert_enabled and charge_mode is eco
+ * (openevse_esp32_firmware#1342), so turning Eco divert on writes both.
+ * divert_enabled defaults off and nothing else in the UI sets it. Turning it
+ * off writes charge_mode alone and leaves divert_enabled set, so the
+ * dashboard's Eco button stays available.
+ */
+export function alwaysOnConfig(action: string, on: boolean): Partial<Config> | null {
+  switch (action) {
+    case 'eco_divert': return on ? { divert_enabled: true, charge_mode: 'eco' } : { charge_mode: 'fast' }
+    case 'shaper': return { current_shaper_enabled: on }
+    case 'rfid':   return { rfid_enabled: on }
+    case 'ocpp':   return { ocpp_enabled: on }
+    default:       return null
   }
 }
 

@@ -15,7 +15,6 @@ import { status_store } from '../../lib/stores/status'
 import { config_store } from '../../lib/stores/config'
 import { claims_target_store } from '../../lib/stores/claims_target'
 import { uistates_store } from '../../lib/stores/uistates'
-import { uisettings_store } from '../../lib/stores/uisettings'
 import Monitoring from '../Monitoring.svelte'
 
 describe('Monitoring', () => {
@@ -24,7 +23,6 @@ describe('Monitoring', () => {
     config_store.set({ scale: 454, offset: 283, max_current_soft: 48 })
     claims_target_store.set({ claims: { state: 65537 }, properties: { state: 'disabled' } })
     uistates_store.setObject('error', false)
-    uisettings_store.update((s) => ({ ...s, dev_features: false }))
   })
 
   it('lands on the Energy tab by default', () => {

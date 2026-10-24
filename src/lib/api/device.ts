@@ -138,6 +138,14 @@ export interface Status {
   smoothed_available_current?: number
   /** Absent on firmware without the current shaper. */
   shaper?: number
+  /** Absent on firmware without Shelly LNM. 1 while the multicast listener is bound. */
+  shelly_lnm_listening?: number
+  /** ms since the last Shelly LNM packet; 4294967295 (UINT32_MAX) until the first one arrives. */
+  shelly_lnm_data_age?: number
+  /** watts; null until the first packet. */
+  shelly_lnm_power?: number | null
+  /** volts; null until the first packet. */
+  shelly_lnm_voltage?: number | null
   shaper_live_pwr?: number
   shaper_cur?: number
   shaper_updated?: boolean
@@ -235,7 +243,8 @@ export interface Status {
 export interface Config {
   /** Absent on firmware without load sharing. */
   loadsharing_enabled?: boolean
-  loadsharing_role?: string
+  /** false = controller (the default), true = member — set by the firmware when another charger joins this one into its group. */
+  loadsharing_role?: boolean
   loadsharing_group_id?: string
   /** amps */
   loadsharing_group_max_current?: number
@@ -344,6 +353,8 @@ export interface Config {
   mqtt_retained: boolean
   ohm_enabled: boolean
   sntp_enabled: boolean
+  /** Prefer the DHCP option-42 NTP server over sntp_hostname. Absent on firmware without it; src/routes/settings/Time.svelte gates on presence. */
+  sntp_dhcp?: boolean
   /** Absent on firmware without Tesla integration. */
   tesla_enabled?: boolean
   /** Absent on firmware without solar/divert mode. */
@@ -351,7 +362,7 @@ export interface Config {
   /** Absent on firmware without the current shaper. */
   current_shaper_enabled?: boolean
   pause_uses_disabled: boolean
-  // button_enabled, is_threephase, default_state, voltage, relay_dc1,
+  // front_button, is_threephase, default_state, voltage, relay_dc1,
   // relay_dc2, relay_ac, pp_auto, boot_lock, overcurrent_monitor: all in
   // dev/fixtures/config.json (so "always sent" by rule 1), but each is
   // gated by its own `{#if $config_store?.X !== undefined}` in
@@ -360,7 +371,8 @@ export interface Config {
   // presence-gate idiom the spec uses for known capability-gated fields.
   // Treated as optional on that evidence rather than the letter of rule 2,
   // which does not name them.
-  button_enabled?: boolean
+  /** Front-panel button enabled, backed live by RAPI like boot_lock. */
+  front_button?: boolean
   /** Absent on firmware without vehicle-data integration. */
   mqtt_vehicle_range_miles?: boolean
   /** Absent on firmware without OCPP. */
@@ -410,6 +422,17 @@ export interface Config {
   relay_thermal_index_x100?: number
   relay_thermal_baseline_x100?: number
   relay_stuck_recovery_count?: number
+  /** Absent on firmware without Shelly LNM; `shelly_lnm_addr` is always present (non-empty default) where it exists. */
+  shelly_lnm_enabled?: boolean
+  /** multicast group address */
+  shelly_lnm_addr?: string
+  shelly_lnm_port?: number
+  /** which Shelly field is the grid power, e.g. 'act_power' / 'total_act_power' */
+  shelly_lnm_power_field?: string
+  /** which Shelly field is the voltage, e.g. 'voltage' / 'a_voltage' */
+  shelly_lnm_voltage_field?: string
+  /** only accept packets from this Shelly device id; '' = any */
+  shelly_lnm_device?: string
 
   // The fields below are read by the app (src/routes/settings/{Mqtt,Evse,
   // Http,Terminal,Safety,LoadSharing,Display}.svelte) but absent from
@@ -433,6 +456,8 @@ export interface Config {
   mqtt_sys_query?: boolean
   /** 0–255 */
   led_brightness?: number
+  /** The OpenEVSE Labs switch, stored on the device. Absent on firmware without it. */
+  labs_enabled?: boolean
   /** 'c' | 'f'. */
   temp_unit?: string
   www_http_enabled?: boolean

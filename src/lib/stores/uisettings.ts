@@ -14,8 +14,6 @@ export interface UiSettings {
   currency_symbol: string
   /** top of the Dashboard energy-limit slider, in kWh */
   max_energy_kwh: number
-  /** gates power-user pages (Developer Tools) in Settings nav */
-  dev_features: boolean
 }
 
 export interface UisettingsStore extends Writable<UiSettings> {}
@@ -31,5 +29,4 @@ export const uisettings_store: UisettingsStore = persisted('settings', {
   energy_rate: 0,
   currency_symbol: '$',
   max_energy_kwh: 100,
-  dev_features: false,
 })

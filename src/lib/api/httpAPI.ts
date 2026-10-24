@@ -6,18 +6,48 @@ import type { ErrorBody } from './device'
 /** Every call resolves to the payload or the string 'error' — never rejects. */
 export type ApiResult<T> = T | 'error'
 
+/** The `raw: true` result: the HTTP status alongside the parsed body. */
+export interface RawResponse<T> {
+  status: number
+  body: T
+}
+
 /** True for a `{ msg: 'error' }` body, which some GETs return instead of a payload. */
 export function isErrorBody(x: unknown): x is ErrorBody {
   return typeof x === 'object' && x !== null && 'msg' in x && (x as ErrorBody).msg === 'error'
 }
 
+// `raw: true` resolves to { status, body } instead of just the parsed body,
+// for callers that need to tell an HTTP error apart from a successful
+// response by status code rather than by matching the response text (which
+// breaks silently if the server's wording ever changes). The 401/network
+// error paths still resolve to the plain 'error' string either way, so a
+// caller that opts in only needs to check `res === 'error'` before reading
+// `res.status`.
+export async function httpAPI<T = unknown>(
+  method: string,
+  url: string,
+  body?: string | null,
+  type?: 'json' | 'text',
+  timeout?: number,
+  opts?: { raw?: false },
+): Promise<ApiResult<T>>
+export async function httpAPI<T = unknown>(
+  method: string,
+  url: string,
+  body: string | null,
+  type: 'json' | 'text',
+  timeout: number,
+  opts: { raw: true },
+): Promise<ApiResult<RawResponse<T>>>
 export async function httpAPI<T = unknown>(
   method: string,
   url: string,
   body: string | null = null,
   type: 'json' | 'text' = 'json',
   timeout = 60000,
-): Promise<ApiResult<T>> {
+  { raw = false }: { raw?: boolean } = {},
+): Promise<ApiResult<T | RawResponse<T>>> {
   const content_type =
     type === 'json'
       ? 'application/json'
@@ -38,16 +68,17 @@ export async function httpAPI<T = unknown>(
   if (import.meta.env.DEV) {
     if (!url.includes('http', 0)) url = '/api' + url
   }
-  const res: ApiResult<T> = await fetch(url, data)
-    .then((response): Promise<T | 'error'> => {
+  const res: ApiResult<T | RawResponse<T>> = await fetch(url, data)
+    .then(async (response): Promise<T | RawResponse<T> | 'error'> => {
       // Session expired / not logged in: send the user to the login page.
       // Login.svelte posts to /login with a bare fetch (not httpAPI), so this
       // interceptor never fires during the login request itself.
       if (response.status === 401) {
         redirect('/login')
-        return Promise.resolve('error')
+        return 'error'
       }
-      return (type === 'json' ? response.json() : response.text()) as Promise<T>
+      const parsed = (type === 'json' ? await response.json() : await response.text()) as T
+      return raw ? { status: response.status, body: parsed } : parsed
     })
     .catch((error: unknown) => {
       console.log(error)
