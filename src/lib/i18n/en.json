@@ -910,6 +910,8 @@
     "evse_missing_body": "The WiFi module can't reach the EVSE controller.",
     "error": "Charger error",
     "reconnect": "Reload",
+    "load_failed": "Can't reach the charger",
+    "load_failed_body": "This page couldn't load the charger's data. Check that the charger is powered on and on the same network as this device, then reload.",
     "offline_title": "Charger disconnected",
     "offline_reason": "The charger dropped off WiFi. This page is still trying to reach it and will reconnect automatically once it's back — the readings behind this dialog are from before the drop.",
     "offline_last_seen": "Last seen",
