@@ -18,29 +18,6 @@ export interface UiStates {
   autorelease: boolean
   time_lmt: number
   charge_lmt: number
-  config_version: number
-  claims_version: number
-  override_version: number
-  schedule_version: number
-  schedule_plan_version: number
-  limit_version: number
-  // Written by DataManager.svelte's refreshBoostStore/refreshCertificateStore
-  // (Task 15) alongside the *_version fields above; missing until now.
-  // certificate_version's writer (refreshCertificateStore) is exported but
-  // not wired to any $effect — kept for parity with the store's other
-  // *_version counters. Optional (unlike its siblings above): pre-TS the key
-  // was simply absent from the plain object until the first successful
-  // refresh, so `$uistates_store.boost_version`/`certificate_version` read
-  // as `undefined`, not `0` — a `0` seed would make DataManager's
-  // `$uistates_store.boost_version != version` false for a device that
-  // genuinely reports `boost_version: 0` on its first frame, skipping the
-  // startup GET.
-  boost_version?: number
-  certificate_version?: number
-  // "<count>:<severity>@<nonce>" — the advisory list's stand-in for a
-  // version counter. null until the first frame from a charger that has
-  // the advisory engine; stays null forever on one that doesn't.
-  notification_badge: string | null
   // Bumped by WebSocket.svelte whenever a frame carries the notifications
   // object. The firmware sends it on connect, when the live set changes
   // and on every ack, so each arrival is a reason to re-read the list —
@@ -85,15 +62,6 @@ const model: UiStates = {
   autorelease: true,
   time_lmt: 0,
   charge_lmt: 0,
-  config_version: 0,
-  claims_version: 0,
-  override_version: 0,
-  schedule_version: 0,
-  schedule_plan_version: 0,
-  limit_version: 0,
-  boost_version: undefined,
-  certificate_version: undefined,
-  notification_badge: null,
   notification_event: 0,
   logidx_min: 0,
   logidx_max: 0,

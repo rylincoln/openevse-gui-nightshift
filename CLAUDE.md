@@ -43,11 +43,14 @@ components mounted by `src/App.svelte` own the whole data layer
    "OPEN but dead" sockets.
 3. **`DataManager.svelte`** — the **version counter** loop. `/status` carries
    `config_version`, `schedule_version`, `override_version`, `limit_version`,
-   `boost_version`, … Each has a derived store, a `refreshXStore(ver)` that
-   re-downloads the matching store when the counter moves, and an `$effect` wiring them. **A successful write never refreshes
-   manually** — the device bumps the counter, the WS frame carries it, and
-   DataManager re-downloads. Adding a versioned resource means adding all
-   three pieces here plus a store with `download()`.
+   `boost_version`, … DataManager feeds every frame to a table built with
+   `versionedResources()` (`src/lib/data/versioned.ts`), which downloads a
+   store once per version, one download at a time per store, and follows up
+   once when the counter moves mid-download. **A successful write never
+   refreshes manually** — the device bumps the counter, the WS frame carries
+   it, and DataManager re-downloads. Adding a versioned resource means one
+   table entry (version field + `download()`), plus a store. Pages that need a
+   resource only while open (load sharing) keep their own small table.
 
 **Capability gate**: a field *absent* from `/status` (`boost_version`,
 `notifications`, `limit`) means the firmware predates that feature — leave the

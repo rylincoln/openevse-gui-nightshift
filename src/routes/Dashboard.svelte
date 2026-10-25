@@ -46,7 +46,8 @@
   import RatePill from '../lib/components/dashboard/RatePill.svelte'
   import ChargeLimitCard from '../lib/components/dashboard/ChargeLimitCard.svelte'
   import AdvisoryStrip from '../lib/components/notifications/AdvisoryStrip.svelte'
-  import type { Limit, LimitType } from '../lib/api/device'
+  import { versionedResources } from '../lib/data/versioned'
+  import type { Limit, LimitType, Status } from '../lib/api/device'
 
   // Controls stay enabled while a write is in flight (disabling a focused
   // control drops keyboard focus); input made meanwhile is held, latest per
@@ -156,9 +157,11 @@
   // /loadsharing/status, not on the websocket; the firmware ticks
   // loadsharing_status_version when either changes, so fetch on the tick —
   // the same trigger Settings → Load sharing uses.
+  const loadSharingStatus = versionedResources<Status, 'status'>({
+    status: { version: (s) => s.loadsharing_status_version, download: () => loadsharing_store.downloadStatus() },
+  })
   $effect(() => {
-    const version = $status_store?.loadsharing_status_version
-    if (loadSharingVisible && version !== undefined) loadsharing_store.downloadStatus()
+    if (loadSharingVisible && $status_store) loadSharingStatus.observe($status_store)
   })
   let loadSharing = $derived(
     loadSharingVisible

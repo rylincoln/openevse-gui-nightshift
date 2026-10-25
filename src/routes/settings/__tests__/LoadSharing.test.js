@@ -12,6 +12,7 @@ import { httpAPI } from '../../../lib/api/httpAPI'
 import { config_store } from '../../../lib/stores/config'
 import { claims_target_store } from '../../../lib/stores/claims_target'
 import { loadsharing_store } from '../../../lib/stores/loadsharing'
+import { status_store } from '../../../lib/stores/status'
 import { EvseClients } from '../../../lib/vars'
 import LoadSharing from '../LoadSharing.svelte'
 
@@ -36,6 +37,7 @@ beforeEach(() => {
     return Promise.resolve({ msg: 'done' })
   })
   loadsharing_store.set({ peers: [], status: null })
+  status_store.set({})
   claims_target_store.set({ properties: {}, claims: { state: null, charge_current: null } })
   // Page is Labs-gated; default it on so the existing cases render it.
   config_store.update((c) => ({ ...c, labs_enabled: true }))
@@ -43,6 +45,28 @@ beforeEach(() => {
 })
 
 describe('LoadSharing page', () => {
+  // Every frame is a new status object; only the counters say the peers or
+  // the group's status changed, and the charger's web server is single-threaded.
+  it('fetches peers and group status when their counters move, not on every frame', async () => {
+    config_store.set({ labs_enabled: true, loadsharing_enabled: true, loadsharing_role: false })
+    status_store.set({ state: 1, loadsharing_peers_version: 1, loadsharing_status_version: 1 })
+    const gets = (url) => httpAPI.mock.calls.filter(([m, u]) => m === 'GET' && u === url).length
+    render(LoadSharing)
+    await vi.waitFor(() => {
+      expect(gets('/loadsharing/peers')).toBe(1)
+      expect(gets('/loadsharing/status')).toBe(1)
+    })
+
+    for (const amp of [6000, 12000]) status_store.update((st) => ({ ...st, amp }))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(gets('/loadsharing/peers')).toBe(1)
+    expect(gets('/loadsharing/status')).toBe(1)
+
+    status_store.update((st) => ({ ...st, loadsharing_peers_version: 2 }))
+    await vi.waitFor(() => expect(gets('/loadsharing/peers')).toBe(2))
+    expect(gets('/loadsharing/status')).toBe(1)
+  })
+
   it('redirects to the settings index when Labs (dev features) is off', () => {
     config_store.update((c) => ({ ...c, labs_enabled: false }))
     config_store.set({ loadsharing_enabled: true, loadsharing_role: false })

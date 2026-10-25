@@ -41,7 +41,7 @@ beforeEach(() => {
   )
   status_store.set(undefined)
   notification_store.reset()
-  uistates_store.update((s) => ({ ...s, notification_badge: null, notification_event: 0 }))
+  uistates_store.update((s) => ({ ...s, notification_event: 0 }))
 })
 
 afterEach(() => cleanup())
@@ -52,7 +52,9 @@ describe('the advisory capability gate', () => {
     // store stays empty and the whole surface stays hidden.
     status_store.set({ state: 1, config_version: 1 })
     render(DataManager)
-    await vi.waitFor(() => expect(httpAPI).toHaveBeenCalled())
+    // A frame that moves another counter shows frames are being looked at.
+    status_store.update((st) => ({ ...st, config_version: 2 }))
+    await vi.waitFor(() => expect(httpAPI).toHaveBeenCalledWith('GET', '/config'))
     expect(notificationCalls()).toHaveLength(0)
     expect(get(notification_store).items).toEqual([])
   })
@@ -61,7 +63,7 @@ describe('the advisory capability gate', () => {
     // Presence is the gate, never the values: {count: 0} is still a yes.
     status_store.set({ state: 1, notifications: { count: 0, severity: 'info' } })
     render(DataManager)
-    await vi.waitFor(() => expect(get(uistates_store).notification_badge).toBe('0:info@0'))
+    await vi.waitFor(() => expect(get(notification_store).items).toHaveLength(1))
     expect(notificationCalls()).toHaveLength(1)
   })
 
@@ -89,9 +91,9 @@ describe('the advisory capability gate', () => {
     // part that actually moved.
     status_store.set({ state: 1, notifications: { count: 1, severity: 'critical' } })
     render(DataManager)
-    await vi.waitFor(() => expect(get(uistates_store).notification_badge).toBe('1:critical@0'))
-    expect(notificationCalls()).toHaveLength(1)
+    await vi.waitFor(() => expect(notificationCalls()).toHaveLength(1))
 
+    // The bump may land while the first download is still under way.
     uistates_store.update((s) => ({ ...s, notification_event: (s.notification_event ?? 0) + 1 }))
     await vi.waitFor(() => expect(notificationCalls()).toHaveLength(2))
   })

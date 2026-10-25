@@ -18,7 +18,8 @@
   import Button from '../../lib/components/ui/Button.svelte'
   import IconButton from '../../lib/components/ui/IconButton.svelte'
   import Modal from '../../lib/components/ui/Modal.svelte'
-  import type { LoadSharingPeer, LoadSharingStatus } from '../../lib/api/device'
+  import { versionedResources } from '../../lib/data/versioned'
+  import type { LoadSharingPeer, LoadSharingStatus, Status } from '../../lib/api/device'
 
   const form = createConfigForm()
   const ss = form.saveState
@@ -208,24 +209,17 @@
     await form.saveField('loadsharing_role', false)
   }
 
-  // Watch for peer list changes via version number
-  $effect(() => {
-    const version = $status_store?.loadsharing_peers_version
-    if (version !== undefined && enabled) {
-      loadsharing_store.downloadPeers()
-    }
+  // The peer list and the group summary (failsafe_active, online_count,
+  // offline_count, allocations) come from their own GETs; the websocket
+  // /status payload carries only their version counters (and
+  // loadsharing_joined_peers). Fetched on first sight and whenever a counter
+  // moves, while this page is open.
+  const versioned = versionedResources<Status, 'peers' | 'status'>({
+    peers: { version: (s) => s.loadsharing_peers_version, download: () => loadsharing_store.downloadPeers() },
+    status: { version: (s) => s.loadsharing_status_version, download: () => loadsharing_store.downloadStatus() },
   })
-
-  // Watch for peer status changes via version number.
-  // The websocket /status payload only carries loadsharing_joined_peers and the
-  // version counters; the group summary fields (failsafe_active, online_count,
-  // offline_count, allocations) come from GET /loadsharing/status, so fetch it
-  // whenever the version ticks (and on first load).
   $effect(() => {
-    const statusVersion = $status_store?.loadsharing_status_version
-    if (statusVersion !== undefined && enabled) {
-      loadsharing_store.downloadStatus()
-    }
+    if (enabled && $status_store) versioned.observe($status_store)
   })
 </script>
 

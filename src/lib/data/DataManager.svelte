@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { derived } from 'svelte/store'
+  import { derived, get } from 'svelte/store'
   import { limit_store } from '../stores/limit'
   import { boost_store } from '../stores/boost'
   import { notification_store } from '../stores/notifications'
@@ -8,13 +8,14 @@
   import { uistates_store } from '../stores/uistates'
   import { status_store } from '../stores/status'
   import { schedule_store } from '../stores/schedule'
-  import { certificate_store } from '../stores/certificates'
   import { plan_store } from '../stores/plan'
   import { config_store } from '../stores/config'
   import { claims_target_store } from '../stores/claims_target'
   import { claims_store } from '../stores/claims'
   import { override_store } from '../stores/override'
   import { formatDate } from '../utils'
+  import { versionedResources } from './versioned'
+  import type { Status } from '../api/device'
   import { locale, locales } from 'svelte-i18n'
   import { _ } from 'svelte-i18n'
 
@@ -27,43 +28,65 @@
 
   // derived stores replacing keyed stores (keyed stores do not trigger an update if the same value is published)
   const time = derived(status_store, ($s) => $s?.time)
-  const config_version = derived(status_store, ($s) => $s?.config_version)
-  const schedule_version = derived(status_store, ($s) => $s?.schedule_version)
-  const schedule_plan_version = derived(status_store, ($s) => $s?.schedule_plan_version)
-  const claims_version = derived(status_store, ($s) => $s?.claims_version)
-  const override_version = derived(status_store, ($s) => $s?.override_version)
-  const limit_version = derived(status_store, ($s) => $s?.limit_version)
-  const boost_version = derived(status_store, ($s) => $s?.boost_version)
-  // Advisories have no version counter of their own: /status carries the two
-  // badge fields, and the firmware pushes them over the websocket whenever the
-  // live set changes. The pair alone is not enough — one advisory clearing as
-  // another of the same severity is raised moves the set without moving either
-  // number — so WebSocket.svelte bumps notification_event on every frame that
-  // carries the object, and the two together make the version.
-  const notification_badge = derived(
-    [status_store, uistates_store],
-    ([$s, $ui]) => {
-      const sig = badgeSignature($s)
-      return sig === null ? null : sig + '@' + ($ui?.notification_event ?? 0)
-    },
-  )
+  // Bumped by WebSocket.svelte on every frame that carries the advisory
+  // object; part of the advisory list's version (see `notifications` below).
+  const notification_event = derived(uistates_store, ($ui) => $ui?.notification_event ?? 0)
   const evse_state = derived(status_store, ($s) => $s?.state)
   const charging = derived(evse_state, ($s) => $s == 3 ? true : false)
   const rfid_waiting = derived(status_store, ($s) => $s?.rfid_waiting)
   const elapsed = derived(status_store, ($s) => $s?.session_elapsed)
   const ipaddress = derived(status_store, ($s) => $s?.ipaddress)
 
-  let refresh_config = false
-  let refresh_schedule = false
-  let refresh_certificate = false
-  let refresh_target = false
-  let refresh_override = false
-  let refresh_plan = false
-  let refresh_limit = false
-  let refresh_boost = false
-  let refresh_notifications = false
   let prev_ip: string | undefined
   let ip_changed = false
+
+  // The stores the charger versions on /status, each re-downloaded when its
+  // counter moves. A successful write never refreshes by hand: the charger
+  // bumps the counter and the next frame brings it here.
+  const versioned = versionedResources<Status, 'config' | 'schedule' | 'plan' | 'claims' | 'override' | 'limit' | 'boost' | 'notifications'>({
+    config: { version: (s) => s.config_version, download: () => config_store.download() },
+    schedule: { version: (s) => s.schedule_version, download: () => schedule_store.download() },
+    plan: { version: (s) => s.schedule_plan_version, download: () => plan_store.download() },
+    claims: {
+      version: (s) => s.claims_version,
+      // The claims list (with real per-claim priorities) changes in lockstep
+      // with the target, so it rides on the same counter.
+      download: async () => {
+        const ok = await claims_target_store.download()
+        await claims_store.download()
+        return ok
+      },
+    },
+    override: { version: (s) => s.override_version, download: () => override_store.download() },
+    limit: {
+      version: (s) => s.limit_version,
+      // `limit` says whether one is set: with none there is nothing to fetch.
+      download: (s) => (s.limit ? limit_store.download() : Promise.resolve(limit_store.reset())),
+    },
+    // No boost_version → firmware predates Boost; the store stays idle and
+    // the whole surface hidden (capability gate). download() normalises {}
+    // (idle) and {type,…} (active), so this covers arm / reached / cancelled /
+    // replaced / reboot.
+    boost: { version: (s) => s.boost_version, download: () => boost_store.download() },
+    // Advisories have no counter of their own: /status carries the two badge
+    // fields, and the firmware pushes them whenever the live set changes. The
+    // pair alone is not enough — one advisory clearing as another of the same
+    // severity is raised moves the set without moving either number — so the
+    // frame-arrival nonce joins them. No `notifications` object → firmware
+    // predates advisories: the bell, the strip and the settings markers stay
+    // hidden. The gate is presence, never the values: a charger with nothing
+    // to report still sends {count: 0, severity: "info"}.
+    notifications: {
+      version: (s) => {
+        const sig = badgeSignature(s)
+        return sig === null ? null : sig + '@' + get(notification_event)
+      },
+      download: () => notification_store.download(),
+    },
+  })
+  // FetchData downloaded these as of the status still in the store: WebSocket
+  // and DataManager mount only once it is done.
+  if ($status_store) versioned.loaded(['config', 'schedule', 'plan', 'claims', 'override'], $status_store)
 
   export function refreshDateTime(t: string | undefined, tz: string | undefined): void { // params: time (isostring) , timezone
     // t is undefined only before status_store's first download; App.svelte
@@ -72,165 +95,6 @@
     // effect can fire with a real frame, t is a string. formatDate's `t` is
     // untyped for undefined (utils.ts), so this asserts that invariant.
     $uistates_store.time_localestring = formatDate(t!, tz)
-  }
-
-  export async function refreshConfigStore(ver: number | undefined): Promise<boolean | undefined> {
-    if (refresh_config)
-      return
-    if (ver != $uistates_store.config_version) {
-      refresh_config = true
-      const res = await config_store.download()
-      if (res)
-        // ver is undefined only before status_store's first download, which
-        // App.svelte's FetchData completes before DataManager ever mounts
-        // (see refreshDateTime above for the same invariant).
-        $uistates_store.config_version = ver!
-      refresh_config = false
-      return res
-    }
-  }
-
-  export async function refreshSchedulestore(ver: number | undefined): Promise<boolean | undefined> {
-    if (refresh_schedule)
-      return
-    if (ver != $uistates_store.schedule_version) {
-      refresh_schedule = true
-      $uistates_store.schedule_version = ver! // see refreshConfigStore
-      const res = await schedule_store.download()
-      refresh_schedule = false
-      return res
-    }
-  }
-
-  export async function refreshCertificateStore(ver: number | undefined): Promise<boolean | undefined> {
-    if (refresh_certificate)
-      return
-    if (ver != $uistates_store.certificate_version) {
-      refresh_certificate = true
-      $uistates_store.certificate_version = ver! // see refreshConfigStore
-      const res = await certificate_store.download()
-      refresh_certificate = false
-      return res
-    }
-  }
-
-  export async function refreshPlanStore(ver: number | undefined): Promise<boolean | undefined> {
-    if (refresh_plan)
-      return
-    if (ver != $uistates_store.schedule_plan_version) {
-      refresh_plan = true
-      $uistates_store.schedule_plan_version = ver! // see refreshConfigStore
-      const res = await plan_store.download()
-      refresh_plan = false
-      return res
-    }
-  }
-
-  export async function refreshClaimsTargetStore(ver: number | undefined): Promise<boolean | undefined> {
-    if (refresh_target)
-      return
-    if (ver != $uistates_store.claims_version) {
-      refresh_target = true
-      $uistates_store.claims_version = ver! // see refreshConfigStore
-      const res = await claims_target_store.download()
-      // The claims list (with real per-claim priorities) changes in lockstep
-      // with the target, so refresh it on the same version bump.
-      await claims_store.download()
-      refresh_target = false
-      return res
-    }
-    return false
-  }
-
-  export async function refreshOverrideStore(version: number | undefined): Promise<boolean | undefined> {
-    if (refresh_override)
-      return
-    if ($uistates_store.override_version != version) {
-      refresh_override = true
-      $uistates_store.override_version = version! // see refreshConfigStore
-      const res = await override_store.download()
-      refresh_override = false
-      if (res)
-        return res
-      else return false
-    }
-    else return true
-  }
-
-  export async function refreshStatusStore(): Promise<boolean> {
-    const res = await status_store.download()
-    return res
-  }
-
-  export async function refreshLimitStore(version: number | undefined): Promise<boolean | undefined> {
-    if (refresh_limit)
-      return
-    if ($uistates_store.limit_version != version) {
-      if ($status_store?.limit) {
-        refresh_limit = true
-        const res = await limit_store.download()
-        refresh_limit = false
-        if (res) {
-          $uistates_store.limit_version = version! // see refreshConfigStore
-          return res
-        }
-        else {
-          return false
-        }
-      }
-      else {
-        limit_store.reset()
-        $uistates_store.limit_version = version! // see refreshConfigStore
-      }
-    }
-    else return true
-  }
-
-  export async function refreshBoostStore(version: number | undefined): Promise<boolean | undefined> {
-    if (refresh_boost)
-      return
-    // No boost_version in /status → firmware predates Boost; leave the store
-    // idle and keep the whole surface hidden (capability gate). This mirrors
-    // how refreshLimitStore gates on $status_store?.limit presence.
-    if (version === undefined || version === null)
-      return
-    if ($uistates_store.boost_version != version) {
-      refresh_boost = true
-      // download() normalises {} (idle) → reset and {type,…} (active) → set,
-      // so this one path covers arm / reached / cancelled / replaced / reboot.
-      const res = await boost_store.download()
-      refresh_boost = false
-      if (res) {
-        $uistates_store.boost_version = version
-        return res
-      }
-      else {
-        return false
-      }
-    }
-    else return true
-  }
-
-  export async function refreshNotificationStore(signature: string | null): Promise<boolean | undefined> {
-    if (refresh_notifications)
-      return
-    // null → no `notifications` object in /status → firmware predates
-    // advisories. Leave the store idle so the bell, the strip and the settings
-    // markers stay hidden, mirroring how refreshBoostStore gates on
-    // boost_version. The gate is presence, never the values: a charger with
-    // nothing to report still sends {count: 0, severity: "info"}.
-    if (signature === null || signature === undefined)
-      return
-    if ($uistates_store.notification_badge === signature)
-      return
-    refresh_notifications = true
-    const res = await notification_store.download()
-    refresh_notifications = false
-    if (res) {
-      $uistates_store.notification_badge = signature
-      return res
-    }
-    return false
   }
 
   export function refreshChargingState(val: boolean): void {
@@ -318,15 +182,11 @@
     else $uistates_store.error = false
   }
 
-  // Refresh stores when new version is published over websocket
-  $effect(() => { refreshConfigStore($config_version) })
-  $effect(() => { refreshSchedulestore($schedule_version) })
-  $effect(() => { refreshPlanStore($schedule_plan_version) })
-  $effect(() => { refreshClaimsTargetStore($claims_version) })
-  $effect(() => { refreshOverrideStore($override_version) })
-  $effect(() => { refreshLimitStore($limit_version) })
-  $effect(() => { refreshBoostStore($boost_version) })
-  $effect(() => { refreshNotificationStore($notification_badge) })
+  // Every status frame, and every advisory arrival, goes to the versioned stores.
+  $effect(() => {
+    void $notification_event
+    if ($status_store) versioned.observe($status_store)
+  })
   $effect(() => { refreshDateTime($time, $config_store?.time_zone) })
   $effect(() => { refreshChargingState($charging) })
   $effect(() => { refreshLocale($config_store?.lang) })

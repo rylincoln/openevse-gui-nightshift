@@ -8,7 +8,6 @@
   import { claims_target_store } from '../stores/claims_target'
   import { claims_store } from '../stores/claims'
   import { certificate_store } from '../stores/certificates'
-  import { uistates_store } from '../stores/uistates'
 
   interface Props {
     onProgress?: (progress: number) => void
@@ -21,19 +20,17 @@
   interface Step {
     store: { download(): Promise<boolean> }
     progress: number
-    after?: () => void
   }
 
+  // Status first: the rest are at least as new as the versions it reports,
+  // which is what DataManager takes them to be when it mounts.
   const steps: Step[] = [
     { store: status_store, progress: 20 },
-    // status_store is step 0 above and each step awaits the previous one in
-    // sequence, so by the time an `after` callback below runs, status_store's
-    // download has already succeeded and $status_store is populated.
-    { store: schedule_store, progress: 30, after: () => ($uistates_store.schedule_version = $status_store!.schedule_version) },
-    { store: plan_store, progress: 40, after: () => ($uistates_store.schedule_plan_version = $status_store!.schedule_plan_version) },
-    { store: config_store, progress: 60, after: () => ($uistates_store.config_version = $status_store!.config_version) },
-    { store: override_store, progress: 80, after: () => ($uistates_store.override_version = $status_store!.override_version) },
-    { store: claims_target_store, progress: 90, after: () => ($uistates_store.claims_version = $status_store!.claims_version) },
+    { store: schedule_store, progress: 30 },
+    { store: plan_store, progress: 40 },
+    { store: config_store, progress: 60 },
+    { store: override_store, progress: 80 },
+    { store: claims_target_store, progress: 90 },
     { store: claims_store, progress: 95 },
     { store: certificate_store, progress: 100 },
   ]
@@ -47,7 +44,6 @@
         onError()
         return
       }
-      step.after?.()
       onProgress(step.progress)
     }
     onStatus('ok')

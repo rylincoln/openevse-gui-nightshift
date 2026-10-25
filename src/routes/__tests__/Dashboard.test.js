@@ -605,6 +605,29 @@ describe('Dashboard', () => {
     expect(httpAPI).toHaveBeenCalledWith('GET', '/loadsharing/status')
   })
 
+  // Every frame is a new status object; only the counter says the group's
+  // status changed, and the charger's web server is single-threaded.
+  it('fetches the load-sharing status when its counter moves, not on every frame', async () => {
+    config_store.set({ labs_enabled: true,
+      max_current_soft: 32, divert_enabled: false, current_shaper_enabled: false,
+      loadsharing_enabled: true, loadsharing_role: true, loadsharing_controller_host: 'controller.local',
+    })
+    httpAPI.mockImplementation((m, url) =>
+      Promise.resolve(url === '/loadsharing/status' ? { failsafe_active: false, online_count: 2, peers: [] } : {}),
+    )
+    status_store.set({ state: 1, total_day: 0, total_energy: 0, pilot: 32, loadsharing_status_version: 1 })
+    const statusGets = () => httpAPI.mock.calls.filter(([m, u]) => m === 'GET' && u === '/loadsharing/status')
+    render(Dashboard)
+    await vi.waitFor(() => expect(statusGets()).toHaveLength(1))
+
+    for (const amp of [6000, 12000, 16000]) status_store.update((st) => ({ ...st, amp }))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(statusGets()).toHaveLength(1)
+
+    status_store.update((st) => ({ ...st, loadsharing_status_version: 2 }))
+    await vi.waitFor(() => expect(statusGets()).toHaveLength(2))
+  })
+
   it('shows the limited card, one amber reason, and tags the current tile', async () => {
     config_store.set({ labs_enabled: true,
       max_current_soft: 32, divert_enabled: false, current_shaper_enabled: false,
