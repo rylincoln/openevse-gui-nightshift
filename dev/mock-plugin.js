@@ -799,6 +799,17 @@ export function mockPlugin() {
             }
             Object.assign(configWrites, data)
             configVersion++
+            // As the firmware's config_changed: a limit_default_* write applies
+            // the Default limit at once (auto_release false), or clears
+            // whatever limit is set when the type becomes none.
+            if (Object.keys(data).some((k) => k.startsWith('limit_default_'))) {
+              const cfg = effectiveFixture('/api/config')
+              const type = cfg.limit_default_type || 'none'
+              const value = Number(cfg.limit_default_value) || 0
+              if (type === 'none') limit = null
+              else if (value) limit = { type, value, auto_release: false }
+              limitVersion++
+            }
             const msg = buildStatusMessage(tickCount)
             for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
             res.writeHead(200, { 'Content-Type': 'application/json' })

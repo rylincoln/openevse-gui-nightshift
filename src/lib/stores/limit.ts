@@ -10,7 +10,7 @@ const model: Limit = {
 
 export interface LimitStore extends Writable<Limit> {
   download(): Promise<boolean>
-  upload(data: Partial<Limit>): Promise<boolean>
+  upload(data: Limit): Promise<boolean>
   remove(id?: unknown): Promise<boolean>
   reset(): boolean
 }
@@ -27,8 +27,13 @@ function createLimitStore(): LimitStore {
     return true
   }
 
-  async function upload(data: Partial<Limit>): Promise<boolean> {
-    return accepted(await httpAPI<WriteResponse>('POST', '/limit', JSON.stringify(data)))
+  async function upload(data: Limit): Promise<boolean> {
+    // Held only once the charger accepts it; the limit_version the write
+    // moves brings the charger's own copy.
+    if (accepted(await httpAPI<WriteResponse>('POST', '/limit', JSON.stringify(data)))) {
+      P.update(() => data)
+      return true
+    } else return false
   }
 
   async function remove(_id?: unknown): Promise<boolean> {

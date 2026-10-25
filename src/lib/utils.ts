@@ -25,6 +25,16 @@ export function sec2time(sec: number | null | undefined): string {
 	return hours.toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: false }) + ':' + minutes.toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: false }) + ':' + seconds.toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: false })
 }
 
+/** Seconds as m:ss, or h:mm:ss from an hour up. */
+export function fmtDur(sec: number): string {
+  sec = Math.max(0, Math.round(sec))
+  const h = Math.floor(sec / 3600)
+  const m = Math.floor((sec % 3600) / 60)
+  const s = sec % 60
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
 export function formatDate(t: string, z?: string, format?: string | null): string {
 	let d
 	if (z) {

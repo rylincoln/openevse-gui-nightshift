@@ -7,7 +7,7 @@
  */
 import { EvseClients } from '../vars'
 import { clientid2name } from '../utils'
-import type { Limit, Override } from '../api/device'
+import type { Override } from '../api/device'
 
 /** A charge-mode control segment key. */
 export type ControlSegment = 'off' | 'auto' | 'eco' | 'on'
@@ -22,7 +22,6 @@ export interface ChargeModeSnapshot {
   divertEnabled: boolean
   /** The Manual override as GET /override last returned it ({} when none). */
   override: Override | undefined
-  limit: Limit | null | undefined
   /** The charge rate when no client sets one: config.max_current_soft. */
   defaultRate: number | undefined
 }
@@ -45,7 +44,8 @@ export interface ChargeModeCharger {
   setOverride(override: Override): Promise<boolean>
   clearOverride(): Promise<boolean>
   setDivertMode(divertmode: 1 | 2): Promise<boolean>
-  clearLimit(): Promise<boolean>
+  /** Clear a User limit. A Default limit stays (see chargeLimit.ts); that is still a success. */
+  clearUserLimit(): Promise<boolean>
 }
 
 /** Segment keys in display order. Eco only appears when solar divert is set up. */
@@ -92,12 +92,8 @@ export async function selectChargeMode(
     })
     if (!set) return false
     // A reached charge limit outranks the Manual override, so On alone would
-    // not resume charging. A Default limit is never cleared from here: the
-    // firmware re-applies it only at boot or on a config write, so deleting it
-    // would silently discard the configured limit.
-    if (segment === 'on' && readChargeMode(s).limitReached && s.limit?.auto_release !== false) {
-      return charger.clearLimit()
-    }
+    // not resume charging past a User limit.
+    if (segment === 'on' && readChargeMode(s).limitReached) return charger.clearUserLimit()
     return true
   }
   if (s.override && Object.keys(s.override).length > 0) {

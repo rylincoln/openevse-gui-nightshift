@@ -137,6 +137,13 @@ missing from any `source/` catalog or a `{placeholder}` differs from `en`.
 3 charging, 4–11 fault, 254 sleeping, 255 off. Field types and units are declared in
 `src/lib/api/device.ts`; capability-gated fields are optional there.
 
+The charger holds one charge limit. A User limit (set from the dashboard)
+auto-releases; the Default limit (config `limit_default_*`, applied by the
+firmware on that config write and at boot) comes back from `/limit` with
+`auto_release: false` and must never be DELETEd. `src/lib/chargeLimit.ts`
+owns that rule, the write order for each kind, and the target wording — go
+through it rather than `limit_store` directly.
+
 `docs/superpowers/specs/` and `plans/` hold the design spec and plan behind
 each feature — read the matching pair before extending a screen. The two
 `*-RUNBOOK.md` files there are historical.

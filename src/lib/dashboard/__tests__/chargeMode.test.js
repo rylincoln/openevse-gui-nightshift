@@ -9,7 +9,6 @@ function snapshot(over = {}) {
     divertmode: 1,
     divertEnabled: false,
     override: undefined,
-    limit: { type: 'none', value: 0, auto_release: true },
     defaultRate: 32,
     ...over,
   }
@@ -33,7 +32,7 @@ function fakeCharger(fail = {}) {
     setOverride: (o) => answer('setOverride', o),
     clearOverride: () => answer('clearOverride'),
     setDivertMode: (dm) => answer('setDivertMode', dm),
-    clearLimit: () => answer('clearLimit'),
+    clearUserLimit: () => answer('clearUserLimit'),
   }
 }
 
@@ -120,24 +119,11 @@ describe('selectChargeMode', () => {
     ])
   })
 
-  it('picking On past a reached User limit clears the limit after the override', async () => {
+  it('picking On past a reached limit clears the User limit after the override', async () => {
     const charger = fakeCharger()
-    const s = snapshot({
-      claimsTarget: owned('limit', 'disabled'),
-      limit: { type: 'energy', value: 5000, auto_release: true },
-    })
+    const s = snapshot({ claimsTarget: owned('limit', 'disabled') })
     expect(await selectChargeMode('on', s, charger)).toBe(true)
-    expect(charger.calls.map(([name]) => name)).toEqual(['setOverride', 'clearLimit'])
-  })
-
-  it('never clears a reached Default limit', async () => {
-    const charger = fakeCharger()
-    const s = snapshot({
-      claimsTarget: owned('limit', 'disabled'),
-      limit: { type: 'energy', value: 5000, auto_release: false },
-    })
-    expect(await selectChargeMode('on', s, charger)).toBe(true)
-    expect(charger.calls.map(([name]) => name)).toEqual(['setOverride'])
+    expect(charger.calls.map(([name]) => name)).toEqual(['setOverride', 'clearUserLimit'])
   })
 
   it('stops, and reports failure, when the override is refused', async () => {
@@ -148,7 +134,7 @@ describe('selectChargeMode', () => {
   })
 
   it('reports failure when clearing the reached limit fails', async () => {
-    const charger = fakeCharger({ clearLimit: true })
+    const charger = fakeCharger({ clearUserLimit: true })
     const s = snapshot({ claimsTarget: owned('limit', 'disabled') })
     expect(await selectChargeMode('on', s, charger)).toBe(false)
   })

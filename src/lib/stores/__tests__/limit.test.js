@@ -67,18 +67,21 @@ describe('limit_store', () => {
     expect(result).toBe(false)
   })
 
-  it('should upload limit data', async () => {
+  it('uploads a limit, and holds it once the charger accepts it', async () => {
     httpAPI.mockResolvedValue({ msg: 'done' })
-    const data = { type: 'energy', value: 10000 }
+    const data = { type: 'energy', value: 10000, auto_release: true }
     const result = await limit_store.upload(data)
     expect(result).toBe(true)
     expect(httpAPI).toHaveBeenCalledWith('POST', '/limit', JSON.stringify(data))
+    expect(get(limit_store)).toEqual(data)
   })
 
-  it('should return false on upload failure', async () => {
-    httpAPI.mockResolvedValue({ msg: 'error' })
-    const result = await limit_store.upload({})
+  it('keeps the limit it held when the charger refuses an upload', async () => {
+    limit_store.set({ type: 'soc', value: 80, auto_release: true })
+    httpAPI.mockResolvedValue('error')
+    const result = await limit_store.upload({ type: 'time', value: 60, auto_release: true })
     expect(result).toBe(false)
+    expect(get(limit_store)).toEqual({ type: 'soc', value: 80, auto_release: true })
   })
 
   it('should remove limit', async () => {

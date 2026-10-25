@@ -7,7 +7,6 @@
   import { config_store } from '../lib/stores/config'
   import type { ConfigState } from '../lib/stores/config'
   import { status_store } from '../lib/stores/status'
-  import { override_store } from '../lib/stores/override'
   import { claims_target_store } from '../lib/stores/claims_target'
   import { claims_store } from '../lib/stores/claims'
   import { plan_store } from '../lib/stores/plan'
@@ -29,6 +28,7 @@
   import RuleModal from '../lib/components/charge_manager/RuleModal.svelte'
   import ClaimsList from '../lib/components/charge_manager/ClaimsList.svelte'
   import { weekPlan, nowInWeek } from '../lib/charge_manager/week'
+  import { setDefaultLimit, clearDefaultLimit, type ChargeLimitCharger } from '../lib/chargeLimit'
   import type { Config, LimitType } from '../lib/api/device'
 
   // `_prevAction` is read only here (never round-tripped through Rule's own
@@ -216,31 +216,27 @@
     if (ok) config_store.update((c) => ({ ...c, ...data }) as ConfigState)
     return ok
   }
+  // The Default limit's charger seam.
+  const limitCharger: ChargeLimitCharger = {
+    setLimit: (l) => limit_store.upload(l),
+    clearLimit: () => limit_store.remove(),
+    saveConfig: saveAlwaysOn,
+  }
 
   async function applyAlwaysOnAction(action: string, rule: EditableRule): Promise<boolean> {
     const data = alwaysOnConfig(action, true)
     if (data) return await saveAlwaysOn(data)
-    // Session limit: a missing/zero limit writes nothing — report it as a
-    // failure instead of pretending the save happened. (The modal already
-    // validates this; this is the backstop.)
+    // Session limit, the Default limit. A missing or zero limit writes
+    // nothing and reports failure rather than pretend the save happened (the
+    // modal already validates it; this is the backstop).
     const limit: RuleLimit | null = rule.limit
-    if (!(limit && limit.type !== 'none' && limit.value > 0)) return false
-    let ok = await config_store.saveParam('limit_default_type', limit.type)
-    if (ok) ok = await config_store.saveParam('limit_default_value', limit.value)
-    if (ok) await limit_store.download()
-    return ok
+    return limit ? setDefaultLimit(limit, limitCharger) : false
   }
 
   async function clearAlwaysOnAction(action: string): Promise<boolean> {
     const data = alwaysOnConfig(action, false)
     if (data) return await saveAlwaysOn(data)
-    // Session limit. Report config/limit write failures; removeProp stays
-    // best-effort — it returns false for the common no-override-set case too.
-    let ok = await config_store.saveParam('limit_default_type', 'none')
-    if (!(await limit_store.remove())) ok = false
-    await override_store.removeProp('charge_current')
-    await limit_store.download()
-    return ok
+    return clearDefaultLimit(limitCharger)
   }
 
   // ── Single-param config save (busy-guarded) ───────────────────────────────

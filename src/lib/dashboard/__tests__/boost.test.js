@@ -1,15 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { boostTarget, fmtDur } from '../boost'
+import { boostTarget } from '../boost'
 
 const t = (k, opts) => (opts?.values ? `${k}(${opts.values.value})` : k)
-
-describe('fmtDur', () => {
-  it('formats minutes and seconds, adding hours past an hour', () => {
-    expect(fmtDur(90)).toBe('1:30')
-    expect(fmtDur(5400)).toBe('1:30:00')
-    expect(fmtDur(-3)).toBe('0:00')
-  })
-})
 
 describe('boostTarget', () => {
   it('is empty with no boost', () => {
