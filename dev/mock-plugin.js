@@ -126,7 +126,12 @@ export function mockPlugin() {
   // off code (255), Auto otherwise (so 254 -> sleeping). Bumping claimsVersion
   // makes DataManager re-download claims/target live over the WebSocket.
   const claimsOff = baseFixtures['/api/claims/target']
-  const claimsAuto = { properties: {}, claims: { state: null, charge_current: null } }
+  // As the firmware serialises it with no claims: the target properties are
+  // always there (the defaults), and `claims` lists only claimed properties.
+  const claimsAuto = {
+    properties: { state: 'active', charge_current: baseFixtures['/api/config'].max_current_soft, auto_release: false },
+    claims: {},
+  }
   let claimsState = claimsOff
   let claimsVersion = baseFixtures['/api/status'].claims_version ?? 1
 

@@ -4,9 +4,18 @@
 
   interface Props {
     flags?: boolean[]
+    /** Names the group of day buttons. */
+    label?: string
+    /** id of an error or hint about the days. */
+    describedby?: string
     onchange?: (flags: boolean[]) => void
   }
-  let { flags = [false, false, false, false, false, false, false], onchange = () => {} }: Props = $props()
+  let {
+    flags = [false, false, false, false, false, false, false],
+    label,
+    describedby,
+    onchange = () => {},
+  }: Props = $props()
 
   let allOn = $derived(flags.every((f) => f === true))
 
@@ -20,7 +29,7 @@
   }
 </script>
 
-<div class="flex justify-between gap-1">
+<div role="group" aria-label={label} aria-describedby={describedby} class="flex justify-between gap-1">
   {#each DAYS as day, i}
     <button
       type="button"

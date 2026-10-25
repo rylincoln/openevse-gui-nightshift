@@ -14,7 +14,7 @@
     busy?: boolean
     // Status indicators (the switches themselves live in the settings page).
     heartbeatSupported?: boolean
-    heartbeatActive?: boolean // red heart when heartbeat supervision is on
+    heartbeatActive?: boolean // filled heart when heartbeat supervision is on
     bootLockSupported?: boolean // show the lock/unlock icon at all
     bootLock?: boolean // locked padlock when on, open padlock when off
     onCurrentChange?: (amps: number) => void
@@ -39,45 +39,41 @@
 </script>
 
 <Card class="mb-3 p-4">
-  <!-- Header: title · status icons (heart / lock) · edit pencil -->
+  <!-- Header: title · edit pencil, then the safety settings in words -->
   <div class="flex items-center justify-between gap-3">
     <div class="text-sm font-semibold text-text">{$_('charge_manager.station')}</div>
-    <div class="flex items-center gap-2">
+    <IconButton
+      icon="mdi:pencil-outline"
+      size={18}
+      label={$_('charge_manager.default_state_settings')}
+      disabled={busy}
+      onclick={onEdit}
+    />
+  </div>
+  {#if heartbeatSupported || bootLockSupported}
+    <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-dim">
       {#if heartbeatSupported}
-        <!-- grid place-items-center matches the pencil IconButton's centering so
-             these status icons sit on the same baseline. Without it the icon's
-             default vertical-align (-0.125em on iconify-icon) shifts it off centre
-             relative to the grid-centred pencil button. -->
-        <span
-          role="img"
-          aria-label={$_('config.security.heartbeat')}
-          class="grid place-items-center {heartbeatActive ? 'text-error' : 'text-text-dim'}"
-        >
-          <Icon icon={heartbeatActive ? 'mdi:heart' : 'mdi:heart-outline'} size={18} />
+        <span class="flex items-center gap-1">
+          <span aria-hidden="true" class="grid place-items-center {heartbeatActive ? 'text-accent' : ''}">
+            <Icon icon={heartbeatActive ? 'mdi:heart' : 'mdi:heart-outline'} size={14} />
+          </span>
+          {$_(heartbeatActive ? 'charge_manager.heartbeat_on' : 'charge_manager.heartbeat_off')}
         </span>
       {/if}
       {#if bootLockSupported}
-        <span
-          role="img"
-          aria-label={$_('config.security.boot_lock')}
-          class="grid place-items-center {bootLock ? 'text-text' : 'text-text-dim'}"
-        >
-          <Icon icon={bootLock ? 'mdi:lock' : 'mdi:lock-open-variant'} size={18} />
+        <span class="flex items-center gap-1">
+          <span aria-hidden="true" class="grid place-items-center {bootLock ? 'text-accent' : ''}">
+            <Icon icon={bootLock ? 'mdi:lock' : 'mdi:lock-open-variant'} size={14} />
+          </span>
+          {$_(bootLock ? 'charge_manager.boot_lock_on' : 'charge_manager.boot_lock_off')}
         </span>
       {/if}
-      <IconButton
-        icon="mdi:pencil-outline"
-        size={18}
-        label={$_('charge_manager.default_state_settings')}
-        disabled={busy}
-        onclick={onEdit}
-      />
     </div>
-  </div>
+  {/if}
 
   <!-- Current — large live set point, no popup, tight to the slider -->
   <div class="mt-3">
-    <div class="text-[10px] uppercase tracking-wide text-text-dim">{$_('charge_manager.current')}</div>
+    <div class="text-xs text-text-dim">{$_('charge_manager.current')}</div>
     <div class="text-3xl font-bold leading-tight tabular-nums text-text">
       {liveCurrent}<span class="ml-1 text-xl font-semibold text-text-dim">A</span>
     </div>

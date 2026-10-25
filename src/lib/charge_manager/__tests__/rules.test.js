@@ -6,7 +6,6 @@ import {
   actionToTimerState,
   actionToFeatureKey,
   timerStateToAction,
-  formatWindow,
   alwaysOnConfig,
   ecoDivertAlwaysOn,
 } from '../rules'
@@ -404,25 +403,6 @@ describe('ruleDeleteIds', () => {
   })
 })
 
-// ── formatWindow ──────────────────────────────────────────────────────────────
-
-describe('formatWindow', () => {
-  it('formats a range as "1:00 PM – 6:00 PM"', () => {
-    expect(formatWindow('13:00', '18:00')).toBe('1:00 PM – 6:00 PM')
-  })
-  it('formats a standalone start as "from 8:00 AM"', () => {
-    expect(formatWindow('08:00', null)).toBe('from 8:00 AM')
-  })
-  it('handles midnight', () => {
-    expect(formatWindow('00:00', null)).toBe('from 12:00 AM')
-  })
-  it('handles noon', () => {
-    expect(formatWindow('12:00', null)).toBe('from 12:00 PM')
-  })
-  it('appends (next day) when stop is before start', () => {
-    expect(formatWindow('23:00', '06:00')).toBe('11:00 PM – 6:00 AM (next day)')
-  })
-})
 
 describe('alwaysOnConfig', () => {
   it('turns Eco divert on with both flags, so it survives a reboot', () => {

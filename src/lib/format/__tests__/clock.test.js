@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatClock } from '../clock'
+import { formatClock, formatHour } from '../clock'
 
 // Intl puts a narrow no-break space before AM/PM; compare on plain spaces.
 const plain = (s) => s.replace(/\s/g, ' ')
@@ -22,5 +22,16 @@ describe('formatClock', () => {
   })
   it('falls back to English for an unknown locale', () => {
     expect(plain(formatClock('23:00', null))).toBe('11:00 PM')
+  })
+})
+
+describe('formatHour', () => {
+  it('names an hour the short way the locale does', () => {
+    expect(plain(formatHour(18, 'en'))).toBe('6 PM')
+    expect(plain(formatHour(0, 'en'))).toBe('12 AM')
+    expect(plain(formatHour(18, 'fr'))).toBe('18 h')
+  })
+  it('falls back to English for an unknown locale', () => {
+    expect(plain(formatHour(6, undefined))).toBe('6 AM')
   })
 })

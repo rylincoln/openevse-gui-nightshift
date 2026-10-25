@@ -9,3 +9,8 @@ export function formatClock(hhmm: string, lang: string | null | undefined): stri
   const d = new Date(2000, 0, 1, Number(m[1]), Number(m[2]))
   return d.toLocaleTimeString(lang || 'en', { hour: 'numeric', minute: '2-digit' })
 }
+
+/** An hour of the day (0–23) as a short axis label: "6 PM", "18 h". */
+export function formatHour(hour: number, lang: string | null | undefined): string {
+  return new Date(2000, 0, 1, hour).toLocaleTimeString(lang || 'en', { hour: 'numeric' })
+}

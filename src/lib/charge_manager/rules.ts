@@ -302,21 +302,3 @@ function daysSetKey(days: string[] | undefined): string {
   if (!Array.isArray(days)) return ''
   return [...days].sort().join(',')
 }
-
-/**
- * Format a window time string: "1:00 PM – 6:00 PM", "from 1:00 PM", or with "(next day)" suffix.
- */
-export function formatWindow(startTime: string, stopTime: string | null | undefined): string {
-  const fmt = (t: string | null): string => {
-    if (!t) return ''
-    const [h, m] = t.split(':').map(Number)
-    const period = h >= 12 ? 'PM' : 'AM'
-    const h12 = h % 12 || 12
-    return `${h12}:${String(m).padStart(2, '0')} ${period}`
-  }
-  if (stopTime) {
-    const nextDay = isNextDay(startTime, stopTime)
-    return `${fmt(startTime)} – ${fmt(stopTime)}${nextDay ? ' (next day)' : ''}`
-  }
-  return `from ${fmt(startTime)}`
-}

@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { _ } from 'svelte-i18n'
+  import { _, locale } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import IconButton from '../ui/IconButton.svelte'
+  import ConfirmDialog from '../ui/ConfirmDialog.svelte'
   import Icon from '../../icons/Icon.svelte'
   import { formatDayChips } from '../../schedule/timers'
-  import { formatWindow } from '../../charge_manager/rules'
+  import { isNextDay } from '../../charge_manager/rules'
+  import { formatClock } from '../../format/clock'
   import type { Rule, RuleLimit } from '../../charge_manager/rules'
 
   interface Props {
@@ -18,12 +20,33 @@
   let { rule, active = false, removing = false, disabled = false, onedit = () => {}, ondelete = () => {} }: Props = $props()
 
   let chips  = $derived(formatDayChips(rule?.days))
-  let window = $derived(formatWindow(rule?.startTime, rule?.stopTime))
+
+  // An open-ended rule has no stop of its own: it runs until the next rule
+  // starts, which the week strip above the list shows.
+  let window = $derived.by(() => {
+    const start = formatClock(rule?.startTime, $locale)
+    if (!rule?.stopTime) return $_('charge_manager.window_open', { values: { start } })
+    const key = isNextDay(rule.startTime, rule.stopTime) ? 'window_next_day' : 'window'
+    return $_(`charge_manager.${key}`, { values: { start, stop: formatClock(rule.stopTime, $locale) } })
+  })
 
   function actionLabel(action: string): string {
-    const key = 'charge_manager.rule_action_' + action
-    return $_(key) !== key ? $_(key) : action
+    return $_('charge_manager.rule_action_' + action, { default: action })
   }
+
+  // The title carries the rate a charge rule sets: "Charge at 16 A".
+  let title = $derived(
+    (rule?.chargeCurrent ?? 0) > 0
+      ? $_('charge_manager.rule_title_rate', { values: { action: actionLabel(rule.action), amps: rule.chargeCurrent } })
+      : actionLabel(rule?.action),
+  )
+
+  // What tells this rule's buttons apart from every other rule's.
+  let name = $derived(
+    [title, chips.filter((c) => c.on).map((c) => $_('days.' + c.day)).join(' '), window].join(', '),
+  )
+
+  let confirmDelete = $state(false)
 
   function limitLabel(limit: RuleLimit | null | undefined): string | null {
     if (!limit || limit.type === 'none' || !limit.value) return null
@@ -37,8 +60,6 @@
   }
 
   let limitChip = $derived(limitLabel(rule?.limit))
-  // Fixed charge current set on the timer (scheduled "charge" rules).
-  let currentChip = $derived((rule?.chargeCurrent ?? 0) > 0 ? `${rule.chargeCurrent} A` : null)
 </script>
 
 <Card class="mb-3 p-4">
@@ -47,7 +68,7 @@
     <button type="button" onclick={onedit} class="min-w-0 flex-1 text-left">
       <div class="flex items-center gap-2">
         <div class="text-sm font-semibold text-text">
-          {actionLabel(rule?.action)}
+          {title}
         </div>
         {#if active}
           <span class="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
@@ -71,12 +92,6 @@
         </div>
         <!-- Time window -->
         <span class="text-xs text-text-dim">{window}</span>
-        <!-- Charge current chip -->
-        {#if currentChip}
-          <span class="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
-            {currentChip}
-          </span>
-        {/if}
         <!-- Limit chip -->
         {#if limitChip}
           <span class="rounded-full bg-surface-3 px-2 py-0.5 text-[10px] font-semibold text-text-dim">
@@ -91,7 +106,7 @@
       <IconButton
         icon="mdi:pencil-outline"
         size={16}
-        label={$_('charge_manager.rule_edit_title')}
+        label={$_('charge_manager.rule_edit_named', { values: { rule: name } })}
         {disabled}
         onclick={onedit}
       />
@@ -103,11 +118,24 @@
         <IconButton
           icon="mdi:trash-can-outline"
           size={16}
-          label={$_('charge_manager.rule_delete')}
+          label={$_('charge_manager.rule_delete_named', { values: { rule: name } })}
           {disabled}
-          onclick={ondelete}
+          onclick={() => (confirmDelete = true)}
         />
       {/if}
     </div>
   </div>
 </Card>
+
+<ConfirmDialog
+  visible={confirmDelete}
+  title={$_('charge_manager.rule_delete_title')}
+  body={$_('charge_manager.rule_delete_body', { values: { rule: name } })}
+  confirmLabel={$_('charge_manager.rule_delete_confirm')}
+  cancelLabel={$_('charge_manager.rule_cancel')}
+  onconfirm={() => {
+    confirmDelete = false
+    ondelete()
+  }}
+  oncancel={() => (confirmDelete = false)}
+/>
