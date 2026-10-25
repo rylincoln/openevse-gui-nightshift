@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { displayState, ringFill, limitProgress, connectedReason, maxPowerW, vehicleConnected, clampEnergyMax, ENERGY_LIMIT_MAX_KWH } from '../state'
+import { displayState, ringFill, limitProgress, maxPowerW, vehicleConnected, clampEnergyMax, ENERGY_LIMIT_MAX_KWH } from '../state'
 
 describe('clampEnergyMax', () => {
   it('keeps a sensible value untouched', () => {
@@ -30,8 +30,13 @@ describe('displayState', () => {
     expect(displayState({ state: 1 })).toBe('idle')
     expect(displayState({ state: 2 })).toBe('connected')
     expect(displayState({ state: 254 })).toBe('sleeping')
-    expect(displayState({ state: 255 })).toBe('off')
     expect(displayState({ state: 3 })).toBe('charging')
+  })
+  it('treats Disabled (255) as off only when the owner picked Off', () => {
+    // A scheduled rule or the default state can hold the charger Disabled
+    // rather than Sleeping (config pause_uses_disabled); that is still a pause.
+    expect(displayState({ state: 255 }, 2)).toBe('off')
+    expect(displayState({ state: 255 }, 0)).toBe('sleeping')
   })
   it('treats state 254 with mode=Off (2) as off, not sleeping', () => {
     // The "Off" mode just drops charge_current to 0 — device sits in
@@ -117,60 +122,5 @@ describe('limitProgress', () => {
   it('returns 0 for none/unknown or zero target', () => {
     expect(limitProgress({ type: 'none', value: 0 }, {})).toBe(0)
     expect(limitProgress({ type: 'time', value: 0 }, { session_elapsed: 100 })).toBe(0)
-  })
-})
-
-describe('connectedReason', () => {
-  it('waiting when a schedule event is pending', () => {
-    const r = connectedReason(0, { next_event: { time: '23:00' } })
-    expect(r.key).toBe('dashboard.reason.waiting')
-    expect(r.values.time).toBe('23:00')
-  })
-  it('off when mode is Off', () => {
-    expect(connectedReason(2, null).key).toBe('dashboard.reason.off')
-  })
-  it('generic not_charging otherwise', () => {
-    expect(connectedReason(0, null).key).toBe('dashboard.reason.not_charging')
-  })
-  it('names the timer window when the scheduler holds the claim', () => {
-    const plan = {
-      current_event: { state: 'disabled', time: '06:25' },
-      next_event: { state: 'active', time: '22:50' },
-    }
-    const r = connectedReason(0, plan, 'timer')
-    expect(r.key).toBe('dashboard.reason.timer')
-    expect(r.values).toEqual({ since: '06:25' })
-    expect(r.detail).toEqual({ key: 'dashboard.reason.timer_on', values: { at: '22:50' } })
-  })
-  it('trims seconds off plan event times', () => {
-    // the device reports HH:MM:SS but schedules only resolve to the minute
-    const plan = {
-      current_event: { state: 'disabled', time: '14:00:00' },
-      next_event: { state: 'active', time: '08:00:00' },
-    }
-    const r = connectedReason(0, plan, 'timer')
-    expect(r.values).toEqual({ since: '14:00' })
-    expect(r.detail.values).toEqual({ at: '08:00' })
-    const w = connectedReason(0, { next_event: { time: '23:00:00' } })
-    expect(w.values.time).toBe('23:00')
-  })
-  it('falls back to waiting when the timer claim has no current event', () => {
-    const plan = { current_event: false, next_event: { state: 'active', time: '22:50' } }
-    const r = connectedReason(0, plan, 'timer')
-    expect(r.key).toBe('dashboard.reason.waiting')
-    expect(r.values.time).toBe('22:50')
-  })
-  it('does not use the timer window when the next flip is a disable', () => {
-    const plan = {
-      current_event: { state: 'active', time: '22:50' },
-      next_event: { state: 'disabled', time: '06:25' },
-    }
-    const r = connectedReason(0, plan, 'timer')
-    expect(r.key).toBe('dashboard.reason.waiting')
-  })
-  it('names eco, ocpp and rfid claim owners', () => {
-    expect(connectedReason(0, null, 'divert').key).toBe('dashboard.reason.eco_waiting')
-    expect(connectedReason(0, null, 'ocpp').key).toBe('dashboard.reason.ocpp')
-    expect(connectedReason(0, null, 'rfid').key).toBe('dashboard.reason.rfid')
   })
 })

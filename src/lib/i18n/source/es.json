@@ -908,7 +908,8 @@
     "lost_body": "Intentando reconectar con el cargador…",
     "evse_missing": "EVSE no conectado",
     "evse_missing_body": "El módulo WiFi no puede comunicarse con el controlador EVSE.",
-    "error": "Error del cargador",
+    "fault": "Fallo del cargador: {fault}",
+    "fault_link": "Qué hacer",
     "reconnect": "Recargar",
     "load_failed": "No se puede conectar con el cargador",
     "load_failed_body": "Esta página no pudo cargar los datos del cargador. Comprueba que el cargador esté encendido y en la misma red que este dispositivo y vuelve a cargar la página.",
@@ -1046,29 +1047,55 @@
     "error_body": "El cargador no aceptó el cambio. Inténtalo de nuevo."
   },
   "dashboard": {
-    "plug": {
-      "connected": "Vehículo conectado",
-      "disconnected": "Sin vehículo"
-    },
-    "status": {
-      "starting": "Iniciando",
-      "charging": "Cargando",
-      "idle": "Listo",
-      "connected": "Vehículo conectado",
-      "sleeping": "En reposo",
-      "off": "Apagado",
-      "error": "Fallo"
-    },
-    "car_connected": "Vehículo conectado",
-    "not_charging": "Sin carga",
-    "ring": {
+    "line": {
       "starting": "Iniciando",
       "ready": "Listo",
-      "ready_sub": "Conecta tu vehículo para comenzar",
+      "connected": "Conectado",
+      "charging": "Cargando",
       "paused": "En pausa",
-      "sleeping": "En reposo",
       "off": "Apagado",
-      "fault": "FALLO"
+      "fault": "Fallo",
+      "plug_in": "Vehículo enchufado",
+      "plug_out": "Ningún vehículo enchufado",
+      "why": {
+        "starting": "Haciendo las comprobaciones de seguridad del arranque",
+        "ready": "Enchufa tu vehículo para empezar a cargar",
+        "connected": "Tu vehículo no está tomando energía. Puede que esté lleno o que siga su propio horario.",
+        "auto": "Auto, nada lo está frenando",
+        "on": "Activado, hasta que elijas otro modo de carga",
+        "eco": "Eco, con el excedente solar",
+        "boost": "Impulso: {target}",
+        "timer": "Auto, lo permite una regla programada",
+        "timer_paused": "Lo frena una regla programada",
+        "timer_since": "Lo frena una regla programada desde las {since}",
+        "eco_waiting": "Eco, esperando suficiente excedente solar",
+        "limit_reached": "Límite de carga alcanzado ({value})",
+        "rfid": "Iniciado con una tarjeta RFID",
+        "rfid_waiting": "Esperando una tarjeta RFID",
+        "ocpp": "Controlado por OCPP",
+        "client": "Controlado por {client}",
+        "off": "Elegiste Desactivado",
+        "waiting": "Esperando una regla programada",
+        "nothing": "Nada está configurado para cargar"
+      },
+      "next": {
+        "until": "Hasta las {time}",
+        "resumes": "Se reanuda a las {time}",
+        "limit": "Elige Activado para seguir cargando",
+        "rfid": "Acerca una tarjeta al cargador para empezar",
+        "off": "Elige Auto o Activado para cargar",
+        "nothing": "Elige Activado o añade una regla en el Gestor de carga"
+      },
+      "fault_next": {
+        "vent": "El vehículo pidió ventilación y este cargador no puede ofrecerla. Desenchufa el vehículo para borrar el fallo.",
+        "diode": "La señal de carga del vehículo no pasó una comprobación de seguridad. Desenchufa, revisa que el conector no tenga daños ni suciedad y vuelve a enchufar.",
+        "gfi": "Hubo una fuga de corriente a tierra. El cargador lo reintenta cada 5 minutos, hasta 6 veces, y desenchufar lo borra. Si sigue saltando, haz revisar el vehículo y la instalación.",
+        "ground": "El cargador no detecta la toma de tierra y lo reintenta cada 5 minutos. Haz que un electricista revise la instalación.",
+        "relay": "Puede que el relé esté pegado. Desenchufa el vehículo y reinicia el cargador. Si el fallo vuelve, deja de usar el cargador y llévalo a revisar.",
+        "gfitest": "La protección diferencial no pasó su autoprueba. Desenchufa y vuelve a enchufar. Si vuelve a fallar, lleva el cargador a revisar.",
+        "temp": "El cargador se calentó demasiado. Deja que se enfríe y luego desenchufa y vuelve a enchufar. Mantenlo fuera del sol directo y sin nada que bloquee la ventilación.",
+        "current": "El vehículo tomó más corriente de la que ofrecía el cargador. Desenchufa y vuelve a enchufar. Si se repite, haz revisar el vehículo."
+      }
     },
     "flows": {
       "house_load": "Consumo de la casa",
@@ -1076,17 +1103,6 @@
       "solar": "Solar",
       "grid": "Red",
       "charge_rate": "Tasa de carga"
-    },
-    "reason": {
-      "off": "Cambia a Auto o Activado",
-      "waiting": "Esperando · {time}",
-      "not_charging": "Sin carga",
-      "limit_reached": "Límite de carga alcanzado · {value}",
-      "timer": "Temporizador · apagado desde {since}",
-      "timer_on": "enciende a las {at}",
-      "eco_waiting": "Eco · esperando excedente",
-      "ocpp": "Controlado por OCPP",
-      "rfid": "Esperando tarjeta RFID"
     },
     "kw_max": "de {max} kW máx",
     "chips": {

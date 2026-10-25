@@ -29,6 +29,26 @@ if (typeof globalThis.ResizeObserver !== 'function') {
     disconnect() {}
   }
 }
+// Svelte transitions run on the Web Animations API, which jsdom lacks. A
+// stand-in that finishes at once keeps an `in:fade` from throwing.
+if (typeof Element !== 'undefined' && typeof Element.prototype.animate !== 'function') {
+  Element.prototype.animate = function () {
+    const animation = {
+      onfinish: null,
+      oncancel: null,
+      currentTime: 0,
+      playState: 'finished',
+      finished: Promise.resolve(),
+      cancel() {},
+      finish() {},
+      play() {},
+      pause() {},
+      reverse() {},
+    }
+    queueMicrotask(() => animation.onfinish?.())
+    return animation
+  }
+}
 if (typeof globalThis.MutationObserver !== 'function') {
   globalThis.MutationObserver = class {
     observe() {}

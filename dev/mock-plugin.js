@@ -188,10 +188,14 @@ export function mockPlugin() {
     const baseStatus = effectiveFixture('/api/status')
     const state = stateOverride == null ? baseStatus.state : stateOverride
     const charging = state === 3
+    // The plug follows a previewed state that implies one: Ready has no car,
+    // Connected and Charging do. Paused, Off and faults keep the fixture's.
+    const vehicle = stateOverride === 1 ? 0 : stateOverride === 2 || charging ? 1 : baseStatus.vehicle
     const advisories = notificationList()
     return JSON.stringify({
       ...baseStatus,
       state,
+      vehicle,
       config_version: configVersion,
       // Exactly the two fields the firmware sends here — the list lives on
       // its own endpoint. Their presence is the GUI's capability gate.

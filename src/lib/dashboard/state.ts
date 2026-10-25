@@ -1,5 +1,5 @@
 /** Pure helpers for the Dashboard. No store or DOM access — fully unit-tested. */
-import type { Status, Limit, Plan } from '../api/device'
+import type { Status, Limit } from '../api/device'
 import type { ConfigState } from '../stores/config'
 
 /**
@@ -30,7 +30,8 @@ export type DisplayState = 'starting' | 'idle' | 'off' | 'charging' | 'error' | 
  * Picking Off only drops charge_current to 0 — the device then sits in
  * the same state 254 it would be in if Auto were waiting on a timer.
  * So we use mode to disambiguate: 254 + Off = 'off'; 254 + anything else
- * = 'sleeping'.
+ * = 'sleeping'. The same goes for 255: a device configured to pause by
+ * disabling (pause_uses_disabled) sits there for a timer or the default state too.
  */
 export function displayState(status: Status | null | undefined, mode: number = 0): DisplayState {
   const s = status?.state
@@ -39,7 +40,7 @@ export function displayState(status: Status | null | undefined, mode: number = 0
   if (s === 3) return 'charging'
   if (s >= 4 && s <= 11) return 'error'
   if (s === 254) return mode === 2 ? 'off' : 'sleeping'
-  if (s === 255) return 'off' // device was already disabled at boot
+  if (s === 255) return mode === 2 ? 'off' : 'sleeping'
   return 'connected' // 2: car plugged in, not charging
 }
 
@@ -87,15 +88,6 @@ export function ringFill(
 }
 
 /**
- * Why the EVSE is connected-but-not-charging.
- * mode: 0 Auto, 1 On, 2 Off. `owner` is the EvseClients name holding the
- * state claim ('' when none) — it names who switched charging off.
- * Returns an i18n key + interpolation values.
- */
-// Plan events carry HH:MM:SS but schedules only resolve to the minute.
-const hhmm = (t: string): string => (typeof t === 'string' ? t.slice(0, 5) : t)
-
-/**
  * Is a vehicle physically plugged in?
  *
  * The firmware publishes an authoritative `vehicle` flag (1/0) that stays
@@ -111,45 +103,4 @@ export function vehicleConnected(status: Status | null | undefined): boolean {
   if (v === 0) return false
   const s = status?.state
   return s === 2 || s === 3
-}
-
-/** A "why not charging" descriptor: an i18n key + interpolation values, optionally a second line. */
-export interface ConnectedReason {
-  key: string
-  values: Record<string, unknown>
-  detail?: { key: string; values: Record<string, unknown> }
-}
-
-export function connectedReason(
-  mode: number,
-  plan: Plan | null | undefined,
-  owner: string = '',
-): ConnectedReason {
-  // `false` (no event scheduled) behaves identically to absent everywhere
-  // below (only ever read through a truthiness check), so fold it into null.
-  const cur = plan?.current_event || null
-  const next = plan?.next_event || null
-  if (owner === 'timer' && next?.time && next.state === 'active') {
-    // The scheduler switched charging off. Spell out the window: when it
-    // went off and when it comes back, or just the next flip if the device
-    // didn't report a current event.
-    if (cur?.time) {
-      // Two lines: dim context ("Timer · off since …") over an emphasized
-      // resume time — the actionable fact when you're standing at the charger.
-      return {
-        key: 'dashboard.reason.timer',
-        values: { since: hhmm(cur.time) },
-        detail: { key: 'dashboard.reason.timer_on', values: { at: hhmm(next.time) } },
-      }
-    }
-    return { key: 'dashboard.reason.waiting', values: { time: hhmm(next.time) } }
-  }
-  if (owner === 'divert') return { key: 'dashboard.reason.eco_waiting', values: {} }
-  if (owner === 'ocpp') return { key: 'dashboard.reason.ocpp', values: {} }
-  if (owner === 'rfid') return { key: 'dashboard.reason.rfid', values: {} }
-  if (next && next.time) {
-    return { key: 'dashboard.reason.waiting', values: { time: hhmm(next.time) } }
-  }
-  if (mode === 2) return { key: 'dashboard.reason.off', values: {} }
-  return { key: 'dashboard.reason.not_charging', values: {} }
 }

@@ -1,6 +1,5 @@
 <script lang="ts">
-  import type { ComponentProps } from 'svelte'
-  import { _ } from 'svelte-i18n'
+  import { _, locale } from 'svelte-i18n'
   import { fade } from 'svelte/transition'
   import { status_store } from '../lib/stores/status'
   import { config_store } from '../lib/stores/config'
@@ -16,16 +15,19 @@
   import { httpAPI } from '../lib/api/httpAPI'
   import { serialQueue } from '../lib/queue'
   import { EvseClients } from '../lib/vars'
-  import { sec2time, temp_round, round, clientid2name, getStateDesc, hardMaxCurrent } from '../lib/utils'
+  import { sec2time, temp_round, round, clientid2name, hardMaxCurrent } from '../lib/utils'
   import { formatTemp } from '../lib/temperature'
   import { formatCost } from '../lib/cost'
   import { showWriteError, showBoostError } from '../lib/alerts'
-  import { displayState, ringFill, connectedReason, maxPowerW, vehicleConnected } from '../lib/dashboard/state'
+  import { displayState, ringFill, maxPowerW, vehicleConnected } from '../lib/dashboard/state'
+  import { chargerStatus } from '../lib/dashboard/status'
+  import { boostTarget } from '../lib/dashboard/boost'
+  import { formatClock } from '../lib/format/clock'
   import { socCeiling, estMaxRange, hmsShort } from '../lib/dashboard/soc'
   import { loadSharingView } from '../lib/dashboard/loadsharing'
   import { createWriteRunner } from '../lib/dashboard/writes'
 
-  import PlugPill from '../lib/components/dashboard/PlugPill.svelte'
+  import StatusLine from '../lib/components/dashboard/StatusLine.svelte'
   import PowerRing from '../lib/components/dashboard/PowerRing.svelte'
   import ChargingHero from '../lib/components/dashboard/ChargingHero.svelte'
   import StatChips from '../lib/components/dashboard/StatChips.svelte'
@@ -39,14 +41,6 @@
   import ChargeLimitCard from '../lib/components/dashboard/ChargeLimitCard.svelte'
   import AdvisoryStrip from '../lib/components/notifications/AdvisoryStrip.svelte'
   import type { Limit, LimitType } from '../lib/api/device'
-
-  // Derived from PowerRing's own Props (its I18nValues type is unexported),
-  // so this isn't a second, hand-copied declaration of the same shape. The
-  // reason/detail objects below are always plain svelte-i18n interpolation
-  // data (strings, numbers) even though connectedReason()'s own return type
-  // keeps `values` as Record<string, unknown> to stay agnostic of any one
-  // caller's needs.
-  type I18nValues = NonNullable<ComponentProps<typeof PowerRing>['reasonValues']>
 
   // Controls stay enabled while a write is in flight (disabling a focused
   // control drops keyboard focus); input made meanwhile is held, latest per
@@ -86,18 +80,8 @@
   let claimOwner = $derived($claims_target_store?.claims?.state)
   // A reached charge limit grabs the state-claim to stop charging. Unlike OCPP
   // or RFID it's the user's own setting, not an external authority — so we don't
-  // lock the controls; we surface it as the ring reason and let On clear it.
+  // lock the controls; we surface it as the status reason and let On clear it.
   let limitTripped = $derived(claimOwner === EvseClients.limit.id)
-  let reason = $derived(
-    limitTripped
-      ? { key: 'dashboard.reason.limit_reached', values: { value: formatLimit($limit_store) } }
-      : connectedReason(mode, $plan_store, claimOwner ? clientid2name(claimOwner) : ''),
-  )
-  // PowerRing wants the narrower I18nValues shape; see the type's comment above.
-  let reasonValues: I18nValues = $derived(reason.values as I18nValues)
-  let reasonDetail: { key: string; values: I18nValues } | null = $derived(
-    reason.detail ? { key: reason.detail.key, values: reason.detail.values as I18nValues } : null,
-  )
 
   let kw = $derived((($status_store?.power ?? 0) / 1000).toFixed(1))
   // Shown on the PowerRing while charging (the non-Labs / chart-off path).
@@ -200,6 +184,7 @@
     if (l.type === 'range') return `${l.value} km`
     return ''
   }
+
 
   // ── charge-limit bar view-model ─────────────────────────────────────────
   let hasSoc = $derived(
@@ -369,6 +354,30 @@
   let activeBoost = $derived(
     $boost_store?.type && $boost_store.type !== 'none' ? $boost_store : null,
   )
+  // What the charger is doing and why: one line above either hero.
+  let status = $derived(
+    chargerStatus({
+      display,
+      segment: chargeSegment,
+      stateOwner: claimOwner ? clientid2name(claimOwner) : '',
+      vehicle: connected,
+      fault: $status_store?.state,
+      plan: $plan_store,
+      limitText: formatLimit($limit_store),
+      boostText: boostTarget(activeBoost, $_, $_($config_store?.mqtt_vehicle_range_miles ? 'units.miles' : 'units.km')),
+      time: (t) => formatClock(t, $locale),
+      clientName: (k) => $_(`clients.${k}`),
+    }),
+  )
+  // Read out on change only: no live numbers in it, so it stays quiet while
+  // charging and speaks when the state or the reason moves.
+  let statusSpoken = $derived(
+    [status.headline, status.plug, status.reason, status.next]
+      .filter((r) => r !== null)
+      .map((r) => $_(r.key, { values: r.values }))
+      .join('. '),
+  )
+
   // soc/range dimensions need a vehicle data source — same gates the limit card
   // uses. Hidden (not just disabled) when absent; the 422 backstop still runs.
   let canRange = $derived(hasSoc && Number.isFinite(maxRange))
@@ -428,6 +437,7 @@
        order-1 hero on mobile, and it spans the desktop grid. Renders nothing
        unless there is an unmuted critical advisory. -->
   <div class="lg:col-span-2"><AdvisoryStrip /></div>
+  <p class="sr-only" role="status">{statusSpoken}</p>
 
   {#if showChart}
     <!-- Labs chart hero: full content width on desktop, first block on mobile -->
@@ -448,7 +458,7 @@
         sessionElapsed={$status_store?.session_elapsed ?? 0}
         chartError={$energy_store.error.raw}
         rateDisabled={ecoOn || display === 'error'}
-        {connected}
+        {status}
         onrate={setChargeAmps}
       />
     </div>
@@ -463,8 +473,8 @@
          corners. -->
     <div class="relative max-lg:order-1 lg:col-span-2" in:fade={{ duration: 150 }}>
       <div class="flex items-start justify-between gap-2 px-1 pb-2 lg:contents">
-        <div class="lg:absolute lg:left-3 lg:top-1 lg:z-10"><PlugPill {connected} /></div>
-        <div class="lg:absolute lg:right-3 lg:top-1 lg:z-10">
+        <div class="min-w-0 lg:absolute lg:left-3 lg:top-1 lg:z-10 lg:max-w-[40%]"><StatusLine {status} /></div>
+        <div class="shrink-0 lg:absolute lg:right-3 lg:top-1 lg:z-10">
           {#key rateNonce}
             <RatePill
               amps={chargeAmps}
@@ -482,10 +492,6 @@
         {fill}
         {kw}
         maxKw={charging ? maxKw : ''}
-        reasonKey={reason.key}
-        {reasonValues}
-        {reasonDetail}
-        faultText={getStateDesc($status_store?.state) ?? ''}
       />
     </div>
   {/if}

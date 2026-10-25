@@ -16,21 +16,21 @@ describe('PowerRing', () => {
     })
     expect(getByText('7.4')).toBeInTheDocument()
   })
-  it('shows the ready label when idle', () => {
-    const { getByText } = render(PowerRing, { props: { display: 'idle', fill: 0 } })
-    expect(getByText(/^dashboard\.ring\.ready$/)).toBeInTheDocument()
+  // The ring's word is the status line's headline; the why lives in the line.
+  it.each([
+    ['idle', 'dashboard.line.ready'],
+    ['connected', 'dashboard.line.connected'],
+    ['sleeping', 'dashboard.line.paused'],
+    ['off', 'dashboard.line.off'],
+    ['error', 'dashboard.line.fault'],
+    ['starting', 'dashboard.line.starting'],
+  ])('names the %s state in the glossary\'s words', (display, key) => {
+    const { getByText } = render(PowerRing, { props: { display } })
+    expect(getByText(key)).toBeInTheDocument()
   })
-  it('stacks an emphasized detail line under the reason when sleeping', () => {
-    const { getByText } = render(PowerRing, {
-      props: {
-        display: 'sleeping',
-        reasonKey: 'dashboard.reason.timer',
-        reasonValues: { since: '14:00' },
-        reasonDetail: { key: 'dashboard.reason.timer_on', values: { at: '08:00' } },
-      },
-    })
-    expect(getByText('dashboard.reason.timer')).toBeInTheDocument()
-    const detail = getByText('dashboard.reason.timer_on')
-    expect(detail.className).toContain('font-semibold')
+  it('does not call a connected car that is not drawing power paused', () => {
+    const { queryByText, container } = render(PowerRing, { props: { display: 'connected' } })
+    expect(queryByText('dashboard.line.paused')).not.toBeInTheDocument()
+    expect(container.innerHTML).not.toContain('var(--warning)')
   })
 })

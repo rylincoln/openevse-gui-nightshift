@@ -8,6 +8,7 @@
   import { tick } from 'svelte'
   import { _ } from 'svelte-i18n'
   import Button from '../ui/Button.svelte'
+  import { boostTarget, fmtDur } from '../../dashboard/boost'
   import type { Boost, LimitType } from '../../api/device'
 
   interface Props {
@@ -127,14 +128,6 @@
     }
   })
 
-  function fmtDur(sec: number): string {
-    sec = Math.max(0, Math.round(sec))
-    const h = Math.floor(sec / 3600)
-    const m = Math.floor((sec % 3600) / 60)
-    const s = sec % 60
-    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-    return `${m}:${String(s).padStart(2, '0')}`
-  }
   function fmtMins(min: number): string {
     const h = Math.floor(min / 60)
     const m = min % 60
@@ -187,15 +180,7 @@
     base ? Math.max(0, base.remaining - Math.floor((now - base.at) / 1000)) : (active?.remaining ?? 0),
   )
 
-  let targetText = $derived.by(() => {
-    if (!active) return ''
-    if (active.type === 'time') return $_('dashboard.boost.for', { values: { value: fmtDur(active.value) } })
-    if (active.type === 'energy')
-      return $_('dashboard.boost.add', { values: { value: `${(active.value / 1000).toFixed(1)} ${$_('units.kwh')}` } })
-    if (active.type === 'soc')
-      return $_('dashboard.boost.until', { values: { value: `${active.value}${$_('units.percent')}` } })
-    return $_('dashboard.boost.until', { values: { value: `${active.value} ${rangeUnit}` } })
-  })
+  let targetText = $derived(boostTarget(active, $_, rangeUnit))
   let remainingText = $derived.by(() => {
     if (!active) return ''
     const left = $_('dashboard.limit.left')

@@ -908,7 +908,8 @@
     "lost_body": "Trying to reconnect to the charger…",
     "evse_missing": "EVSE not connected",
     "evse_missing_body": "The WiFi module can't reach the EVSE controller.",
-    "error": "Charger error",
+    "fault": "Charger fault: {fault}",
+    "fault_link": "What to do",
     "reconnect": "Reload",
     "load_failed": "Can't reach the charger",
     "load_failed_body": "This page couldn't load the charger's data. Check that the charger is powered on and on the same network as this device, then reload.",
@@ -1046,29 +1047,55 @@
     "error_body": "The charger didn't accept the change. Please try again."
   },
   "dashboard": {
-    "plug": {
-      "connected": "Car connected",
-      "disconnected": "Not connected"
-    },
-    "status": {
-      "starting": "Starting",
-      "charging": "Charging",
-      "idle": "Ready",
-      "connected": "Car connected",
-      "sleeping": "Sleeping",
-      "off": "Off",
-      "error": "Fault"
-    },
-    "car_connected": "Car connected",
-    "not_charging": "Not charging",
-    "ring": {
+    "line": {
       "starting": "Starting",
       "ready": "Ready",
-      "ready_sub": "Plug in your car to start",
+      "connected": "Connected",
+      "charging": "Charging",
       "paused": "Paused",
-      "sleeping": "Sleeping",
       "off": "Off",
-      "fault": "FAULT"
+      "fault": "Fault",
+      "plug_in": "Car plugged in",
+      "plug_out": "No car plugged in",
+      "why": {
+        "starting": "Running its power-up safety checks",
+        "ready": "Plug in your car to start charging",
+        "connected": "Your car isn't drawing power. It may be full or running its own schedule.",
+        "auto": "Auto, nothing is holding it back",
+        "on": "On, until you pick another charge mode",
+        "eco": "Eco, using solar surplus",
+        "boost": "Boost: {target}",
+        "timer": "Auto, a scheduled rule allows it",
+        "timer_paused": "Held by a scheduled rule",
+        "timer_since": "Held by a scheduled rule since {since}",
+        "eco_waiting": "Eco, waiting for enough solar surplus",
+        "limit_reached": "Charge limit reached ({value})",
+        "rfid": "Started with an RFID card",
+        "rfid_waiting": "Waiting for an RFID card",
+        "ocpp": "Controlled by OCPP",
+        "client": "Controlled by {client}",
+        "off": "You picked Off",
+        "waiting": "Waiting for a scheduled rule",
+        "nothing": "Nothing is set to charge"
+      },
+      "next": {
+        "until": "Until {time}",
+        "resumes": "Resumes at {time}",
+        "limit": "Pick On to keep charging",
+        "rfid": "Tap a card on the charger to start",
+        "off": "Pick Auto or On to charge",
+        "nothing": "Pick On, or add a rule in Charge Manager"
+      },
+      "fault_next": {
+        "vent": "The car asked for ventilation, which this charger can't provide. Unplug the car to clear the fault.",
+        "diode": "The car's charging signal failed a safety check. Unplug, check the connector for damage or debris, and plug in again.",
+        "gfi": "Current leaked to ground. The charger retries every 5 minutes, up to 6 times, and unplugging clears it. If it keeps tripping, have the car and the wiring checked.",
+        "ground": "The charger can't detect an earth ground and retries every 5 minutes. Have an electrician check the supply wiring.",
+        "relay": "The relay may be stuck closed. Unplug the car, then restart the charger. If the fault comes back, stop using the charger and have it serviced.",
+        "gfitest": "The ground-fault protection failed its self-test. Unplug and plug in again. If it fails again, have the charger serviced.",
+        "temp": "The charger got too hot. Let it cool, then unplug and plug in again. Keep it out of direct sun and clear of anything blocking airflow.",
+        "current": "The car drew more current than the charger offered. Unplug and plug in again. If it happens again, have the car checked."
+      }
     },
     "flows": {
       "house_load": "House load",
@@ -1076,17 +1103,6 @@
       "solar": "Solar",
       "grid": "Grid",
       "charge_rate": "Charge rate"
-    },
-    "reason": {
-      "off": "Switch to Auto or On",
-      "waiting": "Waiting · {time}",
-      "not_charging": "Not charging",
-      "limit_reached": "Charge limit reached · {value}",
-      "timer": "Timer · off since {since}",
-      "timer_on": "on at {at}",
-      "eco_waiting": "Eco · waiting for surplus power",
-      "ocpp": "Controlled by OCPP",
-      "rfid": "Waiting for RFID card"
     },
     "kw_max": "of {max} kW max",
     "chips": {

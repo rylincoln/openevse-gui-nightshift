@@ -16,6 +16,13 @@ const base = {
   amps: 32, maxAmps: 48, rateClaimedBy: '', rateNonce: 0,
   samples: [], voltage: 240, sessionElapsed: 600, chartError: false,
   modeDisabled: false, rateDisabled: false,
+  status: {
+    tone: 'charging',
+    headline: { key: 'dashboard.line.charging' },
+    plug: null,
+    reason: { key: 'dashboard.line.why.eco' },
+    next: null,
+  },
 }
 
 describe('ChargingHero', () => {
@@ -23,6 +30,13 @@ describe('ChargingHero', () => {
     const { getByText } = render(ChargingHero, { props: { ...base } })
     expect(getByText('3.2')).toBeInTheDocument()
     expect(getByText('KW')).toBeInTheDocument()
+  })
+
+  // The chart hero carries the same status line as the ring, in the same spot.
+  it('says it is charging, and why', () => {
+    const { getByText, queryByText } = render(ChargingHero, { props: { ...base } })
+    expect(getByText('dashboard.line.charging')).toBeInTheDocument()
+    expect(getByText('dashboard.line.why.eco')).toBeInTheDocument()
   })
 
   it('shows the SOC readout with the target when SOC is present', () => {

@@ -1,9 +1,10 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n'
-  import PlugPill from './PlugPill.svelte'
+  import StatusLine from './StatusLine.svelte'
   import RatePill from './RatePill.svelte'
   import SessionChart from './SessionChart.svelte'
   import type { EnergySample } from '../../api/device'
+  import type { ChargerStatus } from '../../dashboard/status'
 
   interface Props {
     kw?: string
@@ -21,7 +22,7 @@
     sessionElapsed?: number
     chartError?: boolean
     rateDisabled?: boolean
-    connected?: boolean
+    status: ChargerStatus
     onrate?: (value: number) => void
   }
   let {
@@ -40,18 +41,20 @@
     sessionElapsed = 0,
     chartError = false,
     rateDisabled = false,
-    connected = false,
+    status,
     onrate = () => {},
   }: Props = $props()
 </script>
 
 <div>
-  <!-- status row: plug pill · rate pill -->
-  <div class="flex items-center justify-between gap-2 px-1">
-    <PlugPill {connected} />
-    {#key rateNonce}
-      <RatePill {amps} min={minAmps} max={maxAmps} claimedBy={rateClaimedBy} disabled={rateDisabled} onchange={onrate} />
-    {/key}
+  <!-- status row: status line · rate pill -->
+  <div class="flex items-start justify-between gap-2 px-1">
+    <StatusLine {status} />
+    <div class="shrink-0">
+      {#key rateNonce}
+        <RatePill {amps} min={minAmps} max={maxAmps} claimedBy={rateClaimedBy} disabled={rateDisabled} onchange={onrate} />
+      {/key}
+    </div>
   </div>
 
   <!-- readout strip: keeps the ring's at-a-glance kW · SOC identity -->

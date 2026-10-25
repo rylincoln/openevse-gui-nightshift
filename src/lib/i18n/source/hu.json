@@ -908,7 +908,8 @@
     "lost_body": "Újracsatlakozás a töltőhöz…",
     "evse_missing": "EVSE nincs csatlakoztatva",
     "evse_missing_body": "A WiFi modul nem tudja elérni az EVSE vezérlőt.",
-    "error": "Töltő hiba",
+    "fault": "Töltőhiba: {fault}",
+    "fault_link": "Teendők",
     "reconnect": "Újratöltés",
     "load_failed": "A töltő nem érhető el",
     "load_failed_body": "Az oldal nem tudta betölteni a töltő adatait. Ellenőrizze, hogy a töltő be van-e kapcsolva, és ugyanazon a hálózaton van-e, mint ez az eszköz, majd töltse újra az oldalt.",
@@ -1046,29 +1047,55 @@
     "error_body": "A töltő nem fogadta el a változtatást. Kérjük, próbálja újra."
   },
   "dashboard": {
-    "plug": {
-      "connected": "Autó csatlakoztatva",
-      "disconnected": "Nincs autó"
-    },
-    "status": {
-      "starting": "Indulás",
-      "charging": "Töltés",
-      "idle": "Kész",
-      "connected": "Autó csatlakoztatva",
-      "sleeping": "Alvó",
-      "off": "Kikapcsolva",
-      "error": "Hiba"
-    },
-    "car_connected": "Autó csatlakoztatva",
-    "not_charging": "Nem tölt",
-    "ring": {
+    "line": {
       "starting": "Indulás",
       "ready": "Kész",
-      "ready_sub": "Csatlakoztassa az autóját a töltés megkezdéséhez",
-      "paused": "Szünet",
-      "sleeping": "Alvó",
+      "connected": "Csatlakoztatva",
+      "charging": "Töltés",
+      "paused": "Szünetel",
       "off": "Kikapcsolva",
-      "fault": "HIBA"
+      "fault": "Hiba",
+      "plug_in": "Autó bedugva",
+      "plug_out": "Nincs bedugott autó",
+      "why": {
+        "starting": "Indítási biztonsági ellenőrzések folyamatban",
+        "ready": "Csatlakoztassa az autóját a töltés megkezdéséhez",
+        "connected": "Az autó nem vesz fel energiát. Lehet, hogy tele van, vagy a saját ütemezését követi.",
+        "auto": "Auto, semmi sem tartja vissza",
+        "on": "Be, amíg másik töltési módot nem választ",
+        "eco": "Eco, napelemes többletből",
+        "boost": "Boost: {target}",
+        "timer": "Auto, egy ütemezett szabály engedélyezi",
+        "timer_paused": "Egy ütemezett szabály tartja vissza",
+        "timer_since": "Egy ütemezett szabály tartja vissza {since} óta",
+        "eco_waiting": "Eco, elegendő napelemes többletre vár",
+        "limit_reached": "Töltési korlát elérve ({value})",
+        "rfid": "RFID kártyával indítva",
+        "rfid_waiting": "RFID kártyára vár",
+        "ocpp": "OCPP vezérlés alatt",
+        "client": "Vezérli: {client}",
+        "off": "A Ki módot választotta",
+        "waiting": "Ütemezett szabályra vár",
+        "nothing": "Semmi sincs beállítva töltésre"
+      },
+      "next": {
+        "until": "Eddig: {time}",
+        "resumes": "Folytatás: {time}",
+        "limit": "Válassza a Be módot a töltés folytatásához",
+        "rfid": "Érintsen egy kártyát a töltőhöz az indításhoz",
+        "off": "Válassza az Auto vagy a Be módot a töltéshez",
+        "nothing": "Válassza a Be módot, vagy adjon hozzá szabályt a Töltéskezelőben"
+      },
+      "fault_next": {
+        "vent": "Az autó szellőztetést kért, amit ez a töltő nem tud biztosítani. Húzza ki az autót a hiba törléséhez.",
+        "diode": "Az autó töltési jele nem ment át egy biztonsági ellenőrzésen. Húzza ki, ellenőrizze, hogy a csatlakozó nem sérült vagy szennyezett-e, majd dugja vissza.",
+        "gfi": "Áram szivárgott a föld felé. A töltő 5 percenként újrapróbálja, legfeljebb 6-szor, és a kihúzás törli a hibát. Ha továbbra is lekapcsol, ellenőriztesse az autót és a vezetékezést.",
+        "ground": "A töltő nem érzékel földelést, és 5 percenként újrapróbálja. Ellenőriztesse a betáplálást villanyszerelővel.",
+        "relay": "Lehet, hogy a relé beragadt. Húzza ki az autót, majd indítsa újra a töltőt. Ha a hiba visszatér, ne használja tovább a töltőt, és javíttassa meg.",
+        "gfitest": "A hibaáram-védelem nem ment át az önteszten. Húzza ki és dugja vissza. Ha újra sikertelen, javíttassa meg a töltőt.",
+        "temp": "A töltő túlmelegedett. Hagyja lehűlni, majd húzza ki és dugja vissza. Ne érje közvetlen napfény, és semmi ne akadályozza a szellőzést.",
+        "current": "Az autó több áramot vett fel, mint amennyit a töltő kínált. Húzza ki és dugja vissza. Ha megismétlődik, ellenőriztesse az autót."
+      }
     },
     "flows": {
       "house_load": "Házi terhelés",
@@ -1076,17 +1103,6 @@
       "solar": "Napelem",
       "grid": "Hálózat",
       "charge_rate": "Töltési sebesség"
-    },
-    "reason": {
-      "off": "Váltson Auto vagy Be módra",
-      "waiting": "Várakozás · {time}",
-      "not_charging": "Nem tölt",
-      "limit_reached": "Töltési korlát elérve · {value}",
-      "timer": "Időzítő · ki {since} óta",
-      "timer_on": "be {at}-kor",
-      "eco_waiting": "Eco · többlet energiára vár",
-      "ocpp": "OCPP vezérlés alatt",
-      "rfid": "RFID kártyára vár"
     },
     "kw_max": "max {max} kW-ból",
     "chips": {

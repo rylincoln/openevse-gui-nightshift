@@ -908,7 +908,8 @@
     "lost_body": "Tentative de reconnexion au chargeur…",
     "evse_missing": "EVSE non connecté",
     "evse_missing_body": "Le module WiFi ne peut pas joindre le contrôleur EVSE.",
-    "error": "Erreur chargeur",
+    "fault": "Défaut du chargeur : {fault}",
+    "fault_link": "Que faire",
     "reconnect": "Recharger",
     "load_failed": "Impossible de joindre le chargeur",
     "load_failed_body": "Cette page n'a pas pu charger les données du chargeur. Vérifiez que le chargeur est allumé et sur le même réseau que cet appareil, puis rechargez la page.",
@@ -1046,29 +1047,55 @@
     "error_body": "Le chargeur n'a pas accepté la modification. Veuillez réessayer."
   },
   "dashboard": {
-    "plug": {
-      "connected": "Véhicule connecté",
-      "disconnected": "Aucun véhicule"
-    },
-    "status": {
-      "starting": "Démarrage",
-      "charging": "Charge en cours",
-      "idle": "Prêt",
-      "connected": "Véhicule connecté",
-      "sleeping": "En veille",
-      "off": "Arrêté",
-      "error": "Défaut"
-    },
-    "car_connected": "Véhicule connecté",
-    "not_charging": "Pas de charge",
-    "ring": {
+    "line": {
       "starting": "Démarrage",
       "ready": "Prêt",
-      "ready_sub": "Branchez votre véhicule pour démarrer",
+      "connected": "Connecté",
+      "charging": "En charge",
       "paused": "En pause",
-      "sleeping": "En veille",
       "off": "Arrêté",
-      "fault": "DÉFAUT"
+      "fault": "Défaut",
+      "plug_in": "Véhicule branché",
+      "plug_out": "Aucun véhicule branché",
+      "why": {
+        "starting": "Contrôles de sécurité du démarrage en cours",
+        "ready": "Branchez votre véhicule pour lancer la charge",
+        "connected": "Votre véhicule ne consomme pas d'énergie. Il est peut-être plein ou suit sa propre programmation.",
+        "auto": "Auto, rien ne la retient",
+        "on": "Marche, jusqu'à ce que vous choisissiez un autre mode de charge",
+        "eco": "Éco, sur le surplus solaire",
+        "boost": "Boost : {target}",
+        "timer": "Auto, une règle programmée l'autorise",
+        "timer_paused": "Retenue par une règle programmée",
+        "timer_since": "Retenue par une règle programmée depuis {since}",
+        "eco_waiting": "Éco, en attente d'un surplus solaire suffisant",
+        "limit_reached": "Limite de charge atteinte ({value})",
+        "rfid": "Lancée avec un badge RFID",
+        "rfid_waiting": "En attente d'un badge RFID",
+        "ocpp": "Contrôlé par OCPP",
+        "client": "Contrôlé par {client}",
+        "off": "Vous avez choisi Arrêt",
+        "waiting": "En attente d'une règle programmée",
+        "nothing": "Rien n'est prévu pour charger"
+      },
+      "next": {
+        "until": "Jusqu'à {time}",
+        "resumes": "Reprise à {time}",
+        "limit": "Choisissez Marche pour continuer la charge",
+        "rfid": "Présentez un badge au chargeur pour démarrer",
+        "off": "Choisissez Auto ou Marche pour charger",
+        "nothing": "Choisissez Marche, ou ajoutez une règle dans le gestionnaire de charge"
+      },
+      "fault_next": {
+        "vent": "Le véhicule a demandé une ventilation que ce chargeur ne peut pas fournir. Débranchez le véhicule pour effacer le défaut.",
+        "diode": "Le signal de charge du véhicule a échoué à un contrôle de sécurité. Débranchez, vérifiez que le connecteur n'est ni abîmé ni encrassé, puis rebranchez.",
+        "gfi": "Du courant a fui vers la terre. Le chargeur réessaie toutes les 5 minutes, jusqu'à 6 fois, et le débranchement efface le défaut. S'il se répète, faites contrôler le véhicule et l'installation.",
+        "ground": "Le chargeur ne détecte pas de mise à la terre et réessaie toutes les 5 minutes. Faites vérifier l'installation par un électricien.",
+        "relay": "Le relais est peut-être collé. Débranchez le véhicule, puis redémarrez le chargeur. Si le défaut revient, n'utilisez plus le chargeur et faites-le réparer.",
+        "gfitest": "La protection différentielle a échoué à son autotest. Débranchez puis rebranchez. Si elle échoue encore, faites réparer le chargeur.",
+        "temp": "Le chargeur a trop chauffé. Laissez-le refroidir, puis débranchez et rebranchez. Évitez le plein soleil et ne gênez pas la ventilation.",
+        "current": "Le véhicule a consommé plus de courant que le chargeur n'en proposait. Débranchez puis rebranchez. Si cela se reproduit, faites contrôler le véhicule."
+      }
     },
     "flows": {
       "house_load": "Consommation maison",
@@ -1076,17 +1103,6 @@
       "solar": "Solaire",
       "grid": "Réseau",
       "charge_rate": "Courant de charge"
-    },
-    "reason": {
-      "off": "Passer en Auto ou Marche",
-      "waiting": "En attente · {time}",
-      "not_charging": "Pas de charge",
-      "limit_reached": "Limite de charge atteinte · {value}",
-      "timer": "Minuterie · arrêt depuis {since}",
-      "timer_on": "marche à {at}",
-      "eco_waiting": "Éco · en attente de surplus",
-      "ocpp": "Contrôlé par OCPP",
-      "rfid": "En attente du badge RFID"
     },
     "kw_max": "sur {max} kW max",
     "chips": {
