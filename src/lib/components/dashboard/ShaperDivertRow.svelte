@@ -1,8 +1,9 @@
 <script lang="ts">
   // Live shaper / solar-divert readouts for the dashboard — the at-a-glance
-  // numbers that explain why the charge rate is what it is. Mirrors the old
-  // UI's status footer: house load + available current when the current
-  // shaper is enabled, production (or grid I/E) + charge rate when divert is.
+  // numbers that explain why the charge rate is what it is: house load and
+  // the current the shaper allows when the load shaper is enabled, production
+  // (or grid I/E) and the current Eco allows when divert is. Neither is the
+  // charge rate itself; that is the rate pill's one number.
   import { _ } from 'svelte-i18n'
   import { status_store } from '../../stores/status'
   import { config_store } from '../../stores/config'
@@ -28,7 +29,7 @@
         <div class="text-xs font-bold text-text">{$status_store?.shaper_live_pwr ?? 0} W</div>
       </div>
       <div class="text-center transition-opacity duration-500" class:opacity-40={stale}>
-        <div class="text-[8px] tracking-wide text-text-dim uppercase">{$_('dashboard.flows.available')}</div>
+        <div class="text-[8px] tracking-wide text-text-dim uppercase">{$_('dashboard.flows.shaper_allows')}</div>
         <div class="text-xs font-bold text-text">{round($status_store?.shaper_cur ?? 0, 1)} A</div>
       </div>
     {/if}
@@ -40,7 +41,7 @@
         <div class="text-xs font-bold text-text">{(gridMode ? $status_store?.grid_ie : $status_store?.solar) ?? 0} W</div>
       </div>
       <div class="text-center">
-        <div class="text-[8px] tracking-wide text-text-dim uppercase">{$_('dashboard.flows.charge_rate')}</div>
+        <div class="text-[8px] tracking-wide text-text-dim uppercase">{$_('dashboard.flows.eco_allows')}</div>
         <div class="text-xs font-bold text-text">{round($status_store?.charge_rate ?? 0, 1)} A</div>
       </div>
     {/if}

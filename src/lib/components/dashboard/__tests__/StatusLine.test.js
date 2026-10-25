@@ -43,4 +43,12 @@ describe('StatusLine', () => {
     })
     expect(container.querySelectorAll('p')).toHaveLength(1)
   })
+
+  it('names who is capping the current', () => {
+    const { getByText } = render(StatusLine, {
+      status: { ...paused, tone: 'charging', headline: { key: 'dashboard.line.charging' }, plug: null, next: null },
+      cap: { key: 'dashboard.line.cap', values: { client: 'Load shaper', amps: '24' } },
+    })
+    expect(getByText('dashboard.line.cap:{"client":"Load shaper","amps":"24"}').className).toContain('text-warning')
+  })
 })

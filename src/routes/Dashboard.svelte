@@ -22,6 +22,7 @@
   import { displayState, ringFill, maxPowerW, vehicleConnected } from '../lib/dashboard/state'
   import { chargerStatus } from '../lib/dashboard/status'
   import { boostTarget } from '../lib/dashboard/boost'
+  import { rateCap } from '../lib/dashboard/rate'
   import { formatClock } from '../lib/format/clock'
   import { socCeiling, estMaxRange, hmsShort } from '../lib/dashboard/soc'
   import { loadSharingView } from '../lib/dashboard/loadsharing'
@@ -95,10 +96,8 @@
     sessionKwh: (($status_store?.session_energy ?? 0) / 1000).toFixed(2),
     elapsed: sec2time($status_store?.session_elapsed ?? 0),
     currentA: (($status_store?.amp ?? 0) / 1000).toFixed(1),
-    voltage: $status_store?.voltage ?? 0,
     temp: tempDisplay.value,
     tempUnit: tempDisplay.unitKey,
-    pilotA: $status_store?.pilot ?? 0,
     // Vehicle charge ETA (MQTT topic) — '' when the topic isn't configured.
     toFull: hmsShort($status_store?.time_to_full_charge ?? 0),
   })
@@ -122,9 +121,22 @@
   let rateClaimedBy = $derived(
     $claims_target_store?.claims?.charge_current &&
     $claims_target_store.claims.charge_current !== EvseClients.manual.id
-      ? clientid2name($claims_target_store.claims.charge_current)
+      ? $_(`clients.${clientid2name($claims_target_store.claims.charge_current)}`)
       : '',
   )
+  // A client capping the current below the charge rate (load shaper, load
+  // sharing): named in the status line and in the rate control, so a pilot
+  // below the chosen rate never goes unexplained.
+  let cap = $derived.by(() => {
+    const c = rateCap($claims_target_store, chargeAmps)
+    return c
+      ? { key: 'dashboard.line.cap', values: { client: $_(`clients.${c.client}`), amps: String(c.amps) } }
+      : null
+  })
+  let capText = $derived(cap ? $_(cap.key, { values: cap.values }) : '')
+  // The status line names the cap only while power could flow; paused or
+  // off, it is beside the point.
+  let statusCap = $derived(charging || display === 'connected' ? cap : null)
   // Load sharing is Labs-gated (see the OpenEVSE Labs switch on Settings →
   // Terminal). Even when the device reports it enabled, the dashboard block
   // stays hidden until the user opts into Labs features.
@@ -372,7 +384,7 @@
   // Read out on change only: no live numbers in it, so it stays quiet while
   // charging and speaks when the state or the reason moves.
   let statusSpoken = $derived(
-    [status.headline, status.plug, status.reason, status.next]
+    [status.headline, status.plug, status.reason, status.next, statusCap]
       .filter((r) => r !== null)
       .map((r) => $_(r.key, { values: r.values }))
       .join('. '),
@@ -451,6 +463,8 @@
         {minAmps}
         {maxAmps}
         {rateClaimedBy}
+        {capText}
+        cap={statusCap}
         {rateNonce}
         samples={$energy_store.raw.samples}
         voltage={$status_store?.voltage ?? 0}
@@ -473,7 +487,7 @@
          corners. -->
     <div class="relative max-lg:order-1 lg:col-span-2" in:fade={{ duration: 150 }}>
       <div class="flex items-start justify-between gap-2 px-1 pb-2 lg:contents">
-        <div class="min-w-0 lg:absolute lg:left-3 lg:top-1 lg:z-10 lg:max-w-[40%]"><StatusLine {status} /></div>
+        <div class="min-w-0 lg:absolute lg:left-3 lg:top-1 lg:z-10 lg:max-w-[40%]"><StatusLine {status} cap={statusCap} /></div>
         <div class="shrink-0 lg:absolute lg:right-3 lg:top-1 lg:z-10">
           {#key rateNonce}
             <RatePill
@@ -481,6 +495,7 @@
               min={minAmps}
               max={maxAmps}
               claimedBy={rateClaimedBy}
+              {capText}
               disabled={ecoOn || display === 'error'}
               onchange={setChargeAmps}
             />

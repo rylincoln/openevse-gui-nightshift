@@ -11,7 +11,7 @@ import StatChips from '../StatChips.svelte'
 
 const live = {
   sessionKwh: '12.30', elapsed: '01:42:09', currentA: '32.0',
-  voltage: 240, tempC: '42.7', pilotA: 32,
+  temp: 42.7, tempUnit: 'units.celsius',
 }
 const summary = { todayKwh: '3.2', totalKwh: '7523' }
 
@@ -38,16 +38,19 @@ describe('StatChips', () => {
     expect(getByText('3.2')).toBeInTheDocument()
     expect(getByText('7523')).toBeInTheDocument()
   })
-  it('renders the sensor trio as desktop pills and a mobile row', () => {
-    const { container } = render(StatChips, { props: { charging: true, live, summary } })
-    // mobile compact row keeps its rule but hides at lg
-    const row = container.querySelector('[class*="border-b"]')
-    expect(row.className).toContain('lg:hidden')
-    // desktop pill grid (hidden on mobile) carries the three sensor chips
-    const pills = container.querySelector('[class*="lg:grid-cols-3"]')
-    expect(pills).toBeTruthy()
-    expect(pills.className).toContain('hidden')
-    expect(pills.textContent).toContain('240 V')
-    expect(pills.textContent).toContain('32 A')
+  // One amp number on the dashboard's tiles, named for what it is: what the
+  // car draws. Pilot and voltage are Monitoring's.
+  it('labels the measured current as the charging current', () => {
+    const { getByText } = render(StatChips, { props: { charging: true, live, summary } })
+    expect(getByText('32.0 A').parentElement).toHaveTextContent('dashboard.chips.charging_current')
+  })
+  it('leaves pilot and voltage to Monitoring', () => {
+    const { queryByText } = render(StatChips, { props: { charging: true, live, summary } })
+    expect(queryByText(/dashboard\.chips\.(pilot|voltage)/)).toBeNull()
+    expect(queryByText(/240 V/)).toBeNull()
+  })
+  it('keeps the charger temperature as a tile', () => {
+    const { getByText } = render(StatChips, { props: { charging: true, live, summary } })
+    expect(getByText('42.7units.celsius').parentElement).toHaveTextContent('dashboard.chips.temp')
   })
 })

@@ -34,7 +34,7 @@ describe('ShaperDivertRow', () => {
     const { getByText } = render(ShaperDivertRow)
     expect(getByText('dashboard.flows.house_load')).toBeInTheDocument()
     expect(getByText('4200 W')).toBeInTheDocument()
-    expect(getByText('24 A')).toBeInTheDocument()
+    expect(getByText('24 A').parentElement).toHaveTextContent('dashboard.flows.shaper_allows')
     expect(getByText('4200 W').parentElement.className).not.toContain('opacity-40')
   })
 
@@ -54,7 +54,8 @@ describe('ShaperDivertRow', () => {
     const { getByText, queryByText } = render(ShaperDivertRow)
     expect(getByText('dashboard.flows.solar')).toBeInTheDocument()
     expect(getByText('3200 W')).toBeInTheDocument()
-    expect(getByText('32 A')).toBeInTheDocument()
+    // divert's computed current, not a second "charge rate" beside the pill
+    expect(getByText('32 A').parentElement).toHaveTextContent('dashboard.flows.eco_allows')
     expect(queryByText('dashboard.flows.grid')).toBeNull()
   })
 

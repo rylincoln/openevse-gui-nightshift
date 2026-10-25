@@ -540,8 +540,9 @@ export interface Claim {
 }
 
 export interface ClaimsTarget {
-  properties: { state: string; charge_current: number; auto_release: boolean }
-  claims: { state: number; charge_current: number }
+  /** `max_current` (amps) and its client are present only while a client caps the current. */
+  properties: { state: string; charge_current: number; max_current?: number; auto_release: boolean }
+  claims: { state: number; charge_current: number; max_current?: number }
 }
 
 export interface Certificate {

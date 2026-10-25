@@ -1,14 +1,16 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n'
-  import type { ChargerStatus, StatusTone } from '../../dashboard/status'
+  import type { ChargerStatus, I18nRef, StatusTone } from '../../dashboard/status'
 
   // What the charger is doing and why, in the same spot above the hero in
   // every state. Screen readers hear it through the Dashboard's persistent
   // live region, not this element, which is remounted when the hero swaps.
   interface Props {
     status: ChargerStatus
+    /** Who is capping the current below the charge rate, when anyone is. */
+    cap?: I18nRef | null
   }
-  let { status }: Props = $props()
+  let { status, cap = null }: Props = $props()
 
   const TEXT: Record<StatusTone, string> = {
     charging: 'text-charging',
@@ -43,5 +45,8 @@
   {/if}
   {#if status.next}
     <p class="text-[13px] font-medium leading-snug text-text">{$_(status.next.key, { values: status.next.values })}</p>
+  {/if}
+  {#if cap}
+    <p class="text-[13px] font-medium leading-snug text-warning">{$_(cap.key, { values: cap.values })}</p>
   {/if}
 </div>

@@ -1057,6 +1057,7 @@
       "fault": "Hiba",
       "plug_in": "Autó bedugva",
       "plug_out": "Nincs bedugott autó",
+      "cap": "{client} {amps} A-re korlátozza",
       "why": {
         "starting": "Indítási biztonsági ellenőrzések folyamatban",
         "ready": "Csatlakoztassa az autóját a töltés megkezdéséhez",
@@ -1099,19 +1100,17 @@
     },
     "flows": {
       "house_load": "Házi terhelés",
-      "available": "Elérhető",
+      "shaper_allows": "A terheléscsökkentő enged",
       "solar": "Napelem",
       "grid": "Hálózat",
-      "charge_rate": "Töltési sebesség"
+      "eco_allows": "Az Eco enged"
     },
     "kw_max": "max {max} kW-ból",
     "chips": {
       "session": "Töltési kWh",
       "elapsed": "Eltelt idő",
-      "current": "Áram",
-      "voltage": "Feszültség",
-      "temp": "Hőmérséklet",
-      "pilot": "Pilot"
+      "charging_current": "Töltőáram",
+      "temp": "Hőmérséklet"
     },
     "summary": {
       "today": "Ma",
@@ -1125,7 +1124,7 @@
     },
     "rate": {
       "claimed": "{client} állítja",
-      "aria": "Töltési sebesség"
+      "label": "Töltési sebesség"
     },
     "vehicle": {
       "to_full": "{time} a teljes töltésig",
@@ -1329,6 +1328,8 @@
     "rfid": "RFID",
     "mqtt": "MQTT",
     "shaper": "Terheléscsökkentő",
+    "loadsharing": "Terhelésmegosztás",
+    "tempThrottle": "Hőmérsékleti korlátozás",
     "evcc": "evcc",
     "null": "—"
   },

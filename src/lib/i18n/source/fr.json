@@ -1057,6 +1057,7 @@
       "fault": "Défaut",
       "plug_in": "Véhicule branché",
       "plug_out": "Aucun véhicule branché",
+      "cap": "{client} la limite à {amps} A",
       "why": {
         "starting": "Contrôles de sécurité du démarrage en cours",
         "ready": "Branchez votre véhicule pour lancer la charge",
@@ -1099,19 +1100,17 @@
     },
     "flows": {
       "house_load": "Consommation maison",
-      "available": "Disponible",
+      "shaper_allows": "Le délestage permet",
       "solar": "Solaire",
       "grid": "Réseau",
-      "charge_rate": "Courant de charge"
+      "eco_allows": "Éco permet"
     },
     "kw_max": "sur {max} kW max",
     "chips": {
       "session": "kWh session",
       "elapsed": "Écoulé",
-      "current": "Courant",
-      "voltage": "Tension",
-      "temp": "Temp",
-      "pilot": "Pilote"
+      "charging_current": "Courant de charge",
+      "temp": "Temp"
     },
     "summary": {
       "today": "Aujourd'hui",
@@ -1125,7 +1124,7 @@
     },
     "rate": {
       "claimed": "Défini par {client}",
-      "aria": "Vitesse de charge"
+      "label": "Vitesse de charge"
     },
     "vehicle": {
       "to_full": "{time} avant la charge complète",
@@ -1329,6 +1328,8 @@
     "rfid": "RFID",
     "mqtt": "MQTT",
     "shaper": "Délestage",
+    "loadsharing": "Partage de charge",
+    "tempThrottle": "Bridage thermique",
     "evcc": "evcc",
     "null": "—"
   },

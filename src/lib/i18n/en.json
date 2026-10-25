@@ -1057,6 +1057,7 @@
       "fault": "Fault",
       "plug_in": "Car plugged in",
       "plug_out": "No car plugged in",
+      "cap": "{client} limits it to {amps} A",
       "why": {
         "starting": "Running its power-up safety checks",
         "ready": "Plug in your car to start charging",
@@ -1099,19 +1100,17 @@
     },
     "flows": {
       "house_load": "House load",
-      "available": "Available",
+      "shaper_allows": "Shaper allows",
       "solar": "Solar",
       "grid": "Grid",
-      "charge_rate": "Charge rate"
+      "eco_allows": "Eco allows"
     },
     "kw_max": "of {max} kW max",
     "chips": {
       "session": "Session kWh",
       "elapsed": "Elapsed",
-      "current": "Current",
-      "voltage": "Voltage",
-      "temp": "Temp",
-      "pilot": "Pilot"
+      "charging_current": "Charging current",
+      "temp": "Temp"
     },
     "summary": {
       "today": "Today",
@@ -1125,7 +1124,7 @@
     },
     "rate": {
       "claimed": "Set by {client}",
-      "aria": "Charge rate"
+      "label": "Charge rate"
     },
     "vehicle": {
       "to_full": "{time} to full",
@@ -1329,6 +1328,8 @@
     "rfid": "RFID",
     "mqtt": "MQTT",
     "shaper": "Load shaper",
+    "loadsharing": "Load sharing",
+    "tempThrottle": "Temperature throttle",
     "evcc": "evcc",
     "null": "—"
   },

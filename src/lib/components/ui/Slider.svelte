@@ -49,6 +49,7 @@
   <input
     type="range"
     aria-label={ariaLabel || undefined}
+    aria-valuetext={String(format(current))}
     {min}
     {max}
     {step}

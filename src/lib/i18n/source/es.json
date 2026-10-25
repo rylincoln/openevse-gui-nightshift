@@ -1057,6 +1057,7 @@
       "fault": "Fallo",
       "plug_in": "Vehículo enchufado",
       "plug_out": "Ningún vehículo enchufado",
+      "cap": "{client} la limita a {amps} A",
       "why": {
         "starting": "Haciendo las comprobaciones de seguridad del arranque",
         "ready": "Enchufa tu vehículo para empezar a cargar",
@@ -1099,19 +1100,17 @@
     },
     "flows": {
       "house_load": "Consumo de la casa",
-      "available": "Disponible",
+      "shaper_allows": "El limitador permite",
       "solar": "Solar",
       "grid": "Red",
-      "charge_rate": "Tasa de carga"
+      "eco_allows": "Eco permite"
     },
     "kw_max": "de {max} kW máx",
     "chips": {
       "session": "kWh sesión",
       "elapsed": "Tiempo",
-      "current": "Corriente",
-      "voltage": "Voltaje",
-      "temp": "Temp",
-      "pilot": "Piloto"
+      "charging_current": "Corriente de carga",
+      "temp": "Temp"
     },
     "summary": {
       "today": "Hoy",
@@ -1125,7 +1124,7 @@
     },
     "rate": {
       "claimed": "Establecido por {client}",
-      "aria": "Velocidad de carga"
+      "label": "Velocidad de carga"
     },
     "vehicle": {
       "to_full": "{time} para completar",
@@ -1329,6 +1328,8 @@
     "rfid": "RFID",
     "mqtt": "MQTT",
     "shaper": "Limitador de carga",
+    "loadsharing": "Reparto de carga",
+    "tempThrottle": "Reducción por temperatura",
     "evcc": "evcc",
     "null": "—"
   },

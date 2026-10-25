@@ -26,4 +26,14 @@ describe('Slider', () => {
     await fireEvent.change(input)
     expect(onchange).toHaveBeenCalledWith(32)
   })
+
+  // Screen readers read aria-valuetext in place of the bare number.
+  it('announces the formatted value', async () => {
+    const { getByRole } = render(Slider, { props: { value: 47, max: 48, format: (v) => `${v} A`, ariaLabel: 'Rate' } })
+    const slider = getByRole('slider', { name: 'Rate' })
+    expect(slider).toHaveAttribute('aria-valuetext', '47 A')
+    slider.value = '20'
+    await fireEvent.input(slider)
+    expect(slider).toHaveAttribute('aria-valuetext', '20 A')
+  })
 })

@@ -6,11 +6,9 @@
     sessionKwh: string
     elapsed: string
     currentA: string
-    voltage: number
     temp: number | null
     tempUnit: string
-    pilotA: number
-    toFull: string
+    toFull?: string
   }
   interface StatChipsSummary {
     todayKwh: number
@@ -40,14 +38,15 @@
   }: Props = $props()
 </script>
 
-<!-- Fixed-height band: the charging layout (chips + sensor row) is taller
-     than the resting summary, so reserve its height and centre the content.
-     This keeps the controls below from shifting as the state changes. The
-     resting state reserves a smaller height so the summary bar isn't pinned
-     tight against the ring. -->
+<!-- Fixed-height band: the charging tiles are taller than the resting
+     summary, so reserve their height and centre the content. This keeps the
+     controls below from shifting as the state changes. The resting state
+     reserves a smaller height so the summary bar isn't pinned tight against
+     the ring. Pilot and voltage live on Monitoring; the one amp number here
+     is what the car draws. -->
 <div class="flex flex-col justify-center {charging ? 'min-h-[96px]' : 'min-h-[64px]'}">
   {#if charging}
-    <div class="grid grid-cols-3 gap-2 py-2">
+    <div class="grid grid-cols-2 gap-2 py-2 sm:grid-cols-4">
       <StatChip value={live.sessionKwh} label={$_('dashboard.chips.session')} sub={sessionCost} />
       <StatChip
         value={live.elapsed}
@@ -56,22 +55,11 @@
       />
       <StatChip
         value={`${live.currentA} A`}
-        label={$_('dashboard.chips.current')}
+        label={$_('dashboard.chips.charging_current')}
         sub={currentLimited ? $_('dashboard.loadsharing.tile_limited') : null}
         subTone="warning"
       />
-    </div>
-    <!-- Sensor trio: compact underlined row on mobile; at lg it joins the
-         pill language of the chips above (and drops the rule). -->
-    <div class="flex justify-around border-b border-border pb-2 text-[9px] text-text-dim lg:hidden">
-      <span>{$_('dashboard.chips.voltage')} <b class="text-text">{live.voltage} V</b></span>
-      <span>{$_('dashboard.chips.temp')} <b class="text-text">{live.temp}{$_(live.tempUnit)}</b></span>
-      <span>{$_('dashboard.chips.pilot')} <b class="text-text">{live.pilotA} A</b></span>
-    </div>
-    <div class="hidden lg:grid lg:grid-cols-3 lg:gap-2 lg:pb-2">
-      <StatChip value={`${live.voltage} V`} label={$_('dashboard.chips.voltage')} />
       <StatChip value={`${live.temp}${$_(live.tempUnit)}`} label={$_('dashboard.chips.temp')} />
-      <StatChip value={`${live.pilotA} A`} label={$_('dashboard.chips.pilot')} />
     </div>
   {:else}
     <div class="flex justify-center gap-6 rounded-xl bg-surface-2 py-2 text-[10px] text-text-dim">

@@ -4,7 +4,7 @@
   import RatePill from './RatePill.svelte'
   import SessionChart from './SessionChart.svelte'
   import type { EnergySample } from '../../api/device'
-  import type { ChargerStatus } from '../../dashboard/status'
+  import type { ChargerStatus, I18nRef } from '../../dashboard/status'
 
   interface Props {
     kw?: string
@@ -15,6 +15,9 @@
     minAmps?: number
     maxAmps?: number
     rateClaimedBy?: string
+    /** Who is capping the current below the charge rate. */
+    cap?: I18nRef | null
+    capText?: string
     rateNonce?: number
     samples?: EnergySample[]
     voltage?: number
@@ -34,6 +37,8 @@
     minAmps = 6,
     maxAmps = 48,
     rateClaimedBy = '',
+    cap = null,
+    capText = '',
     rateNonce = 0,
     samples = [],
     voltage = 0,
@@ -49,10 +54,18 @@
 <div>
   <!-- status row: status line · rate pill -->
   <div class="flex items-start justify-between gap-2 px-1">
-    <StatusLine {status} />
+    <StatusLine {status} {cap} />
     <div class="shrink-0">
       {#key rateNonce}
-        <RatePill {amps} min={minAmps} max={maxAmps} claimedBy={rateClaimedBy} disabled={rateDisabled} onchange={onrate} />
+        <RatePill
+          {amps}
+          min={minAmps}
+          max={maxAmps}
+          claimedBy={rateClaimedBy}
+          {capText}
+          disabled={rateDisabled}
+          onchange={onrate}
+        />
       {/key}
     </div>
   </div>

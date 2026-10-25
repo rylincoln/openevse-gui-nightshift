@@ -6,7 +6,7 @@ describe('dashboard i18n keys', () => {
     expect(en.dashboard.line.charging).toBeTypeOf('string')
     expect(en.dashboard.line.why.off).toBeTypeOf('string')
     expect(en.dashboard.line.next.off).toBeTypeOf('string')
-    expect(en.dashboard.chips.current).toBeTypeOf('string')
+    expect(en.dashboard.chips.charging_current).toBeTypeOf('string')
     expect(en.dashboard.mode.auto).toBeTypeOf('string')
     expect(en.dashboard.limit.pills_aria).toBeTypeOf('string')
   })

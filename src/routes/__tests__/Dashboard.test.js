@@ -3,7 +3,10 @@ import { render, fireEvent, within } from '@testing-library/svelte'
 import { get } from 'svelte/store'
 
 vi.mock('svelte-i18n', () => {
-  const t = (k) => k
+  // Keys come back as-is, except that client names and the lines naming a
+  // client show which name they were given, so a raw internal key would show.
+  const t = (k, o) =>
+    k.startsWith('clients.') ? `name:${k.slice(8)}` : o?.values?.client ? `${k}(${o.values.client})` : k
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t, locale: { subscribe: (fn) => { fn('en'); return () => {} } } }
 })
@@ -86,6 +89,41 @@ describe('Dashboard', () => {
     expect(getByText('dashboard.session.collecting')).toBeInTheDocument()
   })
 
+  // Load shaper caps the current at 24 A under the requested 48 A: the status
+  // line and the rate control both say who.
+  it('names the client capping the current, in the status line and the rate control', async () => {
+    status_store.set({ state: 3, vehicle: 1, power: 5000, voltage: 240, amp: 24000, session_energy: 0, session_elapsed: 0, temp: 0, pilot: 24 })
+    claims_target_store.set({
+      properties: { state: 'active', charge_current: 48, max_current: 24 },
+      claims: { state: null, charge_current: EvseClients.manual.id, max_current: EvseClients.shaper.id },
+    })
+    const { container, getByRole, getAllByText } = render(Dashboard)
+    expect(statusLine(container).getByText('dashboard.line.cap(name:shaper)')).toBeInTheDocument()
+    await fireEvent.click(getByRole('button', { name: /^dashboard\.rate\.label/ }))
+    expect(getAllByText('dashboard.line.cap(name:shaper)')).toHaveLength(2)
+  })
+
+  it('leaves the cap out of the status line while nothing could flow anyway', () => {
+    status_store.set({ state: 254, vehicle: 1, total_day: 0, total_energy: 0 })
+    claims_target_store.set({
+      properties: { state: 'disabled', charge_current: 48, max_current: 24 },
+      claims: { state: null, max_current: EvseClients.shaper.id },
+    })
+    const { container } = render(Dashboard)
+    expect(statusLine(container).queryByText(/dashboard\.line\.cap/)).toBeNull()
+  })
+
+  it('names the client setting the rate in words, not its internal key', async () => {
+    status_store.set({ state: 3, vehicle: 1, power: 3000, voltage: 240, amp: 12000, session_energy: 0, session_elapsed: 0, temp: 0, pilot: 12 })
+    claims_target_store.set({
+      properties: { state: 'active', charge_current: 12 },
+      claims: { state: null, charge_current: EvseClients.tempThrottle.id },
+    })
+    const { getByRole, getByText } = render(Dashboard)
+    await fireEvent.click(getByRole('button', { name: /^dashboard\.rate\.label/ }))
+    expect(getByText('dashboard.rate.claimed(name:tempThrottle)')).toBeInTheDocument()
+  })
+
   it('renders the idle composition when state is 1', () => {
     status_store.set({ state: 1, total_day: 3.2, total_energy: 7523 })
     const { container } = render(Dashboard)
@@ -114,16 +152,16 @@ describe('Dashboard', () => {
     config_store.set({ max_current_soft: 32, max_current_hard: 48, divert_enabled: false, current_shaper_enabled: false })
     status_store.set({ state: 1, total_day: 0, total_energy: 0 })
     const { getByRole } = render(Dashboard)
-    await fireEvent.click(getByRole('button', { name: 'dashboard.rate.aria' }))
-    expect(getByRole('slider', { name: 'dashboard.rate.aria' })).toHaveAttribute('max', '32')
+    await fireEvent.click(getByRole('button', { name: /^dashboard\.rate\.label/ }))
+    expect(getByRole('slider', { name: /^dashboard\.rate\.label/ })).toHaveAttribute('max', '32')
   })
 
   it('falls back to the hardware max for the rate slider when no soft max is set', async () => {
     config_store.set({ max_current_hard: 40, divert_enabled: false, current_shaper_enabled: false })
     status_store.set({ state: 1, total_day: 0, total_energy: 0 })
     const { getByRole } = render(Dashboard)
-    await fireEvent.click(getByRole('button', { name: 'dashboard.rate.aria' }))
-    expect(getByRole('slider', { name: 'dashboard.rate.aria' })).toHaveAttribute('max', '40')
+    await fireEvent.click(getByRole('button', { name: /^dashboard\.rate\.label/ }))
+    expect(getByRole('slider', { name: /^dashboard\.rate\.label/ })).toHaveAttribute('max', '40')
   })
 
   it('ignores a hardware max of 0 (not read from the controller yet) for the rate slider', async () => {
@@ -133,16 +171,16 @@ describe('Dashboard', () => {
     config_store.set({ max_current_soft: 32, max_current_hard: 0, divert_enabled: false, current_shaper_enabled: false })
     status_store.set({ state: 1, total_day: 0, total_energy: 0 })
     const { getByRole } = render(Dashboard)
-    await fireEvent.click(getByRole('button', { name: 'dashboard.rate.aria' }))
-    expect(getByRole('slider', { name: 'dashboard.rate.aria' })).toHaveAttribute('max', '32')
+    await fireEvent.click(getByRole('button', { name: /^dashboard\.rate\.label/ }))
+    expect(getByRole('slider', { name: /^dashboard\.rate\.label/ })).toHaveAttribute('max', '32')
   })
 
   it('falls back to 48 A when neither max is usable', async () => {
     config_store.set({ max_current_hard: 0, divert_enabled: false, current_shaper_enabled: false })
     status_store.set({ state: 1, total_day: 0, total_energy: 0 })
     const { getByRole } = render(Dashboard)
-    await fireEvent.click(getByRole('button', { name: 'dashboard.rate.aria' }))
-    expect(getByRole('slider', { name: 'dashboard.rate.aria' })).toHaveAttribute('max', '48')
+    await fireEvent.click(getByRole('button', { name: /^dashboard\.rate\.label/ }))
+    expect(getByRole('slider', { name: /^dashboard\.rate\.label/ })).toHaveAttribute('max', '48')
   })
 
   it('locks the mode pill to the claim owner (RFID)', () => {
@@ -327,14 +365,14 @@ describe('Dashboard', () => {
     // ChargeControls renders a radiogroup for the mode segment control
     expect(getByRole('radiogroup', { name: 'dashboard.mode.aria' })).toBeInTheDocument()
     // RatePill is still present in the non-chart path
-    expect(getByRole('button', { name: 'dashboard.rate.aria' })).toBeInTheDocument()
+    expect(getByRole('button', { name: /^dashboard\.rate\.label/ })).toBeInTheDocument()
   })
 
   it('writes the charge rate from the rate pill', async () => {
     status_store.set({ state: 3, power: 7000, voltage: 240, amp: 32000, session_energy: 0, session_elapsed: 0, temp: 0, pilot: 0, total_day: 0, total_energy: 0 })
     const { getByRole } = render(Dashboard)
-    await fireEvent.click(getByRole('button', { name: 'dashboard.rate.aria' }))
-    const slider = getByRole('slider', { name: 'dashboard.rate.aria' })
+    await fireEvent.click(getByRole('button', { name: /^dashboard\.rate\.label/ }))
+    const slider = getByRole('slider', { name: /^dashboard\.rate\.label/ })
     slider.value = '20'
     await fireEvent.change(slider)
     await vi.waitFor(() => {
