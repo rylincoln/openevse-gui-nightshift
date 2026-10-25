@@ -1239,7 +1239,13 @@
     },
     "session": {
       "collecting": "Töltési adatok gyűjtése…",
-      "soc_target": "SOC → {target}%"
+      "soc_target": "SOC → {target}%",
+      "soc_title": "Töltöttségi szint (%)",
+      "power_title": "Teljesítmény (kW)",
+      "target": "Cél: {target}%",
+      "summary_soc": "A töltöttségi szint {from}%-ról {to}%-ra nőtt, a cél {target}%.",
+      "summary_soc_no_target": "A töltöttségi szint {from}%-ról {to}%-ra nőtt.",
+      "summary_power": "A teljesítmény csúcsa {peak} kW volt, most {now} kW."
     }
   },
   "monitoring": {
@@ -1276,10 +1282,11 @@
       "loading": "Betöltés…",
       "error": "Nem sikerült betölteni az energia adatokat",
       "no_samples": "Még nincs rögzített minta",
+      "summary": "{measure}: legkisebb {min}, legnagyobb {max}, legutóbbi {latest}.",
       "axis": {
         "current": "Áram (A)",
-        "temperature": "Hőmérséklet (°C)",
-        "soc": "SOC (%)"
+        "temperature": "Hőmérséklet ({unit})",
+        "soc": "Töltöttségi szint (%)"
       }
     },
     "sensor": {

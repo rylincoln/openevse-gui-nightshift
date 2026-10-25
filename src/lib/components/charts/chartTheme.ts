@@ -4,23 +4,24 @@ function v(name: string, fallback: string): string {
   return raw || fallback
 }
 
-/** Chart colours resolved from the app's CSS theme variables. */
+/**
+ * Chart colours resolved from the app's CSS theme variables. Deliberately no
+ * status colours (charging, warning, success, error): those mean a state of
+ * the charger, and a data series wearing one reads as that state.
+ */
 export interface ChartTheme {
   accent: string
-  charging: string
-  warning: string
-  success: string
   axisText: string
   grid: string
+  /** The page behind the chart, for rings that lift a mark off a line. */
+  surface: string
 }
 
 export function readChartTheme(): ChartTheme {
   return {
     accent: v('--accent', '#026664'),
-    charging: v('--charging', '#026664'),
-    warning: v('--warning', '#844f04'),
-    success: v('--success', '#05692e'),
     axisText: v('--text-dim', '#51616b'),
     grid: v('--border', '#e4eae9'),
+    surface: v('--surface', '#f0f4f3'),
   }
 }

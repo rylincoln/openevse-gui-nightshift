@@ -1239,7 +1239,13 @@
     },
     "session": {
       "collecting": "Recopilando datos de la sesión…",
-      "soc_target": "SOC → {target}%"
+      "soc_target": "SOC → {target}%",
+      "soc_title": "Estado de carga (%)",
+      "power_title": "Potencia (kW)",
+      "target": "Objetivo {target}%",
+      "summary_soc": "El estado de carga pasó del {from}% al {to}%, con un objetivo del {target}%.",
+      "summary_soc_no_target": "El estado de carga pasó del {from}% al {to}%.",
+      "summary_power": "La potencia alcanzó un máximo de {peak} kW y ahora es de {now} kW."
     }
   },
   "monitoring": {
@@ -1276,10 +1282,11 @@
       "loading": "Cargando…",
       "error": "No se pudieron cargar los datos de energía",
       "no_samples": "Aún no hay muestras registradas",
+      "summary": "{measure}: mínimo {min}, máximo {max}, último {latest}.",
       "axis": {
         "current": "Corriente (A)",
-        "temperature": "Temperatura (°C)",
-        "soc": "SOC (%)"
+        "temperature": "Temperatura ({unit})",
+        "soc": "Estado de carga (%)"
       }
     },
     "sensor": {

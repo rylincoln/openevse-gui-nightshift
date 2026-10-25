@@ -1,6 +1,6 @@
-import uPlot from 'uplot'
 import type { EnergySample } from '../api/device'
 import type { ChartTheme } from '../components/charts/chartTheme'
+import { panelOpts, liveDotPlugin, targetLinePlugin } from '../components/charts/panels'
 
 // Pure transforms turning /energy/raw samples into chart-ready data.
 // Sample shape: { ts:<unix s>, a:<amps>, t:<°C>, e:<energy>, s:<soc %, -1 = none> }
@@ -62,98 +62,54 @@ export function fmtSessionTime(sec: number): string {
   return `${h}h${String(m % 60).padStart(2, '0')}`
 }
 
-/** uPlot plugin: a dashed horizontal line at the target SOC on the soc scale. */
-export function limitLinePlugin(target: number | null | undefined, color: string): uPlot.Plugin {
-  return {
-    hooks: {
-      draw: (u: uPlot) => {
-        if (!isFiniteNumber(target)) return
-        const y = u.valToPos(target, 'soc', true)
-        const { ctx } = u
-        ctx.save()
-        ctx.strokeStyle = color
-        ctx.setLineDash([3, 3])
-        ctx.lineWidth = 1
-        ctx.beginPath()
-        ctx.moveTo(u.bbox.left, y)
-        ctx.lineTo(u.bbox.left + u.bbox.width, y)
-        ctx.stroke()
-        ctx.restore()
-      },
-    },
-  }
-}
-
-/** uPlot plugin: a static amber "you are here" dot at the latest finite kW point. */
-export function liveDotPlugin(color: string): uPlot.Plugin {
-  return {
-    hooks: {
-      draw: (u: uPlot) => {
-        const xs = u.data[0]
-        // data[2] = kW series, matching the [x, soc, kw] order in buildSessionOpts
-        const kw = u.data[2]
-        let i = kw.length - 1
-        while (i >= 0 && !isFiniteNumber(kw[i])) i--
-        if (i < 0) return
-        const kwi = kw[i]
-        const xsi = xs[i]
-        if (!isFiniteNumber(kwi) || !isFiniteNumber(xsi)) return
-        const cx = u.valToPos(xsi, 'x', true)
-        const cy = u.valToPos(kwi, 'kw', true)
-        const { ctx } = u
-        ctx.save()
-        ctx.fillStyle = color
-        ctx.beginPath()
-        ctx.arc(cx, cy, 3.5, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.restore()
-      },
-    },
-  }
-}
-
-/** uPlot opts for the dual-axis SOC-bars + kW-line session chart. */
-export function buildSessionOpts({
+/** The state-of-charge panel: SOC alone on 0–100, the target dashed and
+ *  labelled, the latest reading dotted. Its time labels are the kW panel's. */
+export function buildSocOpts({
   theme,
   target,
-  kwMax,
-  height = 150,
+  targetLabel,
+  height,
+  syncKey,
 }: {
   theme: ChartTheme
   target: number | null | undefined
-  kwMax: number
-  height?: number
-}): Omit<uPlot.Options, 'width'> {
-  return {
+  targetLabel: string
+  height: number
+  syncKey: string
+}): ReturnType<typeof panelOpts> {
+  return panelOpts(theme, {
+    scale: 'soc',
+    label: 'SOC',
+    range: [0, 100],
+    syncKey,
+    showX: false,
     height,
-    cursor: { drag: { x: false, y: false } },
-    legend: { show: false },
-    scales: {
-      x: { time: false },
-      soc: { range: [0, 100] },
-      kw: { range: [0, kwMax] },
-    },
-    axes: [
-      {
-        stroke: theme.axisText,
-        grid: { stroke: theme.grid, width: 1 },
-        values: (_u, splits) => splits.map(fmtSessionTime),
-      },
-      { scale: 'soc', label: 'SOC %', stroke: theme.axisText, grid: { stroke: theme.grid, width: 1 } },
-      { side: 1, scale: 'kw', label: 'kW', stroke: theme.charging, grid: { show: false } },
-    ],
-    series: [
-      {},
-      {
-        label: 'SOC',
-        scale: 'soc',
-        fill: theme.accent + '55',
-        width: 0,
-        points: { show: false },
-        paths: uPlot.paths.bars?.({ size: [0.6, 100] }),
-      },
-      { label: 'kW', scale: 'kw', stroke: theme.charging, width: 2, fill: theme.charging + '22' },
-    ],
-    plugins: [limitLinePlugin(target, theme.warning), liveDotPlugin(theme.warning)],
-  }
+    area: true,
+    plugins: [targetLinePlugin(target, theme.axisText, targetLabel), liveDotPlugin(theme.accent, theme.surface)],
+  })
+}
+
+/** The power panel: kW alone from zero, with the session time under it. */
+export function buildKwOpts({
+  theme,
+  kwMax,
+  height,
+  syncKey,
+}: {
+  theme: ChartTheme
+  kwMax: number
+  height: number
+  syncKey: string
+}): ReturnType<typeof panelOpts> {
+  return panelOpts(theme, {
+    scale: 'kw',
+    label: 'kW',
+    range: [0, kwMax],
+    syncKey,
+    showX: true,
+    height,
+    area: true,
+    xValues: (_u, splits) => splits.map(fmtSessionTime),
+    plugins: [liveDotPlugin(theme.accent, theme.surface)],
+  })
 }

@@ -36,7 +36,8 @@
     const fallback = (untrack(() => opts).height) ?? 260
     if (!fill) return { width, height: fallback }
     const total = container!.clientHeight || fallback
-    return { width, height: Math.max(80, total - legendH) }
+    const legend = untrack(() => opts).legend?.show === false ? 0 : legendH
+    return { width, height: Math.max(80, total - legend) }
   }
 
   function rebuild(): void {

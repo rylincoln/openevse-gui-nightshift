@@ -1239,7 +1239,13 @@
     },
     "session": {
       "collecting": "Collecting session data…",
-      "soc_target": "SOC → {target}%"
+      "soc_target": "SOC → {target}%",
+      "soc_title": "State of charge (%)",
+      "power_title": "Power (kW)",
+      "target": "Target {target}%",
+      "summary_soc": "State of charge went from {from}% to {to}%, aiming for {target}%.",
+      "summary_soc_no_target": "State of charge went from {from}% to {to}%.",
+      "summary_power": "Power peaked at {peak} kW and is {now} kW now."
     }
   },
   "monitoring": {
@@ -1276,10 +1282,11 @@
       "loading": "Loading…",
       "error": "Failed to load energy data",
       "no_samples": "No samples recorded yet",
+      "summary": "{measure}: lowest {min}, highest {max}, latest {latest}.",
       "axis": {
         "current": "Current (A)",
-        "temperature": "Temperature (°C)",
-        "soc": "SOC (%)"
+        "temperature": "Temperature ({unit})",
+        "soc": "State of charge (%)"
       }
     },
     "sensor": {
