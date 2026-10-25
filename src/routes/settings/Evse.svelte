@@ -149,7 +149,7 @@
         type="button"
         onclick={() => (installOpen = !installOpen)}
         aria-expanded={installOpen}
-        class="flex w-full items-center justify-between gap-3 text-left"
+        class="tap-target flex w-full items-center justify-between gap-3 text-left"
       >
         {$_('config.evse.installation')}
         <Icon

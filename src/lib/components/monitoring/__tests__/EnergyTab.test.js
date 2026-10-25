@@ -58,6 +58,12 @@ describe('EnergyTab', () => {
     await fireEvent.click(screen.getByRole('tab', { name: /annual/i }))
     expect(loadAnnual).toHaveBeenCalled()
   })
+  it('takes taps on the pager buttons over 44 px', () => {
+    render(EnergyTab)
+    for (const k of ['older', 'newer', 'current'])
+      expect(screen.getByText('monitoring.energy.' + k).className).toMatch(/\b(?:tap-target|min-h-11|range-input)\b/)
+  })
+
   it('disables Newer and Current in the live view', () => {
     render(EnergyTab)
     expect(screen.getByText('monitoring.energy.newer')).toBeDisabled()

@@ -48,7 +48,7 @@
       onclick={() => onchange(i)}
       onkeydown={(e) => onkeydown(e, i)}
       class="relative -mb-px border-b-2 font-semibold transition
-             {variant === 'subtle' ? 'py-1.5 text-xs' : 'flex-1 py-2.5 text-sm'}
+             {variant === 'subtle' ? 'tap-target py-1.5 text-xs' : 'min-h-11 flex-1 py-2.5 text-sm'}
              {i === active ? 'border-accent text-text' : 'border-transparent text-text-dim hover:text-text'}"
     >
       {tab.label}

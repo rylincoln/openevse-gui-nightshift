@@ -3,6 +3,11 @@ import { render, fireEvent } from '@testing-library/svelte'
 import Slider from '../Slider.svelte'
 
 describe('Slider', () => {
+  // The track draws 8 px tall; the input around it takes taps over 44.
+  it('takes taps over a 44 px band around its track', () => {
+    const { getByRole } = render(Slider, { props: { min: 0, max: 10, value: 5 } })
+    expect(getByRole('slider').className).toMatch(/\b(?:tap-target|min-h-11|range-input)\b/)
+  })
   it('renders a range input with min/max/value', () => {
     const { getByRole } = render(Slider, { props: { min: 6, max: 48, value: 24 } })
     const input = getByRole('slider')

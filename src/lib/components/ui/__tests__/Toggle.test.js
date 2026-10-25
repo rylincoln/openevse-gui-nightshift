@@ -3,6 +3,10 @@ import { render, fireEvent } from '@testing-library/svelte'
 import Toggle from '../Toggle.svelte'
 
 describe('Toggle', () => {
+  it('takes taps over 44 px though it draws smaller', () => {
+    const { getByRole } = render(Toggle, { props: { label: 'x' } })
+    expect(getByRole('switch').className).toMatch(/\b(?:tap-target|min-h-11|range-input)\b/)
+  })
   it('reflects checked state via aria-checked', () => {
     const { getByRole } = render(Toggle, { props: { checked: true, label: 'Eco' } })
     expect(getByRole('switch').getAttribute('aria-checked')).toBe('true')

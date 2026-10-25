@@ -15,7 +15,7 @@
   aria-label={label}
   {disabled}
   onclick={() => onchange(!checked)}
-  class="relative h-6 w-11 rounded-full transition disabled:opacity-40
+  class="tap-target relative h-6 w-11 rounded-full transition disabled:opacity-40
          {checked ? 'bg-accent' : 'bg-surface-3 dark:bg-white/20'}"
 >
   <span

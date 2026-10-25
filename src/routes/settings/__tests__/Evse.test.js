@@ -128,6 +128,7 @@ describe('EVSE page', () => {
     const fields = ['voltage', 'pp_auto', 'scale', 'offset', 'relay_ac']
     for (const k of fields) expect(queryByLabelText('config.evse.' + k)).toBeNull()
     const toggle = getByRole('button', { name: 'config.evse.installation' })
+    expect(toggle.className).toMatch(/\b(?:tap-target|min-h-11|range-input)\b/)
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
     await fireEvent.click(toggle)
     expect(toggle).toHaveAttribute('aria-expanded', 'true')

@@ -18,7 +18,7 @@
   <div class="lg:max-w-2xl">
     <a
       href="#/settings"
-      class="mb-3 inline-flex items-center gap-1 text-sm text-text-dim hover:text-text"
+      class="tap-target mb-3 inline-flex items-center gap-1 text-sm text-text-dim hover:text-text"
     >
       <Icon icon="mdi:chevron-left" size={18} />
       <span>{$_('config.back')}</span>

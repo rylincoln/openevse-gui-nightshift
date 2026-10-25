@@ -15,6 +15,10 @@ import ConfigPage from '../ConfigPage.svelte'
 const body = createRawSnippet(() => ({ render: () => `<p>page body</p>` }))
 
 describe('ConfigPage', () => {
+  it('takes taps on the back link over 44 px', () => {
+    const { getByText } = render(ConfigPage, { title: 'Network', children: body })
+    expect(getByText('config.back').closest('a').className).toMatch(/\b(?:tap-target|min-h-11|range-input)\b/)
+  })
   it('renders the title and a back link to the hub', () => {
     const { getByText, getByRole } = render(ConfigPage, { title: 'Network', children: body })
     expect(getByText('Network')).toBeInTheDocument()

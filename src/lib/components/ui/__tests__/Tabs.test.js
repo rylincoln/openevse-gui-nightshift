@@ -38,6 +38,14 @@ describe('Tabs', () => {
     expect(active.className).toMatch(/\bborder-accent\b/)
   })
 
+  it('takes taps over 44 px in both variants', () => {
+    for (const variant of ['primary', 'subtle']) {
+      const { getAllByRole, unmount } = render(Tabs, { props: { tabs, variant } })
+      for (const tab of getAllByRole('tab')) expect(tab.className).toMatch(/\b(?:tap-target|min-h-11|range-input)\b/)
+      unmount()
+    }
+  })
+
   it('moves between tabs with the arrow keys, one tab stop for the row', async () => {
     const onchange = vi.fn()
     const { getAllByRole } = render(Tabs, { props: { tabs, active: 1, onchange } })
