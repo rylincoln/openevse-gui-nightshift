@@ -30,6 +30,12 @@ describe('BoostCard', () => {
     ])
   })
 
+  it('reads out the target with its unit', async () => {
+    const { getByRole, getByText } = render(BoostCard, { props: { ...base } })
+    await pick(getByText, 'soc')
+    expect(getByRole('slider').getAttribute('aria-valuetext')).toMatch(/units\.percent$/)
+  })
+
   it('stays collapsed behind a single Boost button until tapped', async () => {
     const { getByText, queryByRole } = render(BoostCard, { props: { ...base } })
     expect(getByText('dashboard.boost.label')).toBeInTheDocument()

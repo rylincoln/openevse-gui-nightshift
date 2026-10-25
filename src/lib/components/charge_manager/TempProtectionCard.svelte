@@ -163,6 +163,7 @@
       value={lo}
       disabled={busy}
       aria-label={$_('config.safety.temp_throttle')}
+      aria-valuetext={`${disp(lo)}${unitLabel}`}
       oninput={handleLoInput}
       onchange={commitLo}
     />
@@ -173,6 +174,7 @@
       value={hi}
       disabled={busy}
       aria-label={$_('config.safety.temp_panic')}
+      aria-valuetext={`${disp(hi)}${unitLabel}`}
       oninput={handleHiInput}
       onchange={commitHi}
     />

@@ -149,6 +149,7 @@
         value={current}
         {disabled}
         aria-label={$_(kind === 'time' ? 'dashboard.limit.type_time' : 'dashboard.limit.type_energy')}
+        aria-valuetext={fmt(stops[current])}
         oninput={handleInput}
         onchange={handleChange}
         class="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"

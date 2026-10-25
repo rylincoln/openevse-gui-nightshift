@@ -146,6 +146,7 @@
         value={current}
         {disabled}
         aria-label={$_('dashboard.vehicle.target_aria')}
+        aria-valuetext={fmt(current)}
         oninput={handleInput}
         onchange={handleChange}
         class="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"

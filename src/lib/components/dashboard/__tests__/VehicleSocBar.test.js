@@ -32,6 +32,14 @@ describe('VehicleSocBar', () => {
     expect(getByRole('slider').parentElement.className).toContain('has-[:focus-visible]:outline-2')
   })
 
+  it('reads out the target in the unit it shows', () => {
+    const percent = render(VehicleSocBar, { props: { ...base } })
+    expect(percent.getByRole('slider').getAttribute('aria-valuetext')).toBe('80%')
+    percent.unmount()
+    const range = render(VehicleSocBar, { props: { ...base, unit: 'range', estMaxRange: 280 } })
+    expect(range.getByRole('slider').getAttribute('aria-valuetext')).toBe('224 units.km')
+  })
+
   it('shimmers the fill only while charging', () => {
     const charging = render(VehicleSocBar, { props: { ...base, charging: true } })
     expect(charging.container.querySelector('.soc-shimmer')).toBeTruthy()

@@ -258,6 +258,7 @@
         value={cfg.get()}
         {disabled}
         aria-label={$_(`dashboard.boost.type_${selected}`)}
+        aria-valuetext={valueLabel}
         oninput={onSlide}
         class="w-full cursor-pointer accent-accent disabled:cursor-not-allowed"
       />

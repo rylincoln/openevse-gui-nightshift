@@ -10,6 +10,14 @@ vi.mock('svelte-i18n', () => {
 import TempProtectionCard from '../TempProtectionCard.svelte'
 
 describe('TempProtectionCard', () => {
+  it('reads out each threshold with its unit', () => {
+    const { getByLabelText } = render(TempProtectionCard, {
+      props: { throttle: 65, panic: 75, min: 40, max: 82, gap: 2 },
+    })
+    expect(getByLabelText('config.safety.temp_throttle').getAttribute('aria-valuetext')).toBe('65units.celsius')
+    expect(getByLabelText('config.safety.temp_panic').getAttribute('aria-valuetext')).toBe('75units.celsius')
+  })
+
   it('pushes the panic thumb up when the throttle thumb is dragged into it', async () => {
     const onThrottleChange = vi.fn()
     const onPanicChange = vi.fn()
