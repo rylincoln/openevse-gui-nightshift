@@ -50,6 +50,7 @@
       <NumberInput
         value={$config_store?.current_shaper_max_pwr ?? null}
         placeholder="9000"
+        unit="W"
         revert={form.revert}
         onchange={(v) => saveShaperField('current_shaper_max_pwr', v)}
       />
@@ -70,8 +71,9 @@
       <NumberInput
         value={$config_store?.current_shaper_min_pause_time ?? null}
         min={0}
-        max={60}
-        placeholder="5"
+        max={3600}
+        placeholder="300"
+        unit="s"
         revert={form.revert}
         onchange={(v) => saveShaperField('current_shaper_min_pause_time', v)}
       />
@@ -86,6 +88,7 @@
         min={10}
         max={300}
         placeholder="120"
+        unit="s"
         revert={form.revert}
         onchange={(v) => saveShaperField('current_shaper_data_maxinterval', v)}
       />
@@ -99,6 +102,7 @@
         value={$config_store?.current_shaper_smoothing_time ?? null}
         min={0}
         max={600}
+        unit="s"
         revert={form.revert}
         onchange={(v) => saveShaperField('current_shaper_smoothing_time', v)}
       />

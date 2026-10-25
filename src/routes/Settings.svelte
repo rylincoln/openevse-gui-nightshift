@@ -3,7 +3,7 @@
   import { _ } from 'svelte-i18n'
   import Card from '../lib/components/ui/Card.svelte'
   import Icon from '../lib/icons/Icon.svelte'
-  import { pagesBySection } from '../lib/config/pages'
+  import { pagesBySection, SETTINGS_LINKS } from '../lib/config/pages'
   import { config_store } from '../lib/stores/config'
   import { redirect } from '../lib/router'
 
@@ -46,6 +46,19 @@
   ]
 </script>
 
+{#snippet row(page: { route: string; icon: string; labelKey: string; descKey: string }, trailing: string)}
+  <li>
+    <a href="#{page.route}" class="flex items-center gap-3 py-3 text-text hover:text-accent">
+      <Icon icon={page.icon} size={20} class="shrink-0 text-text-dim" />
+      <span class="min-w-0 flex-1">
+        <span class="block text-sm">{$_(page.labelKey)}</span>
+        <span class="block text-xs text-text-dim">{$_(page.descKey)}</span>
+      </span>
+      <Icon icon={trailing} size={18} class="shrink-0 text-text-dim" />
+    </a>
+  </li>
+{/snippet}
+
 <section class="p-4 lg:mx-auto lg:max-w-4xl">
   <h1 class="mb-4 text-lg font-semibold text-text">{$_('config.title')}</h1>
 
@@ -57,16 +70,11 @@
         </h2>
         <ul class="divide-y divide-border">
           {#each group.pages as page}
-            <li>
-              <a
-                href="#{page.route}"
-                class="flex items-center gap-3 py-3 text-text hover:text-accent"
-              >
-                <Icon icon={page.icon} size={20} class="text-text-dim" />
-                <span class="flex-1 text-sm">{$_(page.labelKey)}</span>
-                <Icon icon="mdi:chevron-right" size={18} class="text-text-dim" />
-              </a>
-            </li>
+            {@render row(page, 'mdi:chevron-right')}
+          {/each}
+          <!-- Rows that lead out of Settings end in an arrow, not a chevron. -->
+          {#each SETTINGS_LINKS.filter((l) => l.section === group.section) as link}
+            {@render row(link, 'mdi:arrow-right')}
           {/each}
         </ul>
       </Card>

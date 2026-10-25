@@ -31,6 +31,18 @@ describe('Network page', () => {
     expect(getByText('AA:BB')).toBeInTheDocument()
   })
 
+  it('names the network mode in words, not the firmware code', () => {
+    const { getByText, queryByText } = render(Network)
+    expect(getByText('config.network.mode_sta')).toBeInTheDocument()
+    expect(queryByText('STA')).toBeNull()
+  })
+
+  it('shows an unknown network mode as reported', () => {
+    status_store.set({ mode: 'Mesh', ipaddress: '10.0.0.5' })
+    const { getByText } = render(Network)
+    expect(getByText('Mesh')).toBeInTheDocument()
+  })
+
   it('saves the hostname on blur', async () => {
     const { getByDisplayValue } = render(Network)
     const input = getByDisplayValue('openevse-1')
