@@ -1407,6 +1407,9 @@
     "hz": "Hz",
     "ohm": "Ω"
   },
+  "ui": {
+    "show_password": "Afficher le mot de passe"
+  },
   "clients": {
     "manual": "Manuel",
     "divert": "Production solaire",
@@ -1493,7 +1496,10 @@
     "wifi": {
       "title": "WiFi",
       "intro": "Choisissez le réseau auquel le chargeur doit se connecter.",
+      "intro_switch": "Pour passer à un autre réseau, choisissez-le ci-dessous.",
       "current": "Réseau actuel",
+      "keep": "Garder ce réseau et terminer",
+      "saved": "Réseau enregistré (non connecté)",
       "joined": "Demande de connexion envoyée. Le chargeur rejoindra le nouveau réseau dans quelques secondes.",
       "empty": "Aucun réseau trouvé. Appuyez sur Scanner pour réessayer.",
       "handoff_title": "Vous allez perdre cette connexion",
@@ -1528,6 +1534,7 @@
   "login": {
     "title": "Se connecter",
     "subtitle": "Saisissez vos identifiants OpenEVSE",
+    "subtitle_host": "Connexion à {host}",
     "username": "Nom d'utilisateur",
     "password": "Mot de passe",
     "remember": "Se souvenir de moi",

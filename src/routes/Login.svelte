@@ -13,11 +13,17 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n'
   import { redirect } from '../lib/router'
+  import ChargePointMark from '../assets/ChargePointMark.svelte'
   import Card from '../lib/components/ui/Card.svelte'
   import TextInput from '../lib/components/ui/TextInput.svelte'
   import PasswordInput from '../lib/components/ui/PasswordInput.svelte'
   import Toggle from '../lib/components/ui/Toggle.svelte'
   import Button from '../lib/components/ui/Button.svelte'
+
+  const uid = $props.id()
+  // /config is behind the login, so the charger's name comes from the address
+  // this page was loaded from (openevse-9cc0.local, or its IP).
+  const host = typeof location !== 'undefined' ? location.hostname : ''
 
   let user = $state('')
   let pass = $state('')
@@ -64,10 +70,16 @@
 
 <div class="flex min-h-screen items-center justify-center bg-bg p-4">
   <Card class="w-full max-w-sm p-6">
+    <div class="mb-4 flex items-center justify-center gap-2">
+      <ChargePointMark size={28} class="text-accent" />
+      <span class="text-sm font-semibold text-text">{$_('app')}</span>
+    </div>
     <h1 class="mb-1 text-center text-xl font-semibold text-text">
       {$_('login.title')}
     </h1>
-    <p class="mb-5 text-center text-sm text-text-dim">{$_('login.subtitle')}</p>
+    <p class="mb-5 break-all text-center text-sm text-text-dim">
+      {host ? $_('login.subtitle_host', { values: { host } }) : $_('login.subtitle')}
+    </p>
 
     <form
       onsubmit={(e) => {
@@ -82,17 +94,27 @@
       }}
       class="flex flex-col gap-3"
     >
-      <TextInput
-        value={user}
-        placeholder={$_('login.username')}
-        onchange={(v) => (user = v)}
-      />
+      <div class="flex flex-col gap-1">
+        <label for="{uid}-user" class="text-sm text-text">{$_('login.username')}</label>
+        <TextInput
+          id="{uid}-user"
+          name="username"
+          autocomplete="username"
+          value={user}
+          onchange={(v) => (user = v)}
+        />
+      </div>
 
-      <PasswordInput
-        value={pass}
-        placeholder={$_('login.password')}
-        onchange={(v) => (pass = v)}
-      />
+      <div class="flex flex-col gap-1">
+        <label for="{uid}-pass" class="text-sm text-text">{$_('login.password')}</label>
+        <PasswordInput
+          id="{uid}-pass"
+          name="password"
+          autocomplete="current-password"
+          value={pass}
+          onchange={(v) => (pass = v)}
+        />
+      </div>
 
       <label class="mt-1 flex items-center gap-2 text-sm text-text">
         <Toggle
@@ -104,7 +126,7 @@
       </label>
 
       {#if error}
-        <p class="text-sm text-red-400" role="alert">{error}</p>
+        <p class="text-sm text-error" role="alert">{error}</p>
       {/if}
 
       <div class="mt-2">

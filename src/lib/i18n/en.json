@@ -1407,6 +1407,9 @@
     "hz": "Hz",
     "ohm": "Ω"
   },
+  "ui": {
+    "show_password": "Show password"
+  },
   "clients": {
     "manual": "Manual",
     "divert": "Solar divert",
@@ -1493,7 +1496,10 @@
     "wifi": {
       "title": "WiFi",
       "intro": "Pick the network the charger should join.",
+      "intro_switch": "To switch to another network, pick it below.",
       "current": "Currently joined",
+      "keep": "Keep this network and finish",
+      "saved": "Saved network (not connected)",
       "joined": "Connection request sent. The charger will rejoin on the new network in a few seconds.",
       "empty": "No networks found. Tap Scan to try again.",
       "handoff_title": "You'll lose this connection",
@@ -1528,6 +1534,7 @@
   "login": {
     "title": "Sign in",
     "subtitle": "Enter your OpenEVSE credentials",
+    "subtitle_host": "Sign in to {host}",
     "username": "Username",
     "password": "Password",
     "remember": "Remember me",

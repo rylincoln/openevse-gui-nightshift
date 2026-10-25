@@ -8,6 +8,10 @@
     disabled?: boolean
     maxlength?: number
     revert?: number
+    /** For a <label for>, and for password managers (name, autocomplete). */
+    id?: string
+    name?: string
+    autocomplete?: HTMLInputElement['autocomplete']
     onchange?: (value: string) => void
   }
   let {
@@ -16,6 +20,9 @@
     disabled = false,
     maxlength = undefined,
     revert = 0,
+    id = undefined,
+    name = undefined,
+    autocomplete = undefined,
     onchange = () => {},
   }: Props = $props()
 
@@ -37,6 +44,9 @@
 
 <input
   type="text"
+  {id}
+  {name}
+  {autocomplete}
   {placeholder}
   {disabled}
   {maxlength}

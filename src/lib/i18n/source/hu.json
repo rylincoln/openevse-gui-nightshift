@@ -1407,6 +1407,9 @@
     "hz": "Hz",
     "ohm": "Ω"
   },
+  "ui": {
+    "show_password": "Jelszó megjelenítése"
+  },
   "clients": {
     "manual": "Kézi",
     "divert": "Napenergia-eltérítés",
@@ -1493,7 +1496,10 @@
     "wifi": {
       "title": "WiFi",
       "intro": "Válaszd ki a hálózatot, amelyhez a töltő csatlakozzon.",
+      "intro_switch": "Másik hálózatra váltáshoz válassza ki lent.",
       "current": "Jelenleg csatlakoztatva",
+      "keep": "Hálózat megtartása és befejezés",
+      "saved": "Mentett hálózat (nincs csatlakozva)",
       "joined": "Csatlakozási kérelem elküldve. A töltő néhány másodperc múlva csatlakozik az új hálózathoz.",
       "empty": "Nem található hálózat. Érintsd meg a Keresés gombot az ismétléshez.",
       "handoff_title": "El fogja veszíteni ezt a kapcsolatot",
@@ -1528,6 +1534,7 @@
   "login": {
     "title": "Bejelentkezés",
     "subtitle": "Adja meg az OpenEVSE hitelesítő adatait",
+    "subtitle_host": "Bejelentkezés: {host}",
     "username": "Felhasználónév",
     "password": "Jelszó",
     "remember": "Emlékezzen rám",

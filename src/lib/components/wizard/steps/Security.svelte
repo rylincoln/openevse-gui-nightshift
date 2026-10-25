@@ -9,16 +9,25 @@
 
   Credentials go through CredentialFields, which writes username + password
   together in one request and requires a username when a password is set.
+  There is no separate Save button here: the wizard's Next calls commit(), so
+  a typed password is never silently dropped.
 -->
 <script lang="ts">
   import { _ } from 'svelte-i18n'
   import CredentialFields from '../../config/CredentialFields.svelte'
+
+  let fields = $state<ReturnType<typeof CredentialFields>>()
+
+  /** Save what was typed; false keeps the wizard on this step. */
+  export function commit(): Promise<boolean> {
+    return fields ? fields.commit() : Promise.resolve(true)
+  }
 </script>
 
 <div class="space-y-4">
   <p class="text-sm text-text-dim">{$_('wizard.security.intro')}</p>
 
-  <CredentialFields />
+  <CredentialFields bind:this={fields} showSave={false} />
 
   <p class="text-xs text-text-dim">{$_('wizard.security.skip_hint')}</p>
 </div>

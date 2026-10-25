@@ -1407,6 +1407,9 @@
     "hz": "Hz",
     "ohm": "Ω"
   },
+  "ui": {
+    "show_password": "Mostrar contraseña"
+  },
   "clients": {
     "manual": "Manual",
     "divert": "Desvío solar",
@@ -1493,7 +1496,10 @@
     "wifi": {
       "title": "WiFi",
       "intro": "Elige la red a la que debe conectarse el cargador.",
+      "intro_switch": "Para cambiar a otra red, elíjala abajo.",
       "current": "Red actual",
+      "keep": "Mantener esta red y terminar",
+      "saved": "Red guardada (sin conexión)",
       "joined": "Solicitud de conexión enviada. El cargador se unirá a la nueva red en unos segundos.",
       "empty": "No se han encontrado redes. Toca Buscar para intentarlo de nuevo.",
       "handoff_title": "Perderás esta conexión",
@@ -1528,6 +1534,7 @@
   "login": {
     "title": "Iniciar sesión",
     "subtitle": "Introduce tus credenciales de OpenEVSE",
+    "subtitle_host": "Inicie sesión en {host}",
     "username": "Nombre de usuario",
     "password": "Contraseña",
     "remember": "Recuérdame",

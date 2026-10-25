@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, fireEvent } from '@testing-library/svelte'
 
 vi.mock('svelte-i18n', () => {
-  const t = (k) => k
+  const t = (k, opts) => (opts?.values ? k + ':' + JSON.stringify(opts.values) : k)
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
@@ -58,5 +58,27 @@ describe('Login', () => {
     await fireEvent.click(utils.getByText('login.submit'))
     await vi.waitFor(() => expect(utils.getByRole('alert')).toHaveTextContent('login.invalid'))
     expect(redirect).not.toHaveBeenCalled()
+  })
+
+  it('shows a refusal in the theme error colour, which is legible in light mode', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 401 })
+    const utils = render(Login)
+    await fireEvent.click(utils.getByText('login.submit'))
+    await vi.waitFor(() => expect(utils.getByRole('alert')).toHaveClass('text-error'))
+  })
+
+  it('labels both fields so password managers can fill them', () => {
+    const { getByLabelText } = render(Login)
+    const user = getByLabelText('login.username')
+    const pass = getByLabelText('login.password')
+    expect(user).toHaveAttribute('autocomplete', 'username')
+    expect(user).toHaveAttribute('name', 'username')
+    expect(pass).toHaveAttribute('autocomplete', 'current-password')
+    expect(pass).toHaveAttribute('name', 'password')
+  })
+
+  it('names the charger being signed in to', () => {
+    const { getByText } = render(Login)
+    expect(getByText(`login.subtitle_host:${JSON.stringify({ host: location.hostname })}`)).toBeInTheDocument()
   })
 })

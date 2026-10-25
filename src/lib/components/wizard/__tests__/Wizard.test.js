@@ -29,8 +29,8 @@ vi.mock('../../../api/httpAPI', () => ({
   httpAPI: vi.fn(() => Promise.resolve([])),
 }))
 
-import { writable } from 'svelte/store'
 import { status_store } from '../../../stores/status'
+import { config_store } from '../../../stores/config'
 
 import Wizard from '../../../../routes/Wizard.svelte'
 
@@ -38,6 +38,8 @@ beforeEach(() => {
   saveParam.mockClear()
   upload.mockClear()
   status_store.set({ ipaddress: '10.0.0.5' })
+  // Saving credentials writes into the store; don't let it seed the next test.
+  config_store.set({ wizard_passed: false, hostname: 'openevse' })
 })
 
 describe('Wizard route', () => {
@@ -178,6 +180,107 @@ describe('Wizard route', () => {
 
     await vi.waitFor(() => {
       expect(upload).toHaveBeenCalledWith({ ssid: 'Hidden network', pass: 'secret' })
+    })
+  })
+
+  // The charger may already be on the home network (set up before, or by
+  // WPS): joining again must not be the only way to finish.
+  it('offers to keep the current network and finish when the charger is already on WiFi', async () => {
+    status_store.set({ ipaddress: '10.0.0.5', mode: 'STA', ssid: 'Home', wifi_client_connected: 1 })
+    const { getByText, queryByText } = render(Wizard)
+    for (let i = 0; i < 5; i++) await fireEvent.click(getByText('wizard.next'))
+    expect(getByText('wizard.wifi.current')).toBeInTheDocument()
+    await fireEvent.click(getByText('wizard.wifi.keep'))
+    await vi.waitFor(() => {
+      expect(saveParam).toHaveBeenCalledWith('wizard_passed', true)
+    })
+    expect(upload).not.toHaveBeenCalled()
+    expect(queryByText('wizard.reconnect.title')).toBeNull()
+  })
+
+  it('keeps the network from the setup hotspot, then says where to reconnect', async () => {
+    status_store.set({ ipaddress: '192.168.4.1', mode: 'STA+AP', ssid: 'Home', wifi_client_connected: 1 })
+    const { getByText } = render(Wizard)
+    for (let i = 0; i < 5; i++) await fireEvent.click(getByText('wizard.next'))
+    await fireEvent.click(getByText('wizard.wifi.keep'))
+    await vi.waitFor(() => {
+      expect(getByText('wizard.reconnect.title')).toBeInTheDocument()
+    })
+  })
+
+  it("only warns about losing the connection on the charger's own hotspot", async () => {
+    status_store.set({ ipaddress: '10.0.0.5', mode: 'AP' })
+    const home = render(Wizard)
+    for (let i = 0; i < 5; i++) await fireEvent.click(home.getByText('wizard.next'))
+    expect(home.queryByText('wizard.wifi.handoff_title')).toBeNull()
+    home.unmount()
+
+    status_store.set({ ipaddress: '192.168.4.1', mode: 'AP' })
+    const ap = render(Wizard)
+    for (let i = 0; i < 5; i++) await fireEvent.click(ap.getByText('wizard.next'))
+    expect(ap.getByText('wizard.wifi.handoff_title')).toBeInTheDocument()
+  })
+
+  it('does not claim a saved network is joined when the charger is not on it', async () => {
+    status_store.set({ ipaddress: '192.168.4.1', mode: 'STA+AP', ssid: '', wifi_client_connected: 0 })
+    config_store.update((c) => ({ ...c, ssid: 'Home' }))
+    const { getByText, queryByText } = render(Wizard)
+    for (let i = 0; i < 5; i++) await fireEvent.click(getByText('wizard.next'))
+    expect(queryByText('wizard.wifi.current')).toBeNull()
+    expect(getByText('wizard.wifi.saved')).toBeInTheDocument()
+    expect(queryByText('wizard.wifi.keep')).toBeNull()
+  })
+
+  // The password step has one way forward: Next saves what was typed.
+  describe('password step', () => {
+    async function toSecurity(view) {
+      for (let i = 0; i < 3; i++) await fireEvent.click(view.getByText('wizard.next'))
+      expect(view.getByText('wizard.security.title')).toBeInTheDocument()
+    }
+    async function type(view, label, value) {
+      const input = view.getByLabelText(label)
+      await fireEvent.input(input, { target: { value } })
+      await fireEvent.blur(input)
+    }
+
+    it('has no separate save button competing with Next', async () => {
+      const view = render(Wizard)
+      await toSecurity(view)
+      expect(view.queryByText('config.http.set_credentials')).toBeNull()
+    })
+
+    it('saves a typed username and password when Next is pressed', async () => {
+      const view = render(Wizard)
+      await toSecurity(view)
+      await type(view, 'config.http.username', 'admin')
+      await type(view, 'config.http.password', 'pw1234')
+      await fireEvent.click(view.getByText('wizard.next'))
+      await vi.waitFor(() => {
+        expect(upload).toHaveBeenCalledWith({ www_username: 'admin', www_password: 'pw1234' })
+      })
+      await vi.waitFor(() => {
+        expect(view.getByText('wizard.firmware.title')).toBeInTheDocument()
+      })
+    })
+
+    it('stays put when a password is typed without a username', async () => {
+      const view = render(Wizard)
+      await toSecurity(view)
+      await type(view, 'config.http.password', 'pw1234')
+      await fireEvent.click(view.getByText('wizard.next'))
+      expect(view.getByText('config.http.username_required')).toBeInTheDocument()
+      expect(view.getByText('wizard.security.title')).toBeInTheDocument()
+      expect(upload).not.toHaveBeenCalled()
+    })
+
+    it('skips when both fields are left blank', async () => {
+      const view = render(Wizard)
+      await toSecurity(view)
+      await fireEvent.click(view.getByText('wizard.next'))
+      await vi.waitFor(() => {
+        expect(view.getByText('wizard.firmware.title')).toBeInTheDocument()
+      })
+      expect(upload).not.toHaveBeenCalled()
     })
   })
 
