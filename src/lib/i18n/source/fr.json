@@ -64,8 +64,8 @@
   },
   "logs-states": {
     "loading": "Démarrage",
-    "active-nocar": "Actif - VE non connecté",
-    "active-car": "Actif - VE connecté",
+    "active-nocar": "Prêt",
+    "active-car": "Connecté",
     "active-charge": "Charge",
     "error": "Erreur",
     "error-vent": "Ventilation requise",
@@ -76,7 +76,7 @@
     "error-ground": "Échec test prise de terre",
     "error-temp": "Surchauffe",
     "error-current": "Surintensité",
-    "sleeping": "Désactivé - En veille",
+    "sleeping": "En veille",
     "disabled": "Désactivé"
   },
   "config": {

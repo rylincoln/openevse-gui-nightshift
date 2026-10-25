@@ -64,8 +64,8 @@
   },
   "logs-states": {
     "loading": "Indulás",
-    "active-nocar": "Aktív - Autó nincs csatlakoztatva",
-    "active-car": "Aktív - Autó csatlakoztatva",
+    "active-nocar": "Kész",
+    "active-car": "Csatlakoztatva",
     "active-charge": "Töltés",
     "error": "Hiba",
     "error-vent": "Szellőztetés szükséges",
@@ -76,7 +76,7 @@
     "error-ground": "Földelés ellenőrzése sikertelen",
     "error-temp": "Túlmelegedés",
     "error-current": "Túláram",
-    "sleeping": "Letiltva - Alvás",
+    "sleeping": "Alvó",
     "disabled": "Letiltva"
   },
   "config": {

@@ -9,8 +9,8 @@
   import { serialQueue } from '../lib/queue'
   import { formatDate, getStateDesc } from '../lib/utils'
   import {
-    pageRange, logTypeIcon, logTypeTone, logStateInfo, logEnergyKwh, logTempC,
-    logPilotAmps, logReason, type LogReason, type LogRowModel,
+    pageRange, logTypeIcon, logTypeTone, logTypeNoteworthy, logStateInfo, logEnergyKwh,
+    logTempC, logPilotAmps, logReason, logFigures, type LogReason, type LogRowModel,
   } from '../lib/history/logs'
   import { isKnownAdvisory } from '../lib/notifications/notifications'
   import { formatTemp } from '../lib/temperature'
@@ -31,10 +31,11 @@
   let phase = $state<'loading' | 'error' | 'ready'>('loading')
   let progress = $state(0)
 
-  // Resolve the "User" cell for one log entry from the RFID name map.
-  function userTextFor(entry: LogEntry | undefined): string {
+  // Resolve the "User" cell for one log entry from the RFID name map; null
+  // (no user line) when the entry has no tag.
+  function userTextFor(entry: LogEntry | undefined): string | null {
     const uid = entry?.rfidTag
-    if (!uid) return '—'
+    if (!uid) return null
     return $rfid_users_store.users[uid] ?? uid
   }
 
@@ -58,6 +59,7 @@
       const state = logStateInfo(e.evseState)
       const t = formatTemp(logTempC(e), $config_store?.temp_unit ?? 'c')
       const kWh = logEnergyKwh(e)
+      const shows = logFigures(e)
       // Store is newest-first, so the earlier-in-time entry is the next index.
       const reason = logReason(e, arr[i + 1])
       return {
@@ -66,15 +68,14 @@
         stateDesc: getStateDesc(e.evseState) ?? '',
         typeIcon: logTypeIcon(e.type),
         typeTone: logTypeTone(e.type),
-        typeLabel: e.type ? $_('history.types.' + e.type, { default: e.type }) : '',
-        timeText: e.time ? formatDate(e.time, $config_store?.time_zone, 'short') : '',
-        energyKwh: kWh,
-        costText: formatCost(
-          kWh,
-          $uisettings_store?.energy_rate,
-          $uisettings_store?.currency_symbol,
-        ),
-        temp: t.value,
+        typeLabel: logTypeNoteworthy(e.type) ? $_('history.types.' + e.type, { default: e.type }) : '',
+        // With the year: the log reaches back further than the current one.
+        timeText: e.time ? formatDate(e.time, $config_store?.time_zone) : '',
+        energyKwh: shows.energy ? kWh : null,
+        costText: shows.energy
+          ? formatCost(kWh, $uisettings_store?.energy_rate, $uisettings_store?.currency_symbol)
+          : null,
+        temp: shows.temp ? t.value : null,
         tempUnit: t.unitKey,
         userText: userTextFor(e),
         pilotAmps: logPilotAmps(e),

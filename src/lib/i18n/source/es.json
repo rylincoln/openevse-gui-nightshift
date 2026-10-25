@@ -64,8 +64,8 @@
   },
   "logs-states": {
     "loading": "Iniciando",
-    "active-nocar": "Activo - vehículo no conectado",
-    "active-car": "Activo - vehículo conectado",
+    "active-nocar": "Listo",
+    "active-car": "Conectado",
     "active-charge": "Cargando",
     "error": "Error",
     "error-vent": "Se requiere ventilación",
@@ -76,7 +76,7 @@
     "error-ground": "Comprobación de conexión a tierra fallida",
     "error-temp": "Exceso de temperatura",
     "error-current": "Sobre corriente",
-    "sleeping": "Desactivado - en reposo",
+    "sleeping": "En reposo",
     "disabled": "Desactivado"
   },
   "config": {
