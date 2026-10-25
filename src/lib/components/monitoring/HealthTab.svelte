@@ -4,7 +4,6 @@
   import Button from '../ui/Button.svelte'
   import ConfirmDialog from '../ui/ConfirmDialog.svelte'
   import { getStateDesc } from '../../utils'
-  import { serialQueue } from '../../queue'
   import { httpAPI } from '../../api/httpAPI'
   import { status_store } from '../../stores/status'
   import { config_store } from '../../stores/config'
@@ -43,9 +42,8 @@
     resetting = true
     resetDone = false
     try {
-      // Single-threaded device server — serialize like every other request.
-      const res = await serialQueue.add(() => httpAPI<RapiResponse>('GET', '/r?json=1&rapi=$FC'))
-      if (res && res !== 'error' && !res.error) {
+      const res = await httpAPI<RapiResponse>('GET', '/r?json=1&rapi=$FC')
+      if (res !== 'error' && !res.error) {
         resetDone = true
         await status_store.download()
         setTimeout(() => (resetDone = false), 3000)
@@ -88,8 +86,8 @@
     resettingRelay = true
     resetRelayDone = false
     try {
-      const res = await serialQueue.add(() => httpAPI<RapiResponse>('GET', '/r?json=1&rapi=$FH'))
-      if (res && res !== 'error' && !res.error) {
+      const res = await httpAPI<RapiResponse>('GET', '/r?json=1&rapi=$FH')
+      if (res !== 'error' && !res.error) {
         resetRelayDone = true
         await config_store.download()
         setTimeout(() => (resetRelayDone = false), 3000)

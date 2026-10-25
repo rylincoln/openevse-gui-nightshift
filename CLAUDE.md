@@ -44,8 +44,7 @@ components mounted by `src/App.svelte` own the whole data layer
 3. **`DataManager.svelte`** — the **version counter** loop. `/status` carries
    `config_version`, `schedule_version`, `override_version`, `limit_version`,
    `boost_version`, … Each has a derived store, a `refreshXStore(ver)` that
-   re-downloads the matching store through `serialQueue` when the counter
-   moves, and an `$effect` wiring them. **A successful write never refreshes
+   re-downloads the matching store when the counter moves, and an `$effect` wiring them. **A successful write never refreshes
    manually** — the device bumps the counter, the WS frame carries it, and
    DataManager re-downloads. Adding a versioned resource means adding all
    three pieces here plus a store with `download()`.
@@ -55,12 +54,16 @@ components mounted by `src/App.svelte` own the whole data layer
 store idle and the UI hidden. Gate on presence, never on values.
 
 **Stores** (`src/lib/stores/*.ts`) wrap a `writable` with `download()` → boolean
-and usually `upload()`. All HTTP goes through `src/lib/api/httpAPI.ts`: in dev
-it prefixes `/api` (which Vite proxies or the mock plugin serves), returns the
-string `'error'` on failure, and redirects to `/login` on 401. `httpAPI<T>()`
-resolves to `T | 'error'`; narrow with `res !== 'error'` and `isErrorBody()`.
-Pass `{ raw: true }` (6th argument) to get `RawResponse<T>` (`{ status, body }`)
-when the HTTP status, not the body text, tells success from failure.
+and usually `upload()`. All HTTP goes through `src/lib/api/httpAPI.ts`, which
+sends one request at a time (the charger's web server is single-threaded;
+callers never queue anything themselves). In dev it prefixes `/api` (which
+Vite proxies or the mock plugin serves), and it redirects to `/login` on 401.
+`httpAPI<T>()` resolves to `T | 'error'`, where `'error'` is any reply outside
+2xx as well as no reply at all; `accepted(res)` is the one success rule, so
+never test a reply's wording (`msg: "done"`). Pass `{ raw: true }` (6th
+argument) to get `RawResponse<T>` (`{ status, body }`) for any reply when the
+caller acts on why the charger refused. `pauseRequests()` / `resumeRequests()`
+keep the charger to one caller, as during a firmware upload.
 
 ## Config pages
 

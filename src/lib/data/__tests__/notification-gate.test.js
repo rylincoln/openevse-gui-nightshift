@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/svelte'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../api/httpAPI', async (importOriginal) => ({ ...(await importOriginal()), httpAPI: vi.fn() }))
 
 import { httpAPI } from '../../api/httpAPI'
 import DataManager from '../DataManager.svelte'
@@ -61,8 +61,8 @@ describe('the advisory capability gate', () => {
     // Presence is the gate, never the values: {count: 0} is still a yes.
     status_store.set({ state: 1, notifications: { count: 0, severity: 'info' } })
     render(DataManager)
-    await vi.waitFor(() => expect(notificationCalls()).toHaveLength(1))
-    expect(get(uistates_store).notification_badge).toBe('0:info@0')
+    await vi.waitFor(() => expect(get(uistates_store).notification_badge).toBe('0:info@0'))
+    expect(notificationCalls()).toHaveLength(1)
   })
 
   it('re-reads when the badge moves and not while it holds still', async () => {
@@ -89,7 +89,8 @@ describe('the advisory capability gate', () => {
     // part that actually moved.
     status_store.set({ state: 1, notifications: { count: 1, severity: 'critical' } })
     render(DataManager)
-    await vi.waitFor(() => expect(notificationCalls()).toHaveLength(1))
+    await vi.waitFor(() => expect(get(uistates_store).notification_badge).toBe('1:critical@0'))
+    expect(notificationCalls()).toHaveLength(1)
 
     uistates_store.update((s) => ({ ...s, notification_event: (s.notification_event ?? 0) + 1 }))
     await vi.waitFor(() => expect(notificationCalls()).toHaveLength(2))

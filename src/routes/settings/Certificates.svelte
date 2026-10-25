@@ -2,7 +2,6 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n'
   import { certificate_store } from '../../lib/stores/certificates'
-  import { serialQueue } from '../../lib/queue'
   import { showWriteError } from '../../lib/alerts'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
@@ -20,10 +19,9 @@
     if (busy) return
     busy = true
     try {
-      const res = await serialQueue.add(() => certificate_store.upload(cert))
-      if (res && res.success) {
+      if (await certificate_store.upload(cert)) {
         modalOpen = false
-        await serialQueue.add(() => certificate_store.download())
+        await certificate_store.download()
       } else {
         showWriteError()
       }
@@ -36,13 +34,13 @@
     if (busy) return
     busy = true
     try {
-      const res = await serialQueue.add(() => certificate_store.generateSelfSigned())
-      if (res && res.success) {
-        await serialQueue.add(() => certificate_store.download())
+      const res = await certificate_store.generateSelfSigned()
+      if (res.success) {
+        await certificate_store.download()
       } else {
         // The firmware explains why it declined (e.g. 501 on builds without
         // mbedTLS); pass that through rather than a bare "write failed".
-        showWriteError(res && res.msg ? res.msg : undefined)
+        showWriteError(res.msg ?? undefined)
       }
     } finally {
       busy = false
@@ -53,9 +51,9 @@
     if (busy) return
     busy = true
     try {
-      const ok = await serialQueue.add(() => certificate_store.remove(id))
+      const ok = await certificate_store.remove(id)
       if (ok) {
-        await serialQueue.add(() => certificate_store.download())
+        await certificate_store.download()
       } else {
         showWriteError()
       }

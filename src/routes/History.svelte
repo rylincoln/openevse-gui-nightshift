@@ -5,8 +5,7 @@
   import { config_store } from '../lib/stores/config'
   import { uisettings_store } from '../lib/stores/uisettings'
   import { rfid_users_store } from '../lib/stores/rfid_users'
-  import { httpAPI } from '../lib/api/httpAPI'
-  import { serialQueue } from '../lib/queue'
+  import { httpAPI, accepted } from '../lib/api/httpAPI'
   import { formatDate, getStateDesc } from '../lib/utils'
   import {
     pageRange, logTypeIcon, logTypeTone, logTypeNoteworthy, logStateInfo, logEnergyKwh,
@@ -103,9 +102,9 @@
     phase = 'loading'
     progress = 0
     try {
-      const index = await serialQueue.add(() => httpAPI<LogsIndex>('GET', '/logs'))
+      const index = await httpAPI<LogsIndex>('GET', '/logs')
       if (
-        !index || index === 'error' || index.msg === 'error' ||
+        !accepted(index) ||
         typeof index.min !== 'number' || typeof index.max !== 'number'
       ) {
         phase = 'error'
@@ -114,7 +113,7 @@
       history_store.set(undefined)
       const pages = pageRange(index.min, index.max)
       for (let i = 0; i < pages.length; i++) {
-        const ok = await serialQueue.add(() => history_store.download(pages[i]))
+        const ok = await history_store.download(pages[i])
         if (!ok) {
           phase = 'error'
           return

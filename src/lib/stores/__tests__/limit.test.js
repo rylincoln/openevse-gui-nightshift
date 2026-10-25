@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI', () => ({
+vi.mock('../../api/httpAPI', async (importOriginal) => ({
+  ...(await importOriginal()),
   httpAPI: vi.fn()
 }))
 
@@ -50,6 +51,14 @@ describe('limit_store', () => {
     const state = get(limit_store)
     expect(state.type).toBe('none')
     expect(state.value).toBe(0)
+  })
+
+  // Firmware since v5 answers GET /limit with 200 {} when no limit is set.
+  it('reads an empty reply as no limit', async () => {
+    limit_store.set({ type: 'time', value: 3600, auto_release: true })
+    httpAPI.mockResolvedValue({})
+    expect(await limit_store.download()).toBe(true)
+    expect(get(limit_store)).toEqual({ type: 'none', value: 0, auto_release: true })
   })
 
   it('should return false on download error', async () => {

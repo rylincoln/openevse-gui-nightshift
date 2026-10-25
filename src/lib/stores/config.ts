@@ -1,5 +1,5 @@
 import { writable, type Writable } from 'svelte/store'
-import { httpAPI, isErrorBody } from '../api/httpAPI'
+import { httpAPI, accepted } from '../api/httpAPI'
 import type { Config, WriteResponse } from '../api/device'
 
 /** `/config` plus the two flags this store derives from `firmware`. */
@@ -37,16 +37,15 @@ function createConfigStore(): ConfigStore {
 
   async function download(): Promise<boolean> {
     const res = await httpAPI<Config>('GET', '/config')
-    if (res && res !== 'error' && !isErrorBody(res)) {
+    if (accepted(res)) {
       P.update(() => withDerived(res))
       return true
     } else return false
   }
 
   async function upload(data: Partial<Config>): Promise<boolean> {
-    const res = await httpAPI<WriteResponse>('POST', '/config', JSON.stringify(data))
-    if (res !== 'error' && (res.msg == 'done' || res.msg == 'no change')) return true
-    else return false
+    // "done" or "no change": either way the charger holds these values now.
+    return accepted(await httpAPI<WriteResponse>('POST', '/config', JSON.stringify(data)))
   }
 
   async function saveParam<K extends keyof Config>(name: K, val: Config[K]): Promise<boolean> {

@@ -8,11 +8,6 @@ vi.mock('svelte-i18n', () => {
   return { _: t }
 })
 
-// We don't care about the queue's batching for unit tests — just resolve.
-vi.mock('../../../queue', () => ({
-  serialQueue: { add: (fn) => Promise.resolve(fn()) },
-}))
-
 // Each step pulls in real stores / form helpers / http — stub them so the
 // route renders without an exploded dependency graph. vi.mock is hoisted,
 // so the spy has to live inside vi.hoisted to be reachable from the factory.
@@ -25,7 +20,8 @@ vi.mock('../../../stores/config', async () => {
   const config_store = writable({ wizard_passed: false, hostname: 'openevse' })
   return { config_store: Object.assign(config_store, { saveParam, upload }) }
 })
-vi.mock('../../../api/httpAPI', () => ({
+vi.mock('../../../api/httpAPI', async (importOriginal) => ({
+  ...(await importOriginal()),
   httpAPI: vi.fn(() => Promise.resolve([])),
 }))
 

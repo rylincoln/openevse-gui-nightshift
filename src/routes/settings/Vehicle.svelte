@@ -3,7 +3,6 @@
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../lib/stores/config'
   import { createConfigForm } from '../../lib/config/configForm.svelte'
-  import { serialQueue } from '../../lib/queue'
   import { httpAPI } from '../../lib/api/httpAPI'
   import { showWriteError } from '../../lib/alerts'
   import { hasTeslaCredentials } from '../../lib/config/tesla'
@@ -74,8 +73,8 @@
 
   async function loadVehicles(): Promise<void> {
     vehiclesError = false
-    const res = await serialQueue.add(() => httpAPI<TeslaVehiclesResponse>('GET', '/tesla/vehicles'))
-    if (!res || res === 'error' || !Array.isArray(res.vehicles)) {
+    const res = await httpAPI<TeslaVehiclesResponse>('GET', '/tesla/vehicles')
+    if (res === 'error' || !Array.isArray(res.vehicles)) {
       vehiclesError = true
       vehicles = []
       return
@@ -87,11 +86,9 @@
     if (loggingIn || !teslaUser || !teslaPass) return
     loggingIn = true
     loginFailed = false
-    const res = await serialQueue.add(() =>
-      httpAPI<TeslaLoginResponse>('POST', TESLA_LOGIN_URL, JSON.stringify({ username: teslaUser, password: teslaPass })),
-    )
+    const res = await httpAPI<TeslaLoginResponse>('POST', TESLA_LOGIN_URL, JSON.stringify({ username: teslaUser, password: teslaPass }))
     loggingIn = false
-    if (res && res !== 'error' && res.ok) {
+    if (res !== 'error' && res.ok) {
       teslaUser = ''
       teslaPass = ''
       const ok = await form.saveFields({

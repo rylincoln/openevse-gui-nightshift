@@ -2,11 +2,10 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { _ } from 'svelte-i18n'
-  import { httpAPI, type ApiResult, type RawResponse } from '../../lib/api/httpAPI'
+  import { httpAPI, accepted, type ApiResult, type RawResponse } from '../../lib/api/httpAPI'
   import { config_store } from '../../lib/stores/config'
   import type { ConfigState } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
-  import { serialQueue } from '../../lib/queue'
   import { showWriteError } from '../../lib/alerts'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
@@ -36,7 +35,7 @@
   // Stored on the device (not browser localStorage) so the switch survives
   // reloads and applies to every browser/hostname that opens this charger.
   async function setLabs(on: boolean): Promise<void> {
-    if (!(await serialQueue.add(() => config_store.saveParam('labs_enabled', !!on)))) showWriteError()
+    if (!(await config_store.saveParam('labs_enabled', !!on))) showWriteError()
   }
 
   // What the Labs switch reveals; `href` links to it once Labs is on.
@@ -85,10 +84,8 @@
     expandDismissed = false
     expanding = true
     try {
-      const res = await serialQueue.add(() =>
-        httpAPI<WriteResponse>('POST', '/migrate/expand16mb', JSON.stringify({})),
-      )
-      if (!res || res === 'error' || res.msg !== 'started') {
+      const res = await httpAPI<WriteResponse>('POST', '/migrate/expand16mb', JSON.stringify({}))
+      if (!accepted(res)) {
         showWriteError()
         expanding = false
       }
@@ -155,10 +152,8 @@
     if (formatting || sdBusy) return
     formatting = true
     try {
-      const res = await serialQueue.add(() =>
-        httpAPI<WriteResponse>('POST', '/sdcard/format', JSON.stringify({})),
-      )
-      if (!res || res === 'error' || res.msg !== 'started') {
+      const res = await httpAPI<WriteResponse>('POST', '/sdcard/format', JSON.stringify({}))
+      if (!accepted(res)) {
         showWriteError()
         formatting = false
       }
@@ -249,8 +244,8 @@
   let clearing = $state(false)
 
   async function loadCrash(): Promise<void> {
-    const res = await serialQueue.add(() => httpAPI<CrashSummary>('GET', '/debug/crash'))
-    crash = res && res !== 'error' && res.present ? res : null
+    const res = await httpAPI<CrashSummary>('GET', '/debug/crash')
+    crash = res !== 'error' && res.present ? res : null
   }
 
   // In dev httpAPI rewrites device paths onto the /api proxy; the raw-dump link
@@ -288,11 +283,10 @@
     if (clearing) return
     clearing = true
     try {
-      // Only {"msg":"erased"} means the flash erase succeeded. A failure
-      // answers 500 {"msg":"error"}, which still parses as JSON — accepting
-      // any object here would hide the dump while it is still on the device.
-      const res = await serialQueue.add(() => httpAPI<WriteResponse>('DELETE', '/debug/crash'))
-      if (res && res !== 'error' && res.msg === 'erased') crash = null
+      // A failed flash erase answers 500 {"msg":"error"}: hiding the dump then
+      // would hide it while it is still on the device.
+      const res = await httpAPI<WriteResponse>('DELETE', '/debug/crash')
+      if (accepted(res)) crash = null
       else showWriteError()
     } catch {
       showWriteError()
@@ -333,8 +327,8 @@
   // Delete does: it is not needed to show the page or to send a report.
   async function loadIdentity(withKey = false): Promise<CrashIdentity | null> {
     const url = '/debug/crash/identity' + (withKey ? '?key=1' : '')
-    const res = await serialQueue.add(() => httpAPI<CrashIdentity>('GET', url))
-    if (!res || res === 'error' || typeof res.broker !== 'string') return null
+    const res = await httpAPI<CrashIdentity>('GET', url)
+    if (res === 'error' || typeof res.broker !== 'string') return null
     broker = res.broker
     reporterId = res.reporter_id || null
     return res
@@ -374,8 +368,8 @@
   }
 
   // HTTP status of a raw call, or null when the charger could not be reached.
-  function statusOf(res: ApiResult<RawResponse<unknown>> | false): number | null {
-    return res && res !== 'error' ? res.status : null
+  function statusOf(res: ApiResult<RawResponse<unknown>>): number | null {
+    return res !== 'error' ? res.status : null
   }
 
   async function startUpload(): Promise<void> {
@@ -391,8 +385,7 @@
       // This charger's first report: give it an identity, kept on the charger
       // so "Delete my reports" works from any browser later.
       const fresh = { reporter_id: randomHex(16), delete_key: randomHex(32) }
-      const stored = await serialQueue.add(() =>
-        httpAPI('POST', '/debug/crash/identity', JSON.stringify(fresh), 'json', 60000, { raw: true }))
+      const stored = await httpAPI('POST', '/debug/crash/identity', JSON.stringify(fresh), 'json', 60000, { raw: true })
       if (statusOf(stored) === 409) {
         // Another tab set one first. The charger keeps that one; carry on
         // with it rather than fail a send that would work.
@@ -408,9 +401,8 @@
         reporterId = fresh.reporter_id
       }
     }
-    const report = await serialQueue.add(() =>
-      httpAPI('GET', '/debug/crash/report', null, 'json', 60000, { raw: true }))
-    if (!report || report === 'error' || report.status !== 200 || !report.body || typeof report.body !== 'object') {
+    const report = await httpAPI('GET', '/debug/crash/report', null, 'json', 60000, { raw: true })
+    if (report === 'error' || report.status !== 200 || !report.body || typeof report.body !== 'object') {
       uploadState = 'failed'
       return
     }
@@ -421,8 +413,7 @@
     }
     // Only now that the broker has it. If the charger cannot erase its copy,
     // say so: "removed" would invite sending the same report again.
-    const erased = await serialQueue.add(() =>
-      httpAPI('DELETE', '/debug/crash', null, 'json', 60000, { raw: true }))
+    const erased = await httpAPI('DELETE', '/debug/crash', null, 'json', 60000, { raw: true })
     await loadCrash()
     uploadState = statusOf(erased) === 200 ? 'done' : 'not_erased'
   }
@@ -450,8 +441,7 @@
     // The reports are gone. If the charger cannot forget its id, the next
     // report would reuse it and be linked to the erased ones -- so say so and
     // keep Delete there; deleting again is safe, with nothing left to erase.
-    const forgot = await serialQueue.add(() =>
-      httpAPI('DELETE', '/debug/crash/identity', null, 'json', 60000, { raw: true }))
+    const forgot = await httpAPI('DELETE', '/debug/crash/identity', null, 'json', 60000, { raw: true })
     if (statusOf(forgot) !== 200) {
       forgetState = 'not_forgotten'
       return
@@ -496,9 +486,12 @@
     if (sending || !trimmed || trimmed === '$') return
     sending = true
     try {
-      const res = await httpAPI<RapiResponse>('GET', '/r?json=1&rapi=' + command)
-      if (res && res !== 'error') {
-        results = [...results, { cmd: res.cmd ?? command, ret: res.ret ?? '', error: res.error }]
+      // Raw, so a refused command shows the controller's reason (400/500
+      // {cmd, error: "RAPI_RESPONSE_TIMEOUT"}) rather than a bare failure.
+      const res = await httpAPI<RapiResponse>('GET', '/r?json=1&rapi=' + command, null, 'json', 60000, { raw: true })
+      if (res !== 'error' && res.body && typeof res.body === 'object') {
+        const r = res.body
+        results = [...results, { cmd: r.cmd ?? command, ret: r.ret ?? '', error: r.error }]
         command = '$'
       } else {
         results = [...results, { cmd: command, ret: '', error: 'error' }]

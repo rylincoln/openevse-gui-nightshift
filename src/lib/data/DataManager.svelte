@@ -15,7 +15,6 @@
   import { claims_store } from '../stores/claims'
   import { override_store } from '../stores/override'
   import { formatDate } from '../utils'
-  import { serialQueue } from '../queue'
   import { locale, locales } from 'svelte-i18n'
   import { _ } from 'svelte-i18n'
 
@@ -80,7 +79,7 @@
       return
     if (ver != $uistates_store.config_version) {
       refresh_config = true
-      const res = await serialQueue.add(config_store.download)
+      const res = await config_store.download()
       if (res)
         // ver is undefined only before status_store's first download, which
         // App.svelte's FetchData completes before DataManager ever mounts
@@ -97,7 +96,7 @@
     if (ver != $uistates_store.schedule_version) {
       refresh_schedule = true
       $uistates_store.schedule_version = ver! // see refreshConfigStore
-      const res = await serialQueue.add(schedule_store.download)
+      const res = await schedule_store.download()
       refresh_schedule = false
       return res
     }
@@ -109,7 +108,7 @@
     if (ver != $uistates_store.certificate_version) {
       refresh_certificate = true
       $uistates_store.certificate_version = ver! // see refreshConfigStore
-      const res = await serialQueue.add(certificate_store.download)
+      const res = await certificate_store.download()
       refresh_certificate = false
       return res
     }
@@ -121,7 +120,7 @@
     if (ver != $uistates_store.schedule_plan_version) {
       refresh_plan = true
       $uistates_store.schedule_plan_version = ver! // see refreshConfigStore
-      const res = await serialQueue.add(plan_store.download)
+      const res = await plan_store.download()
       refresh_plan = false
       return res
     }
@@ -133,10 +132,10 @@
     if (ver != $uistates_store.claims_version) {
       refresh_target = true
       $uistates_store.claims_version = ver! // see refreshConfigStore
-      const res = await serialQueue.add(claims_target_store.download)
+      const res = await claims_target_store.download()
       // The claims list (with real per-claim priorities) changes in lockstep
       // with the target, so refresh it on the same version bump.
-      await serialQueue.add(claims_store.download)
+      await claims_store.download()
       refresh_target = false
       return res
     }
@@ -149,7 +148,7 @@
     if ($uistates_store.override_version != version) {
       refresh_override = true
       $uistates_store.override_version = version! // see refreshConfigStore
-      const res = await serialQueue.add(override_store.download)
+      const res = await override_store.download()
       refresh_override = false
       if (res)
         return res
@@ -159,7 +158,7 @@
   }
 
   export async function refreshStatusStore(): Promise<boolean> {
-    const res = await serialQueue.add(status_store.download)
+    const res = await status_store.download()
     return res
   }
 
@@ -169,7 +168,7 @@
     if ($uistates_store.limit_version != version) {
       if ($status_store?.limit) {
         refresh_limit = true
-        const res = await serialQueue.add(limit_store.download)
+        const res = await limit_store.download()
         refresh_limit = false
         if (res) {
           $uistates_store.limit_version = version! // see refreshConfigStore
@@ -199,7 +198,7 @@
       refresh_boost = true
       // download() normalises {} (idle) → reset and {type,…} (active) → set,
       // so this one path covers arm / reached / cancelled / replaced / reboot.
-      const res = await serialQueue.add(boost_store.download)
+      const res = await boost_store.download()
       refresh_boost = false
       if (res) {
         $uistates_store.boost_version = version
@@ -225,7 +224,7 @@
     if ($uistates_store.notification_badge === signature)
       return
     refresh_notifications = true
-    const res = await serialQueue.add(notification_store.download)
+    const res = await notification_store.download()
     refresh_notifications = false
     if (res) {
       $uistates_store.notification_badge = signature

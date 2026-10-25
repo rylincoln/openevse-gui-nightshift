@@ -599,7 +599,7 @@ export function mockPlugin() {
               const msg = buildStatusMessage(tickCount)
               for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
               res.writeHead(201, { 'Content-Type': 'application/json' })
-              res.end(JSON.stringify({ msg: 'erased' }))
+              res.end(JSON.stringify({ msg: 'done' }))
             })
             return
           }
@@ -614,7 +614,7 @@ export function mockPlugin() {
             const msg = buildStatusMessage(tickCount)
             for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
             res.writeHead(200, { 'Content-Type': 'application/json' })
-            res.end(JSON.stringify({ msg: 'erased' }))
+            res.end(JSON.stringify({ msg: 'done' }))
             return
           }
         }
@@ -708,7 +708,7 @@ export function mockPlugin() {
                 if (rfid && typeof name === 'string') rfidUsers[rfid] = name
               } catch { /* ignore malformed body */ }
               res.writeHead(200, { 'Content-Type': 'application/json' })
-              res.end(JSON.stringify({ msg: 'erased' }))
+              res.end(JSON.stringify({ msg: 'User name saved' }))
             })
             return
           }
@@ -716,7 +716,7 @@ export function mockPlugin() {
             const m = req.url?.match(/[?&]rfid=([^&]*)/)
             if (m) delete rfidUsers[decodeURIComponent(m[1])]
             res.writeHead(200, { 'Content-Type': 'application/json' })
-            res.end(JSON.stringify({ msg: 'erased' }))
+            res.end(JSON.stringify({ msg: 'User name removed' }))
             return
           }
         }
@@ -810,6 +810,14 @@ export function mockPlugin() {
         if (url === '/api/certificates' && req.method === 'POST') {
           res.writeHead(200, { 'Content-Type': 'application/json' })
           res.end(JSON.stringify({ msg: 'done', id: String(Date.now()) }))
+          return
+        }
+
+        // The charger makes the key pair itself, so the private key never
+        // leaves it; the mock only hands back an id.
+        if (url === '/api/certificates/self-signed' && req.method === 'POST') {
+          res.writeHead(200, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ msg: 'done', id: Date.now().toString(16) }))
           return
         }
 

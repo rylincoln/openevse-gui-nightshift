@@ -1,6 +1,6 @@
 import './../../lib/vars'
 import { get, writable, type Writable } from 'svelte/store'
-import { httpAPI, isErrorBody } from '../api/httpAPI'
+import { httpAPI, accepted } from '../api/httpAPI'
 import type { ErrorBody } from '../api/device'
 import model from './json/claims_target.json'
 
@@ -38,7 +38,7 @@ function createClaimsTargetStore(): ClaimsTargetStore {
   // get claims/target
   async function download(): Promise<boolean> {
     const res = await httpAPI<ClaimsTargetModel | ErrorBody>('GET', '/claims/target')
-    if (res === 'error' || isErrorBody(res)) {
+    if (!accepted(res)) {
       P.update(() => ({}))
       return false
     } else {

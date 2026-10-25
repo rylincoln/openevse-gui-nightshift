@@ -297,7 +297,7 @@ describe('Dashboard', () => {
     // Disabling a focused control throws keyboard focus to the page body.
     status_store.set({ state: 1, total_day: 0, total_energy: 0 })
     let release
-    // Held open until the end; serialQueue is shared, so it must settle.
+    // Held open until the end, then settled so nothing is left pending.
     httpAPI.mockReturnValue(new Promise((r) => { release = r }))
     const { getByRole } = render(Dashboard)
     const off = getByRole('radio', { name: 'dashboard.mode.off' })
@@ -332,7 +332,7 @@ describe('Dashboard', () => {
       }
       expect(slider).not.toBeDisabled()
     } finally {
-      release({ msg: 'done' }) // serialQueue is shared, so it must settle
+      release({ msg: 'done' }) // settle it so nothing is left pending
     }
     await vi.waitFor(() => {
       const posts = httpAPI.mock.calls.filter(([m, u]) => m === 'POST' && u === '/limit').map(([, , body]) => JSON.parse(body).value)
@@ -518,19 +518,37 @@ describe('Dashboard', () => {
     // A system (default) limit — the old boost path used to defensively clear
     // limits and rewrite the override; the device-side boost must not.
     limit_store.set({ type: 'energy', value: 10000, auto_release: false })
-    httpAPI.mockResolvedValue({ msg: 'done' })
+    // Arming reads the status as well as the body (raw: true).
+    httpAPI.mockImplementation((_m, _u, _b, _t, _to, opts) =>
+      Promise.resolve(opts?.raw ? { status: 201, body: { msg: 'done' } } : { msg: 'done' }))
     const { getByText } = render(Dashboard)
     // Tap "Boost" to expand the picker, then arm. Default dimension is time
     // (30 min) → POST {type:'time', value:1800}.
     await fireEvent.click(getByText('dashboard.boost.label'))
     await fireEvent.click(getByText('dashboard.boost.arm'))
     await vi.waitFor(() => {
-      expect(httpAPI).toHaveBeenCalledWith('POST', '/boost', JSON.stringify({ type: 'time', value: 1800 }))
+      expect(httpAPI).toHaveBeenCalledWith(
+        'POST', '/boost', JSON.stringify({ type: 'time', value: 1800 }), 'json', 60000, { raw: true })
     })
     // Flush so any (buggy) follow-up limit/override write would have landed.
     await new Promise((r) => setTimeout(r, 0))
     expect(httpAPI).not.toHaveBeenCalledWith('DELETE', '/limit')
     expect(httpAPI).not.toHaveBeenCalledWith('POST', '/override', expect.anything())
+  })
+
+  it.each([
+    ['refuses it for want of a vehicle data source', { status: 422, body: { msg: 'no vehicle data source for this boost type' } }, 'dashboard.boost.no_vehicle_source'],
+    ['cannot be reached', 'error', 'alert.write_failed_body'],
+  ])('says why when the charger %s', async (_, reply, body) => {
+    status_store.set({ state: 1, total_day: 0, total_energy: 0, boost_version: 1 })
+    httpAPI.mockImplementation((method, url) =>
+      Promise.resolve(method === 'POST' && url === '/boost' ? reply : {}))
+    const { getByText } = render(Dashboard)
+    await fireEvent.click(getByText('dashboard.boost.label'))
+    await fireEvent.click(getByText('dashboard.boost.arm'))
+    await vi.waitFor(() => expect(get(uistates_store).alertbox.visible).toBe(true))
+    expect(get(uistates_store).alertbox.body).toBe(body)
+    expect(httpAPI).not.toHaveBeenCalledWith('GET', '/boost')
   })
 
   it('never DELETEs a system limit from the inline editor, even if events reach it', async () => {

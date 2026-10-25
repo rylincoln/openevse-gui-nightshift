@@ -10,7 +10,6 @@
   import ReadOnlyRow from '../../lib/components/config/ReadOnlyRow.svelte'
   import TextInput from '../../lib/components/ui/TextInput.svelte'
   import PasswordInput from '../../lib/components/ui/PasswordInput.svelte'
-  import { serialQueue } from '../../lib/queue'
   import { httpAPI } from '../../lib/api/httpAPI'
   import { showWriteError } from '../../lib/alerts'
   import { normalizeNetworks, signalIcon, signalPercent, isSecured, type WifiNetwork } from '../../lib/config/wifi'
@@ -49,9 +48,9 @@
     scanError = false
     networks = []
     selected = null
-    const res = await serialQueue.add(() => httpAPI<WifiNetwork[]>('GET', '/scan'))
+    const res = await httpAPI<WifiNetwork[]>('GET', '/scan')
     scanning = false
-    if (!res || res === 'error' || !Array.isArray(res)) {
+    if (res === 'error' || !Array.isArray(res)) {
       scanError = true
       return
     }
@@ -74,9 +73,7 @@
     const normalizedSsid = ssid.trim()
     if (joining || !normalizedSsid) return
     joining = true
-    const ok = await serialQueue.add(() =>
-      config_store.upload({ ssid: normalizedSsid, pass: wifiPass }),
-    )
+    const ok = await config_store.upload({ ssid: normalizedSsid, pass: wifiPass })
     joining = false
     if (ok) {
       joined = true

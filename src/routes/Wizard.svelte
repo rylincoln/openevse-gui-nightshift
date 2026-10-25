@@ -12,7 +12,6 @@
   import { _ } from 'svelte-i18n'
   import { config_store } from '../lib/stores/config'
   import { status_store } from '../lib/stores/status'
-  import { serialQueue } from '../lib/queue'
   import { navigate } from '../lib/router'
   import WizardShell from '../lib/components/wizard/WizardShell.svelte'
   import FinishDialog from '../lib/components/wizard/FinishDialog.svelte'
@@ -93,7 +92,7 @@
   // the device is still reachable, or the wizard would reappear next boot.
   async function markComplete() {
     if (!$config_store?.wizard_passed) {
-      await serialQueue.add(() => config_store.saveParam('wizard_passed', true))
+      await config_store.saveParam('wizard_passed', true)
     }
   }
 

@@ -5,7 +5,6 @@
 // (unassign whatever source was on that pin, then assign the new one) rather
 // than a single field write.
 import { cabletemp_store } from '../stores/cabletemp'
-import { serialQueue } from '../queue'
 import { showWriteError } from '../alerts'
 import { createSaveState, type SaveStateStore } from './saveState'
 import { cableTempSourceOnPin, CABLE_TEMP_PIN_NONE } from '../cabletemp'
@@ -31,7 +30,7 @@ export function createCableTempForm(): CableTempForm {
   let busy = $state(false)
 
   async function refresh(): Promise<boolean> {
-    return serialQueue.add(() => cabletemp_store.download())
+    return cabletemp_store.download()
   }
 
   /**
@@ -51,15 +50,15 @@ export function createCableTempForm(): CableTempForm {
     busy = true
     let ok = true
     if (current !== null) {
-      ok = await serialQueue.add(() => cabletemp_store.upload({ source: current, pin: CABLE_TEMP_PIN_NONE }))
+      ok = await cabletemp_store.upload({ source: current, pin: CABLE_TEMP_PIN_NONE })
     }
     if (ok && newSource !== null) {
-      ok = await serialQueue.add(() => cabletemp_store.upload({ source: newSource, pin }))
+      ok = await cabletemp_store.upload({ source: newSource, pin })
       // The unassign above has already landed. Put the old source back rather
       // than leave the input silently empty on a failed reassign — the user
       // asked to swap a sensor, not to remove one.
       if (!ok && current !== null) {
-        await serialQueue.add(() => cabletemp_store.upload({ source: current, pin }))
+        await cabletemp_store.upload({ source: current, pin })
       }
     }
     // Re-read whatever happened: after a failure the controller's own state
@@ -97,7 +96,7 @@ export function createCableTempForm(): CableTempForm {
       panic_c10: current.panic_c10,
       [field]: value,
     }
-    let ok = await serialQueue.add(() => cabletemp_store.upload(payload))
+    let ok = await cabletemp_store.upload(payload)
     if (ok) ok = await refresh()
     busy = false
 

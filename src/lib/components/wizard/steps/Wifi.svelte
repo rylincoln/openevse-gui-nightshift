@@ -14,7 +14,6 @@
   import { _ } from 'svelte-i18n'
   import { config_store } from '../../../stores/config'
   import { status_store } from '../../../stores/status'
-  import { serialQueue } from '../../../queue'
   import { httpAPI } from '../../../api/httpAPI'
   import { showWriteError } from '../../../alerts'
   import { normalizeNetworks, signalIcon, isSecured } from '../../../config/wifi'
@@ -63,9 +62,9 @@
     scanError = false
     networks = []
     selected = null
-    const res = await serialQueue.add(() => httpAPI('GET', '/scan'))
+    const res = await httpAPI('GET', '/scan')
     scanning = false
-    if (!res || res === 'error' || !Array.isArray(res)) {
+    if (res === 'error' || !Array.isArray(res)) {
       scanError = true
       return
     }
@@ -92,9 +91,7 @@
     // station mode and the softAP drops, so a write issued after this may never
     // reach the device. Doing it first means the wizard won't reappear.
     await beforeJoin()
-    const ok = await serialQueue.add(() =>
-      config_store.upload({ ssid: normalizedSsid, pass: wifiPass }),
-    )
+    const ok = await config_store.upload({ ssid: normalizedSsid, pass: wifiPass })
     joining = false
     if (ok) {
       joined = true

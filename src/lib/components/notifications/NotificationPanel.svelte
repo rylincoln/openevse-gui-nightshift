@@ -14,7 +14,6 @@
   import { sortNewestFirst, advisoryRoute, isKnownAdvisory } from '../../notifications/notifications'
   import type { NormalizedNotification } from '../../notifications/notifications'
   import { formatDuration } from '../../format/duration'
-  import { serialQueue } from '../../queue'
   import { showWriteError } from '../../alerts'
 
   interface Props {
@@ -64,7 +63,7 @@
     if (busyId) return
     busyId = id
     try {
-      const ok = await serialQueue.add(() => notification_store.ack(id))
+      const ok = await notification_store.ack(id)
       // A 404 means the advisory cleared between render and tap. ack()
       // re-reads the list either way, so if it is gone the UI has already
       // corrected itself and there is nothing worth alerting about.

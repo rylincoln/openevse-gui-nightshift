@@ -12,7 +12,6 @@
   import { claims_store } from '../lib/stores/claims'
   import { plan_store } from '../lib/stores/plan'
   import { claimRows } from '../lib/monitoring/metrics'
-  import { serialQueue } from '../lib/queue'
   import { showWriteError } from '../lib/alerts'
   import { DAYS } from '../lib/schedule/timers'
   import {
@@ -213,7 +212,7 @@
   // ── Always-on API helpers ─────────────────────────────────────────────────
   // One config write per feature change, merged into the store on success.
   async function saveAlwaysOn(data: Partial<Config>): Promise<boolean> {
-    const ok = await serialQueue.add(() => config_store.upload(data))
+    const ok = await config_store.upload(data)
     if (ok) config_store.update((c) => ({ ...c, ...data }) as ConfigState)
     return ok
   }
@@ -226,13 +225,9 @@
     // validates this; this is the backstop.)
     const limit: RuleLimit | null = rule.limit
     if (!(limit && limit.type !== 'none' && limit.value > 0)) return false
-    let ok = await serialQueue.add(() =>
-      config_store.saveParam('limit_default_type', limit.type)
-    )
-    if (ok) ok = await serialQueue.add(() =>
-      config_store.saveParam('limit_default_value', limit.value)
-    )
-    if (ok) await serialQueue.add(() => limit_store.download())
+    let ok = await config_store.saveParam('limit_default_type', limit.type)
+    if (ok) ok = await config_store.saveParam('limit_default_value', limit.value)
+    if (ok) await limit_store.download()
     return ok
   }
 
@@ -241,10 +236,10 @@
     if (data) return await saveAlwaysOn(data)
     // Session limit. Report config/limit write failures; removeProp stays
     // best-effort — it returns false for the common no-override-set case too.
-    let ok = await serialQueue.add(() => config_store.saveParam('limit_default_type', 'none'))
-    if (!(await serialQueue.add(() => limit_store.remove()))) ok = false
-    await serialQueue.add(() => override_store.removeProp('charge_current'))
-    await serialQueue.add(() => limit_store.download())
+    let ok = await config_store.saveParam('limit_default_type', 'none')
+    if (!(await limit_store.remove())) ok = false
+    await override_store.removeProp('charge_current')
+    await limit_store.download()
     return ok
   }
 
@@ -253,7 +248,7 @@
     if (busy) return
     busy = true
     try {
-      const ok = await serialQueue.add(() => config_store.saveParam(name, val))
+      const ok = await config_store.saveParam(name, val)
       if (!ok) showWriteError()
     } finally {
       busy = false
@@ -285,7 +280,7 @@
               : 6,
           }
         : { heartbeat_interval: 0, heartbeat_current: 0 }
-      const ok = await serialQueue.add(() => config_store.upload(fields))
+      const ok = await config_store.upload(fields)
       if (ok) config_store.update((c) => ({ ...c, ...fields }) as ConfigState)
       else showWriteError()
     } finally {
@@ -296,10 +291,10 @@
   // ── Temperature protection (combined throttle/panic slider) ───────────────
   // Not busy-guarded: dragging one thumb into the other commits BOTH values in
   // one synchronous burst (TempProtectionCard pushes the crossed thumb along),
-  // and the guard would silently drop the second save. serialQueue already
-  // serializes the writes, matching how Safety.svelte drives the same card.
+  // and the guard would silently drop the second save. httpAPI already sends
+  // the writes one at a time, matching how Safety.svelte drives the same card.
   async function saveTempParam(name: 'temp_throttle_setpoint' | 'over_temp_shutdown', degC: number): Promise<void> {
-    const ok = await serialQueue.add(() => config_store.saveParam(name, degC))
+    const ok = await config_store.saveParam(name, degC)
     if (!ok) showWriteError()
   }
   const saveTempThrottle = (degC: number) => saveTempParam('temp_throttle_setpoint', degC)
@@ -344,11 +339,11 @@
         if (toDelete.size) {
           let ok = true
           for (const id of toDelete) {
-            ok = await serialQueue.add(() => schedule_store.remove(id))
+            ok = await schedule_store.remove(id)
             if (!ok) break
           }
           // Refresh even after a failure — earlier deletes may have landed.
-          await serialQueue.add(() => schedule_store.download())
+          await schedule_store.download()
           if (!ok) { showWriteError(); return }
         }
         // Action changed on global card → clear old config
@@ -378,15 +373,15 @@
         const { add, remove } = rulesToTimers(rule, timers)
         let ok = true
         for (const id of remove) {
-          ok = await serialQueue.add(() => schedule_store.remove(id))
+          ok = await schedule_store.remove(id)
           if (!ok) break
         }
         if (ok) for (const timer of add) {
-          ok = await serialQueue.add(() => schedule_store.upload(timer))
+          ok = await schedule_store.upload(timer)
           if (!ok) break
         }
         // Refresh even after a failure so the UI reflects partial writes.
-        await serialQueue.add(() => schedule_store.download())
+        await schedule_store.download()
         if (!ok) showWriteError()
       }
     } finally {
@@ -416,11 +411,11 @@
     try {
       let ok = true
       for (const id of ruleDeleteIds(rule)) {
-        ok = await serialQueue.add(() => schedule_store.remove(id))
+        ok = await schedule_store.remove(id)
         if (!ok) break
       }
       // Refresh even after a failure — the start event may already be gone.
-      await serialQueue.add(() => schedule_store.download())
+      await schedule_store.download()
       if (!ok) showWriteError()
     } finally {
       busy = false

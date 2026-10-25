@@ -8,7 +8,7 @@ vi.mock('svelte-i18n', () => {
   return { _: t }
 })
 
-vi.mock('../../api/httpAPI', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../api/httpAPI', async (importOriginal) => ({ ...(await importOriginal()), httpAPI: vi.fn() }))
 
 import { httpAPI } from '../../api/httpAPI'
 import { config_store } from '../../stores/config'

@@ -11,8 +11,7 @@
   import { energy_store } from '../lib/stores/energy'
   import { uisettings_store } from '../lib/stores/uisettings'
   import { loadsharing_store } from '../lib/stores/loadsharing'
-  import { httpAPI } from '../lib/api/httpAPI'
-  import { serialQueue } from '../lib/queue'
+  import { httpAPI, accepted } from '../lib/api/httpAPI'
   import { EvseClients } from '../lib/vars'
   import { sec2time, temp_round, round, clientid2name, hardMaxCurrent } from '../lib/utils'
   import { formatTemp } from '../lib/temperature'
@@ -216,16 +215,13 @@
   // Bumped on a failed bar write to remount the card back to the confirmed value.
   let socNonce = $state(0)
 
-  // ── actions (all writes serialized) ─────────────────────────────────────
-  // The charge mode's charger seam: every write goes through the queue.
+  // ── actions ─────────────────────────────────────────────────────────────
+  // The charge mode's charger seam.
   const charger: ChargeModeCharger = {
-    setOverride: (o) => serialQueue.add(() => override_store.upload(o)),
-    clearOverride: () => serialQueue.add(() => override_store.clear()),
-    setDivertMode: async (dm) => {
-      const res = await serialQueue.add(() => httpAPI('POST', '/divertmode', `divertmode=${dm}`, 'text'))
-      return res !== false && res !== 'error'
-    },
-    clearLimit: () => serialQueue.add(() => limit_store.remove()),
+    setOverride: (o) => override_store.upload(o),
+    clearOverride: () => override_store.clear(),
+    setDivertMode: async (dm) => accepted(await httpAPI('POST', '/divertmode', `divertmode=${dm}`, 'text')),
+    clearLimit: () => limit_store.remove(),
   }
 
   function setSegment(seg: ControlSegment): Promise<void> {
@@ -255,9 +251,9 @@
         }
         return clearLimit()
       }
-      const ok = await serialQueue.add(() => limit_store.upload({ type, value, auto_release: true }))
+      const ok = await limit_store.upload({ type, value, auto_release: true })
       if (ok) {
-        await serialQueue.add(() => limit_store.download())
+        await limit_store.download()
       } else {
         showWriteError()
         socNonce++
@@ -266,7 +262,7 @@
   }
 
   async function clearLimit(): Promise<void> {
-    const ok = await serialQueue.add(() => limit_store.remove())
+    const ok = await limit_store.remove()
     if (!ok) {
       showWriteError()
       socNonce++ // remount the card so a dragged-to-zero knob reverts
@@ -285,15 +281,15 @@
           socNonce++
           ok = true
         } else {
-          ok = barLimitActive ? await serialQueue.add(() => limit_store.remove()) : true
+          ok = barLimitActive ? await limit_store.remove() : true
         }
       } else {
         const data: Limit =
           limitUnit === 'range' && maxRange !== null
             ? { type: 'range', value: Math.round((pct / 100) * maxRange), auto_release: true }
             : { type: 'soc', value: pct, auto_release: true }
-        ok = await serialQueue.add(() => limit_store.upload(data))
-        if (ok) await serialQueue.add(() => limit_store.download())
+        ok = await limit_store.upload(data)
+        if (ok) await limit_store.download()
       }
       if (!ok) {
         showWriteError()
@@ -348,24 +344,24 @@
 
   function armBoost({ type, value }: { type: LimitType; value: number }): Promise<void> {
     return writes.run('boost', async () => {
-      const res = await serialQueue.add(() => boost_store.upload({ type, value }))
-      if (res && res !== 'error' && res.msg === 'done') {
+      const res = await boost_store.upload({ type, value })
+      if (res.ok) {
         // Reconcile from the device rather than trusting the 201: an
         // already-met soc/range target also returns 201 but leaves nothing
         // running, so flipping to "active" here would show a ghost boost.
-        await serialQueue.add(boost_store.download)
-      } else if (res && res !== 'error' && res.msg) {
-        showBoostError(res.msg) // 422 (no vehicle source) / 400 (bad value)
+        await boost_store.download()
+      } else if (res.reason) {
+        showBoostError(res.reason) // 422 (no vehicle source) / 400 (bad value)
       } else {
-        showWriteError() // network / parse failure
+        showWriteError() // the charger could not be reached
       }
     })
   }
 
   function cancelBoost(): Promise<void> {
     return writes.run('boost', async () => {
-      await serialQueue.add(() => boost_store.remove())
-      await serialQueue.add(boost_store.download)
+      await boost_store.remove()
+      await boost_store.download()
     })
   }
 

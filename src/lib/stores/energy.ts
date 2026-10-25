@@ -1,6 +1,5 @@
 import { writable, get, type Readable, type Writable } from 'svelte/store'
-import { httpAPI, isErrorBody, type ApiResult } from '../api/httpAPI'
-import { serialQueue } from '../queue'
+import { httpAPI, accepted } from '../api/httpAPI'
 import type {
   EnergyRaw,
   EnergyDaily,
@@ -76,11 +75,9 @@ function createEnergyStore(): EnergyStore {
     const url = before > 0 ? `/energy/raw?before=${before}` : '/energy/raw'
     setLoading('raw', true)
     setError('raw', false)
-    const res: ApiResult<EnergyRaw | ErrorBody> | false = await serialQueue.add(() =>
-      httpAPI<EnergyRaw | ErrorBody>('GET', url),
-    )
+    const res = await httpAPI<EnergyRaw | ErrorBody>('GET', url)
     setLoading('raw', false)
-    if (!res || res === 'error' || isErrorBody(res) || !Array.isArray(res.samples)) {
+    if (!accepted(res) || !Array.isArray(res.samples)) {
       setError('raw', true)
       return false
     }
@@ -114,11 +111,9 @@ function createEnergyStore(): EnergyStore {
   ): Promise<boolean> {
     setLoading(key, true)
     setError(key, false)
-    const res: ApiResult<Record<string, unknown>> | false = await serialQueue.add(() =>
-      httpAPI<Record<string, unknown>>('GET', urlPath),
-    )
+    const res = await httpAPI<Record<string, unknown>>('GET', urlPath)
     setLoading(key, false)
-    if (!res || res === 'error' || res.msg === 'error' || !Array.isArray(res[fieldName])) {
+    if (!accepted(res) || !Array.isArray(res[fieldName])) {
       setError(key, true)
       return false
     }

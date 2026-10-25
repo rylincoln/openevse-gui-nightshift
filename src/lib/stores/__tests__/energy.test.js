@@ -5,10 +5,6 @@ vi.mock('../../api/httpAPI', async (importOriginal) => ({
   ...(await importOriginal()),
   httpAPI: vi.fn(),
 }))
-vi.mock('../../queue', () => ({
-  serialQueue: { add: vi.fn((fn) => fn()) },
-}))
-
 import { energy_store } from '../energy'
 import { httpAPI } from '../../api/httpAPI'
 

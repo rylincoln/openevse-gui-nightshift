@@ -1,11 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI', () => ({ httpAPI: vi.fn() }))
-vi.mock('../../queue', () => ({
-  serialQueue: { add: vi.fn((fn) => fn()) },
-}))
-
+vi.mock('../../api/httpAPI', async (importOriginal) => ({ ...(await importOriginal()), httpAPI: vi.fn() }))
 import { rfid_users_store } from '../rfid_users'
 import { httpAPI } from '../../api/httpAPI'
 

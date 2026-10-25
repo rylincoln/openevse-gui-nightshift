@@ -1,5 +1,5 @@
 import { get, writable, type Writable } from 'svelte/store'
-import { httpAPI, isErrorBody } from '../api/httpAPI'
+import { httpAPI, accepted } from '../api/httpAPI'
 import { status_store } from './status'
 import type { Override, ErrorBody, WriteResponse } from '../api/device'
 
@@ -23,24 +23,17 @@ function createOverrideStore(): Writable<Override | undefined> & {
   const { subscribe, set, update } = P
 
   async function download(): Promise<boolean> {
-    const res = await httpAPI<Override | ErrorBody>('GET', '/override')
-    if (res && res !== 'error' && !('msg' in res)) {
-      P.update(() => res)
-      return true
-    } else if (res && res !== 'error' && 'msg' in res && res.msg === 'No manual override') {
-      const store: Override = {}
-      P.update(() => store)
-      return true
-    } else {
-      return false
-    }
+    const res = await httpAPI<Override | ErrorBody | { msg: string }>('GET', '/override')
+    if (!accepted(res)) return false
+    // No override is {} — or, before firmware v5, {"msg":"No manual override"}.
+    P.update(() => ('msg' in res ? {} : res))
+    return true
   }
   async function upload(data: Override): Promise<boolean> {
     const res = await httpAPI<WriteResponse>('POST', '/override', JSON.stringify(data))
     // Update the store only on a confirmed success — never show an
-    // override the device did not accept. httpAPI yields "error" on a
-    // failed request; a msg:"error" body is also a failure.
-    if (res && res !== 'error' && res?.msg !== 'error') {
+    // override the device did not accept.
+    if (accepted(res)) {
       P.update(() => data)
       return true
     }
@@ -49,8 +42,7 @@ function createOverrideStore(): Writable<Override | undefined> & {
   async function clear(): Promise<boolean> {
     if (get(override_store)) {
       const res = await httpAPI('DELETE', '/override')
-      // httpAPI resolves a failed request to the (truthy) string 'error'.
-      if (res !== 'error' && !isErrorBody(res)) {
+      if (accepted(res)) {
         const store: Override = {}
         P.update(() => store)
         return true
@@ -59,10 +51,7 @@ function createOverrideStore(): Writable<Override | undefined> & {
   }
 
   async function toggle(): Promise<boolean> {
-    const res = await httpAPI<WriteResponse>('PATCH', '/override')
-    if (res !== 'error' && res.msg === 'Updated') {
-      return true
-    } else return false
+    return accepted(await httpAPI<WriteResponse>('PATCH', '/override'))
   }
 
   async function removeProp(prop: keyof Override): Promise<boolean> {

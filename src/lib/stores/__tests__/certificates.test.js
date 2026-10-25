@@ -22,23 +22,30 @@ describe('certificate_store', () => {
     expect(typeof certificate_store.remove).toBe('function')
   })
 
+  // The firmware explains a refusal (501 on builds without mbedTLS), so the
+  // request reads the status and the body together.
   it('generates a self-signed certificate', async () => {
-    httpAPI.mockResolvedValue({ msg: 'done', id: 'abc123' })
+    httpAPI.mockResolvedValue({ status: 200, body: { msg: 'done', id: 'abc123' } })
 
     const result = await certificate_store.generateSelfSigned()
-    expect(httpAPI).toHaveBeenCalledWith('POST', '/certificates/self-signed')
+    expect(httpAPI).toHaveBeenCalledWith('POST', '/certificates/self-signed', null, 'json', 60000, { raw: true })
     expect(result).toEqual({ success: true, id: 'abc123' })
   })
 
   it('passes the firmware message through when self-signing is unavailable', async () => {
-    // Builds without mbedTLS answer 501 rather than generating a key.
     httpAPI.mockResolvedValue({
-      msg: 'Self-signed certificate generation is not available in native builds.',
+      status: 501,
+      body: { msg: 'Self-signed certificate generation is not available in native builds.' },
     })
 
     const result = await certificate_store.generateSelfSigned()
     expect(result.success).toBe(false)
     expect(result.msg).toContain('not available')
+  })
+
+  it('reports no message when the charger cannot be reached', async () => {
+    httpAPI.mockResolvedValue('error')
+    expect(await certificate_store.generateSelfSigned()).toEqual({ success: false, msg: null })
   })
 
   it('should download certificates', async () => {
@@ -63,28 +70,16 @@ describe('certificate_store', () => {
     expect(result).toBe(false)
   })
 
-  it('should upload certificate and return result with success flag', async () => {
+  it('uploads a certificate, reporting the charger accepted it', async () => {
     httpAPI.mockResolvedValue({ msg: 'done' })
     const data = { name: 'newcert', pem: '...' }
-    const result = await certificate_store.upload(data)
-    expect(result.success).toBe(true)
+    expect(await certificate_store.upload(data)).toBe(true)
     expect(httpAPI).toHaveBeenCalledWith('POST', '/certificates', JSON.stringify(data))
   })
 
-  it('should set success to false on upload failure', async () => {
-    httpAPI.mockResolvedValue({ msg: 'error' })
-    const result = await certificate_store.upload({})
-    expect(result.success).toBe(false)
-  })
-
-  it('does not throw when the request fails outright (httpAPI resolves the error sentinel)', async () => {
-    httpAPI.mockResolvedValue('error')
-    const data = { name: 'newcert', pem: '...' }
-
-    const result = await certificate_store.upload(data)
-
-    expect(result).toBeTruthy()
-    expect(result.success).toBe(false)
+  it.each([['error'], [{ msg: 'error' }]])('reports a refused or failed upload (%j)', async (reply) => {
+    httpAPI.mockResolvedValue(reply)
+    expect(await certificate_store.upload({ name: 'newcert', pem: '...' })).toBe(false)
   })
 
   it('should remove certificate by id', async () => {

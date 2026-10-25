@@ -1,6 +1,5 @@
 import { writable, type Writable } from 'svelte/store'
-import { httpAPI, isErrorBody, type ApiResult } from '../api/httpAPI'
-import { serialQueue } from '../queue'
+import { httpAPI, accepted } from '../api/httpAPI'
 import type { LoadSharingPeer, LoadSharingStatus, ErrorBody, WriteResponse } from '../api/device'
 
 export interface LoadSharingState {
@@ -23,10 +22,8 @@ function createLoadSharingStore(): LoadSharingStore {
   const { subscribe, set, update } = P
 
   async function downloadPeers(): Promise<boolean> {
-    const res: ApiResult<LoadSharingPeer[] | ErrorBody> | false = await serialQueue.add(() =>
-      httpAPI<LoadSharingPeer[] | ErrorBody>('GET', '/loadsharing/peers'),
-    )
-    if (res && res !== 'error' && !isErrorBody(res)) {
+    const res = await httpAPI<LoadSharingPeer[] | ErrorBody>('GET', '/loadsharing/peers')
+    if (accepted(res)) {
       update((s) => ({ ...s, peers: Array.isArray(res) ? res : [] }))
       return true
     }
@@ -34,10 +31,8 @@ function createLoadSharingStore(): LoadSharingStore {
   }
 
   async function downloadStatus(): Promise<boolean> {
-    const res: ApiResult<LoadSharingStatus | ErrorBody> | false = await serialQueue.add(() =>
-      httpAPI<LoadSharingStatus | ErrorBody>('GET', '/loadsharing/status'),
-    )
-    if (res && res !== 'error' && !isErrorBody(res)) {
+    const res = await httpAPI<LoadSharingStatus | ErrorBody>('GET', '/loadsharing/status')
+    if (accepted(res)) {
       update((s) => ({ ...s, status: res }))
       return true
     }
@@ -45,28 +40,21 @@ function createLoadSharingStore(): LoadSharingStore {
   }
 
   async function addPeer(host: string): Promise<boolean> {
-    const res: ApiResult<WriteResponse> | false = await serialQueue.add(() =>
-      httpAPI<WriteResponse>('POST', '/loadsharing/peers', JSON.stringify({ host })),
-    )
-    return !!res && res !== 'error' && (res.msg === 'done' || res.msg === 'already in group')
+    // "done" or "already in group": either way the peer is in the group.
+    return accepted(await httpAPI<WriteResponse>('POST', '/loadsharing/peers', JSON.stringify({ host })))
   }
 
   async function removePeer(host: string): Promise<boolean> {
-    const res: ApiResult<WriteResponse> | false = await serialQueue.add(() =>
-      httpAPI<WriteResponse>('DELETE', `/loadsharing/peers/${encodeURIComponent(host)}`),
-    )
-    return !!res && res !== 'error' && res.msg === 'done'
+    return accepted(await httpAPI<WriteResponse>('DELETE', `/loadsharing/peers/${encodeURIComponent(host)}`))
   }
 
   async function setPeerPriority(host: string, priority: number): Promise<boolean> {
-    const res: ApiResult<WriteResponse> | false = await serialQueue.add(() =>
-      httpAPI<WriteResponse>(
-        'PUT',
-        `/loadsharing/peers/${encodeURIComponent(host)}`,
-        JSON.stringify({ priority }),
-      ),
+    const res = await httpAPI<WriteResponse>(
+      'PUT',
+      `/loadsharing/peers/${encodeURIComponent(host)}`,
+      JSON.stringify({ priority }),
     )
-    if (res && res !== 'error' && res.msg === 'done') {
+    if (accepted(res)) {
       await refresh()
       return true
     }
@@ -74,10 +62,7 @@ function createLoadSharingStore(): LoadSharingStore {
   }
 
   async function discover(): Promise<boolean> {
-    const res: ApiResult<WriteResponse> | false = await serialQueue.add(() =>
-      httpAPI<WriteResponse>('POST', '/loadsharing/discover'),
-    )
-    return !!res && res !== 'error' && res.msg === 'done'
+    return accepted(await httpAPI<WriteResponse>('POST', '/loadsharing/discover'))
   }
 
   async function refresh(): Promise<boolean> {
