@@ -124,7 +124,7 @@
         max={3600}
         unit="s"
         revert={form.revert}
-        onchange={(v) => form.saveField('scheduler_start_window', v ?? 0)}
+        onchange={(v) => form.saveField('scheduler_start_window', v)}
       />
     </FormField>
     {#if $config_store?.led_brightness !== undefined}
@@ -201,14 +201,14 @@
           <NumberInput
             value={$config_store?.scale ?? 0}
             revert={form.revert}
-            onchange={(v) => form.saveField('scale', v ?? 0)}
+            onchange={(v) => form.saveField('scale', v)}
           />
         </FormField>
         <FormField label={$_('config.evse.offset')} status={$ss.offset ?? 'idle'}>
           <NumberInput
             value={$config_store?.offset ?? 0}
             revert={form.revert}
-            onchange={(v) => form.saveField('offset', v ?? 0)}
+            onchange={(v) => form.saveField('offset', v)}
           />
         </FormField>
 

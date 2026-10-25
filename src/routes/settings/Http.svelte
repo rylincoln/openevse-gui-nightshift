@@ -75,7 +75,7 @@
   // the section can say so instead of leaving the user to discover it.
   let restartPending = $state(false)
 
-  async function saveServerField<K extends keyof Config>(name: K, value: Config[K]): Promise<void> {
+  async function saveServerField<K extends keyof Config>(name: K, value: Config[K] | null): Promise<void> {
     if (await form.saveField(name, value)) restartPending = true
   }
 
@@ -163,7 +163,7 @@
           min={1}
           max={65535}
           step={1}
-          onchange={(v) => saveServerField('www_https_port', v ?? 443)}
+          onchange={(v) => saveServerField('www_https_port', v)}
         />
       </FormField>
       {#if httpsIncomplete}
