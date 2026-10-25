@@ -84,15 +84,17 @@
 
 {#snippet pillRow()}
   <!-- Rendered inside the editors' header line, right-aligned where the old
-       %/km toggle lived — the progress/remaining text keeps the top-left. -->
-  <div role="radiogroup" aria-label={$_('dashboard.limit.pills_aria')} class="flex shrink-0 flex-wrap justify-end gap-1.5">
+       %/km toggle lived — the progress/remaining text keeps the top-left.
+       Where both don't fit (narrow phones) the header wraps and the pills
+       take their own line rather than truncating the progress text. -->
+  <div role="radiogroup" aria-label={$_('dashboard.limit.pills_aria')} class="ml-auto flex shrink-0 flex-wrap justify-end gap-1.5">
     {#each pills as pill}
       <button
         type="button"
         role="radio"
         aria-checked={selected === pill.id}
         onclick={() => pick(pill.id)}
-        class="relative rounded-full border px-3 py-1 text-[11px] font-semibold transition
+        class="tap-target rounded-full border px-3 py-1 text-[11px] font-semibold transition
                {selected === pill.id
                  ? 'border-accent text-accent'
                  : 'border-border text-text-dim'}"

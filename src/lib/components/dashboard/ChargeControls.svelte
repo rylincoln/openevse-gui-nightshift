@@ -46,7 +46,7 @@
           aria-checked={segment === seg}
           {disabled}
           onclick={() => onsegment(seg)}
-          class="flex-1 rounded-lg py-2.5 text-[13px] font-semibold transition
+          class="min-h-11 flex-1 rounded-lg py-2.5 text-[13px] font-semibold transition
                  disabled:cursor-not-allowed disabled:opacity-40
                  {segment === seg
                    ? 'bg-accent text-surface shadow-[var(--accent-glow)]'

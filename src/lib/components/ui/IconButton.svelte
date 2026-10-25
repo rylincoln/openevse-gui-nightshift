@@ -17,7 +17,7 @@
   {disabled}
   {onclick}
   aria-label={label}
-  class="grid place-items-center rounded-full p-2 text-text-dim
+  class="grid min-h-11 min-w-11 place-items-center rounded-full p-2 text-text-dim
          hover:text-text disabled:opacity-40"
 >
   <Icon {icon} {size} />

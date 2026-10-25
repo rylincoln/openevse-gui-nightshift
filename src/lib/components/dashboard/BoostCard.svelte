@@ -235,7 +235,7 @@
               aria-checked={selected === dim.id}
               {disabled}
               onclick={() => (userPick = dim.id)}
-              class="rounded-full border px-3 py-1 text-[11px] font-semibold transition
+              class="tap-target rounded-full border px-3 py-1 text-[11px] font-semibold transition
                      disabled:cursor-not-allowed disabled:opacity-40
                      {selected === dim.id ? 'border-accent text-accent' : 'border-border text-text-dim'}"
             >

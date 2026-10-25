@@ -380,6 +380,22 @@ describe('Dashboard', () => {
     })
   })
 
+  // On a phone the section is one flex column ordered by max-lg:order-*.
+  // What the charger is doing comes first, then the controls that change it,
+  // and only then the readouts — not the mode control 800 px down.
+  it('puts the status, then the controls, then the readouts on a phone', () => {
+    status_store.set({ state: 3, vehicle: 1, power: 7000, voltage: 240, amp: 32000, session_energy: 0, session_elapsed: 0, temp: 0, pilot: 32, battery_level: 60 })
+    const { container, getByRole, getByText } = render(Dashboard)
+    const order = (el) => Number(/max-lg:order-(\d+)/.exec(el.closest('[class*="max-lg:order-"]').className)[1])
+    const status = order(container.querySelector('[data-status-line]'))
+    const mode = order(getByRole('radiogroup', { name: 'dashboard.mode.aria' }))
+    const limit = order(getByRole('radiogroup', { name: 'dashboard.limit.pills_aria' }))
+    const tiles = order(getByText('dashboard.chips.charging_current'))
+    expect(status).toBeLessThan(mode)
+    expect(mode).toBeLessThan(limit)
+    expect(limit).toBeLessThan(tiles)
+  })
+
   it('carries the desktop two-column grid classes', () => {
     status_store.set({ state: 1, total_day: 0, total_energy: 0 })
     const { container } = render(Dashboard)

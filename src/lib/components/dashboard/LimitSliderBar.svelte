@@ -113,7 +113,7 @@
 <div>
   <!-- header: remaining / hint on the left; the card's pills (when provided)
        take the right edge, otherwise the scale max shows there. -->
-  <div class="mb-3 flex items-center justify-between gap-2 text-xs">
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs">
     <span class="min-w-0 truncate text-text">
       {#if active && remaining}
         {remaining} {$_('dashboard.limit.left')}

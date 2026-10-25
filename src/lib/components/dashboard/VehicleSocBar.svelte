@@ -103,7 +103,7 @@
   <!-- header: info line left, the card's pills (when provided) right. The
        "to full" note shares the line only where there's room; on phones it
        moves to a caption under the bar instead of colliding with the pills. -->
-  <div class="mb-3 flex items-center justify-between gap-2">
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
     <span class="min-w-0 truncate text-xs text-text">
       <!-- ml-1, not a leading space: Svelte collapses the whitespace away -->
       {progress}{#if toFull}<span class="ml-1 max-sm:hidden">· {$_('dashboard.vehicle.to_full', { values: { time: toFull } })}</span>{/if}

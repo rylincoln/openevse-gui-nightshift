@@ -512,14 +512,15 @@
   {/if}
 
   <!-- Act column: throttle, mode controls.
-       max-lg:contents dissolves the wrapper on mobile; max-lg:order-* on the
-       children preserves today's visual order in the section's flex-col. -->
+       max-lg:contents dissolves the wrapper on mobile, where max-lg:order-*
+       sets a phone's reading order: status (hero), then the controls that
+       change it (mode, boost, charge limit), then the readouts. -->
   <div class="max-lg:contents lg:flex lg:flex-col">
-    <div class="max-lg:order-3"><ThrottleBadge /></div>
+    <div class="max-lg:order-2"><ThrottleBadge /></div>
 
     <!-- Segmented mode control. Stays visible (disabled) during a fault so the
          layout doesn't reflow. -->
-    <div class="max-lg:order-5">
+    <div class="max-lg:order-3">
       <ChargeControls
         segment={chargeSegment}
         divertEnabled={showEco}
@@ -551,7 +552,7 @@
 
   <!-- Observe column: stat chips -->
   <div class="max-lg:contents lg:flex lg:flex-col">
-    <div class="max-lg:order-4">
+    <div class="max-lg:order-5">
       <StatChips {charging} {live} {summary} {sessionCost} {currentLimited} />
       <ShaperDivertRow />
       {#if loadSharing}
@@ -562,7 +563,7 @@
 
   <!-- SOC / charge-limit card: full content width on desktop, below the columns -->
   {#if display !== 'error'}
-    <div class="max-lg:order-6 lg:col-span-2">
+    <div class="max-lg:order-4 lg:col-span-2">
       {#key socNonce}
         <ChargeLimitCard
           {hasSoc}
