@@ -46,11 +46,13 @@
   const rangeUnit = $derived($_(rangeMiles ? 'units.miles' : 'units.km'))
 
   // ── dimension selection ────────────────────────────────────────────────
+  // Same order as the charge limit control's pills, so a target sits in the
+  // same place in both.
   let dims = $derived([
-    { id: 'time' as LimitType, labelKey: 'dashboard.boost.type_time' },
-    { id: 'energy' as LimitType, labelKey: 'dashboard.boost.type_energy' },
     ...(hasSoc ? [{ id: 'soc' as LimitType, labelKey: 'dashboard.boost.type_soc' }] : []),
     ...(canRange ? [{ id: 'range' as LimitType, labelKey: 'dashboard.boost.type_range' }] : []),
+    { id: 'time' as LimitType, labelKey: 'dashboard.boost.type_time' },
+    { id: 'energy' as LimitType, labelKey: 'dashboard.boost.type_energy' },
   ])
   let userPick = $state<LimitType>('time')
   let selected = $derived(dims.some((d) => d.id === userPick) ? userPick : 'time')
