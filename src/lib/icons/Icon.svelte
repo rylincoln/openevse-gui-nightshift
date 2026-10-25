@@ -9,4 +9,5 @@
   let { icon, size = 20, class: klass = '' }: Props = $props()
 </script>
 
-<iconify-icon icon={icon} width={size} height={size} class={klass}></iconify-icon>
+<!-- Decorative: the label beside it, or the control around it, carries the name. -->
+<iconify-icon icon={icon} width={size} height={size} class={klass} aria-hidden="true"></iconify-icon>

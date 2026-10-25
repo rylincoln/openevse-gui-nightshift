@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { _ } from 'svelte-i18n'
   import { currentPath } from '../../router'
+  import { pageTitle } from '../../pageTitle'
   import { routes, NotFound, LEGACY_ROUTES } from '../../routes'
   import { status_store } from '../../stores/status'
   import { uistates_store } from '../../stores/uistates'
@@ -18,6 +20,10 @@
   let wsConnected = $derived($uistates_store?.ws_connected ?? true)
   let error = $derived($uistates_store?.error ?? false)
   let fault = $derived(error ? (getStateDesc($status_store?.state) ?? '') : '')
+
+  $effect(() => {
+    document.title = pageTitle($currentPath, deviceName, $_)
+  })
 
   // Without scroll restoration, navigating between long pages (e.g. Settings
   // index → Firmware) would land the user wherever the previous page was

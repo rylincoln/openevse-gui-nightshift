@@ -949,7 +949,9 @@
     "settings": "Ajustes"
   },
   "header": {
-    "app_menu": "Menú de la app"
+    "app_menu": "Menú de la app",
+    "theme_dark": "Cambiar al tema oscuro",
+    "theme_light": "Cambiar al tema claro"
   },
   "connection": {
     "connected": "Conectado",

@@ -445,6 +445,9 @@
   class="flex flex-col px-4 pb-4 lg:mx-auto lg:grid lg:w-full lg:max-w-5xl
          lg:grid-cols-2 lg:items-start lg:gap-x-6"
 >
+  <!-- The status line is the visible headline; this gives the page outline
+       the top level every other screen has. -->
+  <h1 class="sr-only">{$_('nav.home')}</h1>
   <!-- Above the hero in both layouts: no `order`, so it precedes the
        order-1 hero on mobile, and it spans the desktop grid. Renders nothing
        unless there is an unmuted critical advisory. -->

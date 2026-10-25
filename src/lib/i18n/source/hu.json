@@ -949,7 +949,9 @@
     "settings": "Beállítások"
   },
   "header": {
-    "app_menu": "App menü"
+    "app_menu": "App menü",
+    "theme_dark": "Váltás sötét témára",
+    "theme_light": "Váltás világos témára"
   },
   "connection": {
     "connected": "Csatlakoztatva",

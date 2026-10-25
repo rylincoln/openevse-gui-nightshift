@@ -55,7 +55,7 @@
     <NotificationBell />
     <IconButton
       icon={$theme.resolved === 'dark' ? 'mdi:weather-sunny' : 'mdi:weather-night'}
-      label="Toggle theme"
+      label={$_($theme.resolved === 'dark' ? 'header.theme_light' : 'header.theme_dark')}
       onclick={() => theme.setTheme($theme.resolved === 'dark' ? 'light' : 'dark')}
     />
     <!-- The dot wears the same p-2 as an IconButton so the whole cluster is
@@ -64,6 +64,7 @@
          8px nearer the header edge than any icon does. -->
     <span class="grid place-items-center p-2">
       <span
+        role="img"
         aria-label={$_(statusKey)}
         title={$_(statusKey)}
         class="h-2.5 w-2.5 rounded-full {connected ? 'bg-accent' : 'bg-error'}"

@@ -44,6 +44,13 @@ describe('Dashboard', () => {
   // either hero.
   const statusLine = (container) => within(container.querySelector('[data-status-line]'))
 
+  // Every other screen has an h1; Home's gives the outline its top.
+  it('has a level-one heading', () => {
+    status_store.set({ state: 1 })
+    const { getByRole } = render(Dashboard)
+    expect(getByRole('heading', { level: 1, name: 'nav.home' })).toBeInTheDocument()
+  })
+
   it('says it is charging, and why, when state is 3', () => {
     status_store.set({ state: 3, power: 7000, voltage: 240, amp: 32000, session_energy: 12300, session_elapsed: 6129, temp: 427, pilot: 32, max_current: 48 })
     const { container } = render(Dashboard)
