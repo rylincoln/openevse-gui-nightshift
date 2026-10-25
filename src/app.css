@@ -107,6 +107,16 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
+/* One style for every section heading, from the Settings hub to Charge
+   Manager to a settings page: larger and stronger than a field label, in
+   sentence case. */
+@utility section-title {
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
 /* A small control (a pill, a text link) keeps its look but takes taps over at
    least 44 x 44 px, centred on it: an invisible ::after box, so layout and
    neighbours don't move. The control must not clip overflow. */
@@ -140,11 +150,17 @@ body {
   .breathe { animation: none; transform: none; }
 }
 
-/* Charging shimmer: a slow accent gradient that drifts toward the charge edge.
-   Applied to the SOC-bar fill only while charging. Replaces the static fill
-   gradient (bg-gradient-to-r from-accent to-cyan-400) for the charging state. */
+/* Charging shimmer: a lighter band of the accent that drifts toward the
+   charge edge. Applied to the SOC-bar fill only while charging; otherwise the
+   fill is plain accent. */
 .soc-shimmer {
-  background-image: linear-gradient(90deg, var(--accent), #7dd3fc, #22d3ee, var(--accent));
+  background-color: var(--accent);
+  background-image: linear-gradient(
+    90deg,
+    var(--accent),
+    color-mix(in oklab, var(--accent) 65%, white),
+    var(--accent)
+  );
   background-size: 200% 100%;
   animation: soc-shimmer-flow 2.2s linear infinite;
   will-change: background-position;

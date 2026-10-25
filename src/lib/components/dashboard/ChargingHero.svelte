@@ -74,13 +74,13 @@
   <div class="flex items-center justify-center gap-6 py-3">
     <div class="text-center">
       <div class="text-4xl font-extrabold leading-none text-text">{kw}</div>
-      <div class="mt-0.5 text-[10px] font-bold tracking-widest text-accent">KW</div>
+      <div class="mt-0.5 text-xs font-semibold text-accent">{$_('units.kw')}</div>
     </div>
     {#if hasSoc && soc != null}
       <div class="w-px self-stretch bg-border"></div>
       <div class="text-center">
         <div class="text-4xl font-extrabold leading-none text-text">{Math.round(soc)}<span class="text-xl">%</span></div>
-        <div class="mt-0.5 text-[10px] font-bold tracking-wide text-text-dim">
+        <div class="mt-0.5 text-xs font-semibold text-text-dim">
           {#if target != null}
             {$_('dashboard.session.soc_target', { values: { target } })}
           {/if}

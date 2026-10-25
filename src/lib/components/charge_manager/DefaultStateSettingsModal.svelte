@@ -95,7 +95,7 @@
             onchange={onHeartbeatInterval}
           />
         </div>
-        <div class="mt-3 mb-1 flex items-baseline justify-between text-[10px] uppercase tracking-wide text-text-dim">
+        <div class="mt-3 mb-1 flex items-baseline justify-between text-xs text-text-dim">
           <span>{$_('config.security.heartbeat_current')}</span>
           <span class="font-semibold normal-case text-text">{heartbeatCurrent} A</span>
         </div>
@@ -109,7 +109,7 @@
           ariaLabel={$_('config.security.heartbeat_current')}
           onchange={onHeartbeatCurrent}
         />
-        <div class="mt-1 flex justify-between text-[10px] text-text-dim">
+        <div class="mt-1 flex justify-between text-[11px] text-text-dim">
           <span>6 A</span>
           <span>{heartbeatMax} A</span>
         </div>

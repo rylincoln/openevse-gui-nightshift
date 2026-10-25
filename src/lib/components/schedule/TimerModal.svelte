@@ -62,7 +62,7 @@
   {/if}
 
   <label class="mt-4 block">
-    <span class="mb-1 block text-[10px] tracking-wide text-text-dim uppercase">{$_('schedule.time')}</span>
+    <span class="mb-1 block text-xs text-text-dim">{$_('schedule.time')}</span>
     <input
       type="time"
       bind:value={time}
@@ -71,7 +71,7 @@
   </label>
 
   <div class="mt-4">
-    <span class="mb-1 block text-[10px] tracking-wide text-text-dim uppercase">{$_('schedule.state')}</span>
+    <span class="mb-1 block text-xs text-text-dim">{$_('schedule.state')}</span>
     <SegmentedControl options={stateOptions} value={timerState} onchange={pickState} />
   </div>
 

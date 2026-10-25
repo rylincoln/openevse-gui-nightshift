@@ -62,7 +62,7 @@
       <StatChip value={`${live.temp}${$_(live.tempUnit)}`} label={$_('dashboard.chips.temp')} />
     </div>
   {:else}
-    <div class="flex justify-center gap-6 rounded-xl bg-surface-2 py-2 text-[10px] text-text-dim">
+    <div class="flex justify-center gap-6 rounded-xl bg-surface-2 py-2 text-[11px] text-text-dim">
       <span>{$_('dashboard.summary.today')} <b class="text-text"><span>{summary.todayKwh}</span> kWh</b></span>
       <span>{$_('dashboard.summary.total')} <b class="text-text"><span>{summary.totalKwh}</span> kWh</b></span>
     </div>

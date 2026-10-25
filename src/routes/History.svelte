@@ -132,28 +132,30 @@
   })
 </script>
 
-<section class="p-4 lg:mx-auto lg:max-w-3xl">
-  <div class="mb-3 flex items-center gap-2">
-    <h1 class="flex-1 text-lg font-semibold text-text">{$_('screen.history')}</h1>
-    {#if phase === 'ready' && rows.length > 0}
-      <div class="w-32 shrink-0">
-        <Button label={$_('history.export_csv')} variant="ghost" onclick={exportCsv} />
-      </div>
+<section class="p-4 lg:mx-auto lg:w-full lg:max-w-5xl">
+  <div class="lg:max-w-3xl">
+    <div class="mb-3 flex items-center gap-2">
+      <h1 class="flex-1 text-lg font-semibold text-text">{$_('screen.history')}</h1>
+      {#if phase === 'ready' && rows.length > 0}
+        <div class="w-32 shrink-0">
+          <Button label={$_('history.export_csv')} variant="ghost" onclick={exportCsv} />
+        </div>
+      {/if}
+    </div>
+
+    {#if phase === 'loading'}
+      <Card class="flex flex-col items-center gap-3 px-6 py-12">
+        <p class="text-sm text-text-dim">{$_('history.loading')}</p>
+        <div class="w-full max-w-xs"><ProgressBar value={progress} /></div>
+      </Card>
+    {:else if phase === 'error'}
+      <Card class="flex flex-col items-center gap-3 px-6 py-12 text-center">
+        <h2 class="text-sm font-semibold text-text">{$_('history.error_title')}</h2>
+        <p class="text-xs text-text-dim">{$_('history.error_body')}</p>
+        <div class="w-full max-w-xs"><Button label={$_('history.retry')} onclick={load} /></div>
+      </Card>
+    {:else}
+      <LogList {rows} />
     {/if}
   </div>
-
-  {#if phase === 'loading'}
-    <Card class="flex flex-col items-center gap-3 px-6 py-12">
-      <p class="text-sm text-text-dim">{$_('history.loading')}</p>
-      <div class="w-full max-w-xs"><ProgressBar value={progress} /></div>
-    </Card>
-  {:else if phase === 'error'}
-    <Card class="flex flex-col items-center gap-3 px-6 py-12 text-center">
-      <h2 class="text-sm font-semibold text-text">{$_('history.error_title')}</h2>
-      <p class="text-xs text-text-dim">{$_('history.error_body')}</p>
-      <div class="w-full max-w-xs"><Button label={$_('history.retry')} onclick={load} /></div>
-    </Card>
-  {:else}
-    <LogList {rows} />
-  {/if}
 </section>

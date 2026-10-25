@@ -57,7 +57,7 @@
       href="#{item.href}"
       aria-label={$_(item.key)}
       aria-current={isActive(item, path) ? 'page' : undefined}
-      class="flex flex-1 flex-col items-center justify-start gap-0.5 pt-1.5 text-[10px]
+      class="flex flex-1 flex-col items-center justify-start gap-0.5 pt-1.5 text-[11px]
              sm:flex-none sm:justify-center sm:gap-1 sm:py-4
              lg:flex-row lg:justify-start lg:gap-3 lg:px-5 lg:py-3 lg:text-sm
              {isActive(item, path) ? 'text-accent' : 'text-text-dim'}"

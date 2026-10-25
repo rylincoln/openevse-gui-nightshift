@@ -15,6 +15,16 @@ import { httpAPI } from '../../../api/httpAPI'
 import HealthTab from '../HealthTab.svelte'
 
 describe('HealthTab', () => {
+  // Monitoring's tabs share one page width; on desktop the cards sit side by
+  // side, as the Data tab's do, so a label isn't a screen away from its value.
+  it('lays the cards out as a two-column grid on desktop', () => {
+    const data = { errors: [], infos: [] }
+    const { getByText } = render(HealthTab, { props: { data } })
+    const grid = getByText('monitoring.safety.errors').closest('[class*="lg:grid-cols-2"]')
+    expect(grid).toBeTruthy()
+    expect(grid.contains(getByText('monitoring.health.maintenance.title'))).toBe(true)
+  })
+
   it('renders the error count rows and the info row', () => {
     const data = {
       errors: [
@@ -111,12 +121,13 @@ describe('HealthTab', () => {
 
   it('groups both reset buttons in the Maintenance section at the bottom', () => {
     const relay = [{ key: 'life_pct', value: 100, severity: 'ok' }]
-    const { getByText, container } = render(HealthTab, { props: { data: { errors: [], infos: [] }, relay } })
+    const { getByText } = render(HealthTab, { props: { data: { errors: [], infos: [] }, relay } })
     const title = getByText('monitoring.health.maintenance.title')
     const section = title.parentElement
     expect(section).toContainElement(getByText('config.safety.reset_faults'))
     expect(section).toContainElement(getByText('monitoring.health.relay.reset_button'))
-    expect(container.lastElementChild).toBe(section)
+    // the last of the cards
+    expect(section.parentElement.lastElementChild).toBe(section)
   })
 
   it('hides the relay reset button but keeps the fault reset when relay data is absent', () => {

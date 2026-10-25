@@ -25,7 +25,7 @@
     <div class="shrink-0">
       <div class="text-2xl font-extrabold text-text">{displayTime(timer?.time)}</div>
       <span
-        class="mt-0.5 inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide
+        class="mt-0.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold
                {active ? 'bg-accent/15 text-accent' : 'bg-surface-3 text-text-dim'}"
       >
         {active ? $_('schedule.active') : $_('schedule.disabled')}
@@ -34,7 +34,7 @@
     <div class="flex flex-1 flex-wrap gap-1">
       {#each chips as chip}
         <span
-          class="rounded px-1.5 py-0.5 text-[10px] font-semibold
+          class="rounded px-1.5 py-0.5 text-[11px] font-semibold
                  {chip.on ? 'bg-accent/15 text-accent' : 'text-text-dim'}"
         >
           {$_('days.' + chip.day).slice(0, 3)}

@@ -29,7 +29,7 @@
 <div class="space-y-4 text-center">
   <ChargePointMark class="mx-auto h-14 w-14 text-accent" />
   <div>
-    <p class="text-xs uppercase tracking-wider text-text-dim">
+    <p class="text-xs text-text-dim">
       {$_('wizard.welcome.kicker')}
     </p>
     <h2 class="mt-1 text-xl font-semibold text-text">

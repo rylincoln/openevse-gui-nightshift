@@ -26,10 +26,11 @@ const base = {
 }
 
 describe('ChargingHero', () => {
-  it('shows the live kW value and KW label', () => {
-    const { getByText } = render(ChargingHero, { props: { ...base } })
+  it('shows the live kW value with the translated unit', () => {
+    const { getByText, queryByText } = render(ChargingHero, { props: { ...base } })
     expect(getByText('3.2')).toBeInTheDocument()
-    expect(getByText('KW')).toBeInTheDocument()
+    expect(getByText('units.kw')).toBeInTheDocument()
+    expect(queryByText('KW')).toBeNull()
   })
 
   // The chart hero carries the same status line as the ring, in the same spot.

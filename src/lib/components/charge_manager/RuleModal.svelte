@@ -195,7 +195,7 @@
 
     <!-- Start time -->
     <label class="mt-4 block">
-      <span class="mb-1 block text-[10px] uppercase tracking-wide text-text-dim">
+      <span class="mb-1 block text-xs text-text-dim">
         {$_('charge_manager.rule_start_time')}
       </span>
       <input
@@ -218,7 +218,7 @@
 
     {#if hasStopTime}
       <label class="mt-2 block">
-        <span class="mb-1 block text-[10px] uppercase tracking-wide text-text-dim">
+        <span class="mb-1 block text-xs text-text-dim">
           {$_('charge_manager.rule_stop_time')}
           {#if nextDay}
             <span class="ml-1 text-warning">{$_('charge_manager.rule_stop_next_day')}</span>
@@ -242,7 +242,7 @@
   <!-- Action dropdown (hidden when Always On — limit is the only relevant setting) -->
   {#if showAction}
     <div class="mt-5">
-      <label for={ids.action} class="mb-1 block text-[10px] uppercase tracking-wide text-text-dim">
+      <label for={ids.action} class="mb-1 block text-xs text-text-dim">
         {$_('charge_manager.rule_action')}
       </label>
       <select id={ids.action} bind:value={action} class={SELECT_CLASS}>
@@ -298,7 +298,7 @@
   <!-- Charge current (only for charge action) -->
   {#if showChargeCurrent}
     <div class="mt-4">
-      <div class="mb-1 flex items-baseline justify-between text-[10px] uppercase tracking-wide text-text-dim">
+      <div class="mb-1 flex items-baseline justify-between text-xs text-text-dim">
         <span>{$_('charge_manager.feature_charge_current')}</span>
         <span class="font-semibold normal-case text-text">{chargeCurrent} A</span>
       </div>
@@ -311,7 +311,7 @@
         ariaLabel={$_('charge_manager.feature_charge_current')}
         onchange={(v) => (chargeCurrent = v)}
       />
-      <div class="mt-1 flex justify-between text-[10px] text-text-dim">
+      <div class="mt-1 flex justify-between text-[11px] text-text-dim">
         <span>{minCurrent} A</span>
         <span>{maxCurrent} A</span>
       </div>
@@ -321,7 +321,7 @@
   <!-- Limit dropdown -->
   {#if showLimit}
     <div class="mt-4">
-      <label for={ids.limit} class="mb-1 block text-[10px] uppercase tracking-wide text-text-dim">
+      <label for={ids.limit} class="mb-1 block text-xs text-text-dim">
         {$_('charge_manager.rule_limit')}
       </label>
       <select
@@ -345,7 +345,7 @@
 
       {#if vehicleLimit}
         <div class="mt-3">
-          <div class="mb-1 flex items-baseline justify-between text-[10px] uppercase tracking-wide text-text-dim">
+          <div class="mb-1 flex items-baseline justify-between text-xs text-text-dim">
             <span>{$_(limitType === 'soc' ? 'charge_manager.rule_limit_soc' : 'charge_manager.rule_limit_range')}</span>
             <span class="font-semibold normal-case text-text">{limitValue}{vehicleLimit.unit}</span>
           </div>
@@ -358,7 +358,7 @@
             ariaLabel={$_(limitType === 'soc' ? 'charge_manager.rule_limit_soc' : 'charge_manager.rule_limit_range')}
             onchange={(v) => { limitValue = v; showLimitError = false }}
           />
-          <div class="mt-1 flex justify-between text-[10px] text-text-dim">
+          <div class="mt-1 flex justify-between text-[11px] text-text-dim">
             <span>{vehicleLimit.min}{vehicleLimit.unit}</span>
             <span>{vehicleLimit.max}{vehicleLimit.unit}</span>
           </div>

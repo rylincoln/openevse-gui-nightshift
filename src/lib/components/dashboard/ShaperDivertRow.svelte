@@ -25,23 +25,23 @@
   <div class="mt-2 grid grid-cols-2 gap-2 rounded-xl bg-surface-2 px-3 py-2 lg:flex lg:items-center lg:justify-around">
     {#if shaperOn}
       <div class="text-center transition-opacity duration-500" class:opacity-40={stale}>
-        <div class="text-[8px] tracking-wide text-text-dim uppercase">{$_('dashboard.flows.house_load')}</div>
+        <div class="text-[11px] leading-tight text-text-dim">{$_('dashboard.flows.house_load')}</div>
         <div class="text-xs font-bold text-text">{$status_store?.shaper_live_pwr ?? 0} W</div>
       </div>
       <div class="text-center transition-opacity duration-500" class:opacity-40={stale}>
-        <div class="text-[8px] tracking-wide text-text-dim uppercase">{$_('dashboard.flows.shaper_allows')}</div>
+        <div class="text-[11px] leading-tight text-text-dim">{$_('dashboard.flows.shaper_allows')}</div>
         <div class="text-xs font-bold text-text">{round($status_store?.shaper_cur ?? 0, 1)} A</div>
       </div>
     {/if}
     {#if divertOn}
       <div class="text-center">
-        <div class="text-[8px] tracking-wide text-text-dim uppercase">
+        <div class="text-[11px] leading-tight text-text-dim">
           {gridMode ? $_('dashboard.flows.grid') : $_('dashboard.flows.solar')}
         </div>
         <div class="text-xs font-bold text-text">{(gridMode ? $status_store?.grid_ie : $status_store?.solar) ?? 0} W</div>
       </div>
       <div class="text-center">
-        <div class="text-[8px] tracking-wide text-text-dim uppercase">{$_('dashboard.flows.eco_allows')}</div>
+        <div class="text-[11px] leading-tight text-text-dim">{$_('dashboard.flows.eco_allows')}</div>
         <div class="text-xs font-bold text-text">{round($status_store?.charge_rate ?? 0, 1)} A</div>
       </div>
     {/if}

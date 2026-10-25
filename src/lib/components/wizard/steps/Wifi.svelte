@@ -139,7 +139,7 @@
     <div class="rounded-xl border border-border bg-surface-2 p-3 text-sm text-text">
       <p>{$_('wizard.wifi.joined')}</p>
       {#if displayHost}
-        <p class="mt-3 text-xs uppercase tracking-wider text-text-dim">
+        <p class="mt-3 text-xs text-text-dim">
           {$_('wizard.wifi.reach_at')}
         </p>
         <p class="break-all text-sm font-semibold text-accent">http://{displayHost}</p>
@@ -165,7 +165,7 @@
         <p class="font-semibold text-text">{$_('wizard.wifi.handoff_title')}</p>
         <p class="mt-1 text-text-dim">{$_('wizard.wifi.handoff_body')}</p>
         {#if displayHost}
-          <p class="mt-2 text-xs uppercase tracking-wider text-text-dim">
+          <p class="mt-2 text-xs text-text-dim">
             {$_('wizard.wifi.reach_at')}
           </p>
           <p class="break-all text-sm font-semibold text-accent">http://{displayHost}</p>

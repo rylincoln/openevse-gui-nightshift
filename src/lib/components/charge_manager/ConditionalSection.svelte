@@ -33,7 +33,7 @@
 
 <div class="mb-4">
   <div class="mb-2 flex items-baseline justify-between">
-    <h2 class="text-sm font-semibold uppercase tracking-wide text-text-dim">
+    <h2 class="section-title">
       {$_('charge_manager.conditional_section')}
     </h2>
   </div>

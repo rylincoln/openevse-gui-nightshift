@@ -124,7 +124,7 @@
     {#if headerEnd}
       {@render headerEnd()}
     {:else}
-      <span class="shrink-0 text-[10px] text-text-dim">{fmt(stops[maxTick])}</span>
+      <span class="shrink-0 text-[11px] text-text-dim">{fmt(stops[maxTick])}</span>
     {/if}
   </div>
 
@@ -136,7 +136,7 @@
         data-fill
         class="absolute inset-y-0 left-0 rounded-l-full {charging && active
           ? 'soc-shimmer'
-          : 'bg-gradient-to-r from-accent to-cyan-400'}"
+          : 'bg-accent'}"
         style="width: {fillPct}%"
       ></div>
       <input

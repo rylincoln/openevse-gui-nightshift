@@ -59,13 +59,13 @@
   </li>
 {/snippet}
 
-<section class="p-4 lg:mx-auto lg:max-w-4xl">
+<section class="p-4 lg:mx-auto lg:w-full lg:max-w-5xl">
   <h1 class="mb-4 text-lg font-semibold text-text">{$_('config.title')}</h1>
 
   <div class="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-4">
     {#each groups as group}
       <Card class="mb-4 p-4">
-        <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-text-dim">
+        <h2 class="mb-2 section-title">
           {$_('config.sections.' + group.section)}
         </h2>
         <ul class="divide-y divide-border">
@@ -81,7 +81,7 @@
     {/each}
 
     <Card class="mb-4 p-4 lg:col-span-2">
-      <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-text-dim">
+      <h2 class="mb-2 section-title">
         {$_('config.sections.support')}
       </h2>
       <ul class="divide-y divide-border">

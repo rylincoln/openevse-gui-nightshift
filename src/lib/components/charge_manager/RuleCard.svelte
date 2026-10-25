@@ -71,7 +71,7 @@
           {title}
         </div>
         {#if active}
-          <span class="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
+          <span class="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
             <span class="h-1.5 w-1.5 rounded-full bg-success"></span>
             {$_('charge_manager.active')}
           </span>
@@ -83,7 +83,7 @@
         <div class="flex flex-wrap gap-1">
           {#each chips as chip}
             <span
-              class="rounded px-1.5 py-0.5 text-[10px] font-semibold
+              class="rounded px-1.5 py-0.5 text-[11px] font-semibold
                      {chip.on ? 'bg-accent/15 text-accent' : 'text-text-dim'}"
             >
               {$_('days.' + chip.day).slice(0, 3)}
@@ -94,7 +94,7 @@
         <span class="text-xs text-text-dim">{window}</span>
         <!-- Limit chip -->
         {#if limitChip}
-          <span class="rounded-full bg-surface-3 px-2 py-0.5 text-[10px] font-semibold text-text-dim">
+          <span class="rounded-full bg-surface-3 px-2 py-0.5 text-[11px] font-semibold text-text-dim">
             {limitChip}
           </span>
         {/if}

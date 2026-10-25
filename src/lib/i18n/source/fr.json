@@ -1396,6 +1396,7 @@
     "dbm": "dBm",
     "ms": "ms",
     "kwh": "kWh",
+    "kw": "kW",
     "amp": "A",
     "volt": "V",
     "celsius": "°C",

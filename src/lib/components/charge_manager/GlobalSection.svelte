@@ -46,7 +46,7 @@
 
 <div class="mb-6">
   <div class="mb-2">
-    <h2 class="text-sm font-semibold uppercase tracking-wide text-text-dim">
+    <h2 class="section-title">
       {$_('charge_manager.global_section')}
     </h2>
   </div>

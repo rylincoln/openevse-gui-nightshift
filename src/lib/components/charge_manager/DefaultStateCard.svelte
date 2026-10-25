@@ -88,7 +88,7 @@
       oninput={(v) => (liveCurrent = v)}
       onchange={onCurrentChange}
     />
-    <div class="mt-1 flex justify-between text-[10px] text-text-dim">
+    <div class="mt-1 flex justify-between text-[11px] text-text-dim">
       <span>{minCurrent} A</span>
       <span>{maxCurrent} A</span>
     </div>

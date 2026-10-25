@@ -37,7 +37,7 @@
       <span
         aria-hidden="true"
         class="pointer-events-none absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center
-               rounded-full px-1 text-[10px] font-bold text-surface {badgeTone}"
+               rounded-full px-1 text-[11px] font-bold text-surface {badgeTone}"
       >
         {count}
       </span>

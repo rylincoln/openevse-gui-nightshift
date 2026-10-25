@@ -102,74 +102,77 @@
   }
 </script>
 
-<Card class="mb-2 p-3">
-  <h2 class="mb-1 text-sm font-semibold text-text">{$_('monitoring.safety.errors')}</h2>
-  {#each data.errors as row}
-    <div class="flex items-center justify-between py-2 text-sm">
-      <span class="text-text-dim">{rowLabel(row)}</span>
-      <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {sevClass[row.severity]}">
-        {rowValue(row)}
-      </span>
-    </div>
-  {/each}
-</Card>
-
-<Card class="mb-2 p-3">
-  <h2 class="mb-1 text-sm font-semibold text-text">{$_('monitoring.safety.info')}</h2>
-  {#each data.infos as row}
-    <div class="flex items-center justify-between py-2 text-sm">
-      <span class="text-text-dim">{$_('monitoring.safety.' + row.key)}</span>
-      <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {sevClass[row.severity]}">
-        {row.count}
-      </span>
-    </div>
-  {/each}
-</Card>
-
-{#if relay}
+<!-- Side by side on desktop, as the Data tab is, so a label stays near its value. -->
+<div class="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-3">
   <Card class="mb-2 p-3">
-    <h2 class="mb-1 text-sm font-semibold text-text">{$_('monitoring.health.relay.title')}</h2>
-    {#each relay as row}
+    <h2 class="mb-1 text-sm font-semibold text-text">{$_('monitoring.safety.errors')}</h2>
+    {#each data.errors as row}
       <div class="flex items-center justify-between py-2 text-sm">
-        <span class="text-text-dim">{relayRowLabel(row)}</span>
+        <span class="text-text-dim">{rowLabel(row)}</span>
         <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {sevClass[row.severity]}">
-          {relayRowValue(row)}
+          {rowValue(row)}
         </span>
       </div>
     {/each}
   </Card>
-{/if}
 
-<Card class="p-3">
-  <h2 class="mb-1 text-sm font-semibold text-text">{$_('monitoring.health.maintenance.title')}</h2>
-  <div class="flex flex-col gap-2 pt-2">
-    <Button
-      label={resetting
-        ? $_('config.safety.resetting')
-        : resetDone
-          ? $_('config.safety.reset_done')
-          : $_('config.safety.reset_faults')}
-      variant="danger"
-      disabled={resetting}
-      onclick={() => (pendingReset = 'faults')}
-    />
-    {#if relay}
-      <div>
-        <Button
-          label={resettingRelay
-            ? $_('monitoring.health.relay.resetting')
-            : resetRelayDone
-              ? $_('monitoring.health.relay.reset_done')
-              : $_('monitoring.health.relay.reset_button')}
-          variant="danger"
-          disabled={resettingRelay}
-          onclick={() => (pendingReset = 'relay')}
-        />
-        <p class="mt-1 text-xs text-text-dim">{$_('monitoring.health.relay.reset_hint')}</p>
+  <Card class="mb-2 p-3">
+    <h2 class="mb-1 text-sm font-semibold text-text">{$_('monitoring.safety.info')}</h2>
+    {#each data.infos as row}
+      <div class="flex items-center justify-between py-2 text-sm">
+        <span class="text-text-dim">{$_('monitoring.safety.' + row.key)}</span>
+        <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {sevClass[row.severity]}">
+          {row.count}
+        </span>
       </div>
-    {/if}
-  </div>
-</Card>
+    {/each}
+  </Card>
+
+  {#if relay}
+    <Card class="mb-2 p-3">
+      <h2 class="mb-1 text-sm font-semibold text-text">{$_('monitoring.health.relay.title')}</h2>
+      {#each relay as row}
+        <div class="flex items-center justify-between py-2 text-sm">
+          <span class="text-text-dim">{relayRowLabel(row)}</span>
+          <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {sevClass[row.severity]}">
+            {relayRowValue(row)}
+          </span>
+        </div>
+      {/each}
+    </Card>
+  {/if}
+
+  <Card class="mb-2 p-3">
+    <h2 class="mb-1 text-sm font-semibold text-text">{$_('monitoring.health.maintenance.title')}</h2>
+    <div class="flex flex-col gap-2 pt-2">
+      <Button
+        label={resetting
+          ? $_('config.safety.resetting')
+          : resetDone
+            ? $_('config.safety.reset_done')
+            : $_('config.safety.reset_faults')}
+        variant="danger"
+        disabled={resetting}
+        onclick={() => (pendingReset = 'faults')}
+      />
+      {#if relay}
+        <div>
+          <Button
+            label={resettingRelay
+              ? $_('monitoring.health.relay.resetting')
+              : resetRelayDone
+                ? $_('monitoring.health.relay.reset_done')
+                : $_('monitoring.health.relay.reset_button')}
+            variant="danger"
+            disabled={resettingRelay}
+            onclick={() => (pendingReset = 'relay')}
+          />
+          <p class="mt-1 text-xs text-text-dim">{$_('monitoring.health.relay.reset_hint')}</p>
+        </div>
+      {/if}
+    </div>
+  </Card>
+</div>
 
 <ConfirmDialog
   visible={pendingReset === 'faults'}

@@ -429,72 +429,74 @@
   }
 </script>
 
-<section class="p-4 lg:mx-auto lg:max-w-3xl">
-  <!-- Title row with Add button -->
-  <div class="mb-5 flex items-center justify-between">
-    <h1 class="text-lg font-semibold text-text">{$_('screen.charge_manager')}</h1>
-    <!-- Not disabled while a save is in flight: picking only opens a dialog,
-         and the saves themselves are guarded by `busy`. -->
-    <button
-      type="button"
-      onclick={() => (pickerOpen = true)}
-      class="min-h-11 rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-surface
-             transition hover:opacity-90"
-    >
-      + {$_('charge_manager.global_add')}
-    </button>
-  </div>
+<section class="p-4 lg:mx-auto lg:w-full lg:max-w-5xl">
+  <div class="lg:max-w-3xl">
+    <!-- Title row with Add button -->
+    <div class="mb-5 flex items-center justify-between">
+      <h1 class="text-lg font-semibold text-text">{$_('screen.charge_manager')}</h1>
+      <!-- Not disabled while a save is in flight: picking only opens a dialog,
+           and the saves themselves are guarded by `busy`. -->
+      <button
+        type="button"
+        onclick={() => (pickerOpen = true)}
+        class="min-h-11 rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-surface
+               transition hover:opacity-90"
+      >
+        + {$_('charge_manager.global_add')}
+      </button>
+    </div>
 
-  <div class="mb-2">
-    <h2 class="text-sm font-semibold uppercase tracking-wide text-text-dim">
-      {$_('charge_manager.station_defaults')}
-    </h2>
-  </div>
+    <div class="mb-2">
+      <h2 class="section-title">
+        {$_('charge_manager.station_defaults')}
+      </h2>
+    </div>
 
-  <DefaultStateCard
-    current={defaultCurrent}
-    {minCurrent}
-    {maxCurrent}
-    {busy}
-    {heartbeatSupported}
-    heartbeatActive={heartbeatEnabled}
-    {bootLockSupported}
-    {bootLock}
-    onCurrentChange={saveDefaultCurrent}
-    onEdit={() => (settingsOpen = true)}
-  />
+    <DefaultStateCard
+      current={defaultCurrent}
+      {minCurrent}
+      {maxCurrent}
+      {busy}
+      {heartbeatSupported}
+      heartbeatActive={heartbeatEnabled}
+      {bootLockSupported}
+      {bootLock}
+      onCurrentChange={saveDefaultCurrent}
+      onEdit={() => (settingsOpen = true)}
+    />
 
-  <GlobalSection
-    enabledFeatures={enabledGlobalFeatures}
-    {limit}
-    {busy}
-    {removingKey}
-    {tempProtection}
-    tempUnit={$config_store?.temp_unit ?? 'c'}
-    onedit={openGlobalEdit}
-    onremove={removeGlobalFeature}
-    onThrottleChange={saveTempThrottle}
-    onPanicChange={saveTempPanic}
-  />
+    <GlobalSection
+      enabledFeatures={enabledGlobalFeatures}
+      {limit}
+      {busy}
+      {removingKey}
+      {tempProtection}
+      tempUnit={$config_store?.temp_unit ?? 'c'}
+      onedit={openGlobalEdit}
+      onremove={removeGlobalFeature}
+      onThrottleChange={saveTempThrottle}
+      onPanicChange={saveTempPanic}
+    />
 
-  <ConditionalSection
-    {rules}
-    {week}
-    {now}
-    removingId={removingId}
-    {activeEventId}
-    {busy}
-    onedit={openRuleEdit}
-    ondelete={deleteRule}
-  />
+    <ConditionalSection
+      {rules}
+      {week}
+      {now}
+      removingId={removingId}
+      {activeEventId}
+      {busy}
+      onedit={openRuleEdit}
+      ondelete={deleteRule}
+    />
 
-  <!-- Who decides each setting right now -->
-  <div class="mt-6">
-    <h2 class="text-sm font-semibold uppercase tracking-wide text-text-dim">
-      {$_('charge_manager.claims_manager')}
-    </h2>
-    <p class="mb-2 mt-1 text-xs text-text-dim">{$_('charge_manager.claims_desc')}</p>
-    <ClaimsList rows={claims} />
+    <!-- Who decides each setting right now -->
+    <div class="mt-6">
+      <h2 class="section-title">
+        {$_('charge_manager.claims_manager')}
+      </h2>
+      <p class="mb-2 mt-1 text-xs text-text-dim">{$_('charge_manager.claims_desc')}</p>
+      <ClaimsList rows={claims} />
+    </div>
   </div>
 </section>
 

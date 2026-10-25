@@ -118,7 +118,7 @@
   </div>
 
   <!-- Legend -->
-  <div class="mb-1 flex items-baseline justify-between text-[10px] uppercase tracking-wide text-text-dim">
+  <div class="mb-1 flex items-baseline justify-between text-xs text-text-dim">
     <span>
       {$_('config.safety.temp_throttle')}
       <span class="font-semibold normal-case text-accent">{disp(lo)}{unitLabel}</span>
@@ -135,7 +135,7 @@
   <div class="relative pt-6">
     {#if hasTemp}
       <div
-        class="pointer-events-none absolute top-0 z-10 flex items-center gap-0.5 whitespace-nowrap rounded bg-surface-3 px-1 py-0.5 text-[10px] font-semibold text-text ring-1 ring-border"
+        class="pointer-events-none absolute top-0 z-10 flex items-center gap-0.5 whitespace-nowrap rounded bg-surface-3 px-1 py-0.5 text-[11px] font-semibold text-text ring-1 ring-border"
         style="left: {tempPct}%; transform: translateX(-{pillShift}%)"
       >
         <Icon icon="mdi:thermometer" size={11} />
@@ -179,7 +179,7 @@
   </div>
   </div>
 
-  <div class="mt-1 flex justify-between text-[10px] text-text-dim">
+  <div class="mt-1 flex justify-between text-[11px] text-text-dim">
     <span>{disp(min)}{unitLabel}</span>
     <span>{disp(max)}{unitLabel}</span>
   </div>

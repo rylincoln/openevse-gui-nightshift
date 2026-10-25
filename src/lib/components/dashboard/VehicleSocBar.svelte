@@ -118,7 +118,7 @@
       <div
         class="absolute inset-y-0 left-0 rounded-l-full {charging
           ? 'soc-shimmer'
-          : 'bg-gradient-to-r from-accent to-cyan-400'}"
+          : 'bg-accent'}"
         style="width: {seg.fillPct}%"
       ></div>
       {#if seg.zoneEndPct > seg.fillPct}
@@ -161,7 +161,7 @@
       ></div>
       <div
         role="tooltip"
-        class="pointer-events-none absolute top-[74px] z-10 max-w-[300px] whitespace-normal rounded-md border border-amber-400 bg-surface px-2 py-1 text-[10px] font-semibold leading-snug text-amber-400 opacity-0 shadow-lg transition-opacity duration-150 peer-hover:opacity-100"
+        class="pointer-events-none absolute top-[74px] z-10 max-w-[300px] whitespace-normal rounded-md border border-warning bg-surface px-2 py-1 text-[11px] font-semibold leading-snug text-warning opacity-0 shadow-lg transition-opacity duration-150 peer-hover:opacity-100"
         style="left: {vehicleLimit}%; transform: translateX(-{vehicleLimit}%)"
       >
         {$_('dashboard.vehicle.vehicle_limit_tip', { values: { value: fmt(vehicleLimit) } })}
@@ -187,7 +187,7 @@
 
   {#if toFull}
     <!-- phone slot for the "to full" note (the header shows it from sm: up) -->
-    <div class="mt-1 text-[10px] text-text-dim sm:hidden">
+    <div class="mt-1 text-[11px] text-text-dim sm:hidden">
       {$_('dashboard.vehicle.to_full', { values: { time: toFull } })}
     </div>
   {/if}
