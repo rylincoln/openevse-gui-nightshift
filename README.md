@@ -1,11 +1,34 @@
 # openevse-gui-nightshift
 
+> **A personal fork** of [OpenEVSE/openevse-gui-nightshift](https://github.com/OpenEVSE/openevse-gui-nightshift).
+> Upstream `main` is merged in from time to time, and the fork is built into
+> [rylincoln/openevse_esp32_firmware](https://github.com/rylincoln/openevse_esp32_firmware)
+> for my own charger. For the official UI, releases and issues, use the parent repo.
+
 A new replacement web UI for v6.x+ the [OpenEVSE](https://www.openevse.com/) WiFi module —
 a from-scratch rewrite built with **Svelte 5, Vite 8 and Tailwind 4**.
 
 The app is a pure client of the OpenEVSE device's HTTP + WebSocket API; it has no
 backend of its own. The production build is a small, gzipped static bundle intended
 to be flashed onto the WiFi module and served from its embedded web server.
+
+## What this fork changes
+
+- **TypeScript** across `src/` (tests stay JavaScript), checked by `pnpm check`
+  (strict svelte-check). The device API is typed in `src/lib/api/device.ts`, and
+  the mock fixtures are checked against it.
+- **pnpm** instead of npm, with the version pinned in `package.json`.
+- **Design review and accessibility fixes**: the dashboard says what the charger
+  is doing and why in every state; WCAG AA contrast in both themes; 44 px touch
+  targets; native modal dialogs; sliders and charts described for screen readers;
+  a confirmation before restarting, restoring or erasing; wording that follows
+  [GLOSSARY.md](GLOSSARY.md).
+- **Safer writes**: every request goes through one queue in `httpAPI`, which gives
+  up on a request the charger never answers; clearing a number field no longer
+  writes `null`; every config write goes through one form, which reports a
+  failure, during first-run setup too.
+- **Simpler internals**: one module each owns the charge mode, the charge limit
+  (a User limit vs the Default limit), keeping data fresh, and joining WiFi.
 
 ## Features
 
