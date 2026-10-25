@@ -1,6 +1,7 @@
 /** Pure helpers for the Dashboard. No store or DOM access — fully unit-tested. */
 import type { Status, Limit } from '../api/device'
 import type { ConfigState } from '../stores/config'
+import type { ControlSegment } from './chargeMode'
 
 /**
  * Hard ceiling for the user-configurable energy-limit slider max, in kWh.
@@ -26,21 +27,24 @@ export type DisplayState = 'starting' | 'idle' | 'off' | 'charging' | 'error' | 
 /**
  * Map the raw OpenEVSE `state` code to a Dashboard display state.
  *
- * `mode` is the dashboard's derived mode (0 = Auto, 1 = On, 2 = Off).
- * Picking Off only drops charge_current to 0 — the device then sits in
- * the same state 254 it would be in if Auto were waiting on a timer.
- * So we use mode to disambiguate: 254 + Off = 'off'; 254 + anything else
- * = 'sleeping'. The same goes for 255: a device configured to pause by
- * disabling (pause_uses_disabled) sits there for a timer or the default state too.
+ * `segment` is the charge mode. Picking Off leaves the device in the same
+ * state 254 it would be in if Auto were waiting on a timer, so the charge
+ * mode disambiguates: 254 + Off = 'off'; 254 + anything else = 'sleeping'.
+ * The same goes for 255: a device configured to pause by disabling
+ * (pause_uses_disabled) sits there for a timer or the default state too.
  */
-export function displayState(status: Status | null | undefined, mode: number = 0): DisplayState {
+export function displayState(
+  status: Status | null | undefined,
+  segment: ControlSegment = 'auto',
+): DisplayState {
   const s = status?.state
+  const off = segment === 'off'
   if (s === undefined || s === 0) return 'starting'
-  if (s === 1) return mode === 2 ? 'off' : 'idle'
+  if (s === 1) return off ? 'off' : 'idle'
   if (s === 3) return 'charging'
   if (s >= 4 && s <= 11) return 'error'
-  if (s === 254) return mode === 2 ? 'off' : 'sleeping'
-  if (s === 255) return mode === 2 ? 'off' : 'sleeping'
+  if (s === 254) return off ? 'off' : 'sleeping'
+  if (s === 255) return off ? 'off' : 'sleeping'
   return 'connected' // 2: car plugged in, not charging
 }
 

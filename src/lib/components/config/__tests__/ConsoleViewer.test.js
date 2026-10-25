@@ -7,7 +7,7 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
-vi.mock('../../../api/httpAPI', () => ({ httpAPI: vi.fn(() => Promise.resolve('')) }))
+vi.mock('../../../api/httpAPI', async (importOriginal) => ({ ...(await importOriginal()), httpAPI: vi.fn(() => Promise.resolve('')) }))
 
 import { httpAPI } from '../../../api/httpAPI'
 import ConsoleViewer from '../ConsoleViewer.svelte'

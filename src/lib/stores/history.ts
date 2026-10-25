@@ -1,5 +1,5 @@
 import { writable, get, type Writable } from 'svelte/store'
-import { httpAPI, isErrorBody } from '../api/httpAPI'
+import { httpAPI, accepted } from '../api/httpAPI'
 import { dedup } from '../utils'
 import type { LogEntry, ErrorBody } from '../api/device'
 
@@ -14,7 +14,7 @@ function createHistoryStore(): HistoryStore {
 
   async function download(index: number): Promise<boolean> {
     const res = await httpAPI<LogEntry[] | ErrorBody>('GET', '/logs/' + index)
-    if (res && res !== 'error' && !isErrorBody(res)) {
+    if (accepted(res)) {
       const prevData = get(P)
       if (prevData) {
         const newData = [...prevData, ...res]

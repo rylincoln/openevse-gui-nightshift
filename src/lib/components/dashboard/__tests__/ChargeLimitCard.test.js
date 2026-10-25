@@ -77,9 +77,9 @@ describe('ChargeLimitCard (pills)', () => {
     expect(onlimit).toHaveBeenCalledWith({ type: 'time', value: 120 })
   })
 
-  it('disables only the active system limit editor', async () => {
+  it('disables only the active Default limit editor', async () => {
     const { getByRole } = render(ChargeLimitCard, {
-      props: { hasSoc: false, limit: { type: 'time', value: 120, auto_release: false }, systemLimit: true },
+      props: { hasSoc: false, limit: { type: 'time', value: 120, auto_release: false }, defaultLimit: true },
     })
     expect(getByRole('slider', { name: 'dashboard.limit.type_time' })).toBeDisabled()
     await fireEvent.click(getByRole('radio', { name: 'dashboard.limit.type_energy' }))

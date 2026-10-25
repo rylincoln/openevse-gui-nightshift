@@ -10,7 +10,7 @@
 //   Omitting the four calibration fields reassigns the pin only. If any one
 //   of them is present, all four must be (the controller 400s otherwise).
 import { writable, type Readable, type Writable } from 'svelte/store'
-import { httpAPI } from '../api/httpAPI'
+import { httpAPI, accepted } from '../api/httpAPI'
 import type { CableTemp, CableTempSource, WriteResponse } from '../api/device'
 
 export interface CabletempStore extends Readable<CableTemp | null> {
@@ -28,7 +28,7 @@ function createCableTempStore(): CabletempStore {
 
   async function download(): Promise<boolean> {
     const res = await httpAPI<CableTemp>('GET', '/cabletemp')
-    if (res && res !== 'error' && Array.isArray(res.sources)) {
+    if (accepted(res) && Array.isArray(res.sources)) {
       set(res)
       return true
     }
@@ -39,8 +39,7 @@ function createCableTempStore(): CabletempStore {
     data: Pick<CableTempSource, 'source' | 'pin'> &
       Partial<Pick<CableTempSource, 'r25' | 'beta' | 'offset_c10' | 'panic_c10'>>,
   ): Promise<boolean> {
-    const res = await httpAPI<WriteResponse>('POST', '/cabletemp', JSON.stringify(data))
-    return !!(res && res !== 'error' && res.msg === 'done')
+    return accepted(await httpAPI<WriteResponse>('POST', '/cabletemp', JSON.stringify(data)))
   }
 
   return { subscribe, set, download, upload }

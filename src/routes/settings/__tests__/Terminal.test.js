@@ -23,9 +23,15 @@ import { config_store } from '../../../lib/stores/config'
 import { status_store } from '../../../lib/stores/status'
 import Terminal from '../Terminal.svelte'
 
+// A RAPI command is sent raw (status and body), so a refusal can show the
+// controller's reason.
+const RAW = [null, 'json', 60000, { raw: true }]
+const GE = { cmd: '$GE', ret: '$OK 0 0^20' }
+
 beforeEach(() => {
   httpAPI.mockReset()
-  httpAPI.mockResolvedValue({ cmd: '$GE', ret: '$OK 0 0^20' })
+  httpAPI.mockImplementation((_m, _u, _b, _t, _to, opts) =>
+    Promise.resolve(opts?.raw ? { status: 200, body: GE } : GE))
   showWriteError.mockClear()
 })
 
@@ -35,10 +41,18 @@ describe('Terminal page', () => {
     const input = getByLabelText('config.terminal.command')
     await fireEvent.input(input, { target: { value: '$GE' } })
     await fireEvent.click(getByText('config.terminal.send'))
-    expect(httpAPI).toHaveBeenCalledWith('GET', '/r?json=1&rapi=$GE')
+    expect(httpAPI).toHaveBeenCalledWith('GET', '/r?json=1&rapi=$GE', ...RAW)
     await vi.waitFor(() => {
       expect(getByText(/\$OK 0 0\^20/)).toBeInTheDocument()
     })
+  })
+
+  it("shows the controller's reason when a command fails", async () => {
+    httpAPI.mockResolvedValue({ status: 500, body: { cmd: '$GE', error: 'RAPI_RESPONSE_TIMEOUT' } })
+    const { getByLabelText, getByText } = render(Terminal)
+    await fireEvent.input(getByLabelText('config.terminal.command'), { target: { value: '$GE' } })
+    await fireEvent.click(getByText('config.terminal.send'))
+    await vi.waitFor(() => expect(getByText(/RAPI_RESPONSE_TIMEOUT/)).toBeInTheDocument())
   })
 
   it('sends the command when Enter is pressed in the input', async () => {
@@ -46,7 +60,7 @@ describe('Terminal page', () => {
     const input = getByLabelText('config.terminal.command')
     await fireEvent.input(input, { target: { value: '$GE' } })
     await fireEvent.keyDown(input, { key: 'Enter' })
-    expect(httpAPI).toHaveBeenCalledWith('GET', '/r?json=1&rapi=$GE')
+    expect(httpAPI).toHaveBeenCalledWith('GET', '/r?json=1&rapi=$GE', ...RAW)
   })
 
   it('does not send when the input is empty or only the "$" prefix', async () => {

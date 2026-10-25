@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, cleanup } from '@testing-library/svelte'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../api/httpAPI', async (importOriginal) => ({ ...(await importOriginal()), httpAPI: vi.fn() }))
 
 import { httpAPI } from '../../api/httpAPI'
 import DataManager from '../DataManager.svelte'
@@ -41,7 +41,7 @@ beforeEach(() => {
   )
   status_store.set(undefined)
   notification_store.reset()
-  uistates_store.update((s) => ({ ...s, notification_badge: null, notification_event: 0 }))
+  uistates_store.update((s) => ({ ...s, notification_event: 0 }))
 })
 
 afterEach(() => cleanup())
@@ -52,7 +52,9 @@ describe('the advisory capability gate', () => {
     // store stays empty and the whole surface stays hidden.
     status_store.set({ state: 1, config_version: 1 })
     render(DataManager)
-    await vi.waitFor(() => expect(httpAPI).toHaveBeenCalled())
+    // A frame that moves another counter shows frames are being looked at.
+    status_store.update((st) => ({ ...st, config_version: 2 }))
+    await vi.waitFor(() => expect(httpAPI).toHaveBeenCalledWith('GET', '/config'))
     expect(notificationCalls()).toHaveLength(0)
     expect(get(notification_store).items).toEqual([])
   })
@@ -61,8 +63,8 @@ describe('the advisory capability gate', () => {
     // Presence is the gate, never the values: {count: 0} is still a yes.
     status_store.set({ state: 1, notifications: { count: 0, severity: 'info' } })
     render(DataManager)
-    await vi.waitFor(() => expect(notificationCalls()).toHaveLength(1))
-    expect(get(uistates_store).notification_badge).toBe('0:info@0')
+    await vi.waitFor(() => expect(get(notification_store).items).toHaveLength(1))
+    expect(notificationCalls()).toHaveLength(1)
   })
 
   it('re-reads when the badge moves and not while it holds still', async () => {
@@ -91,6 +93,7 @@ describe('the advisory capability gate', () => {
     render(DataManager)
     await vi.waitFor(() => expect(notificationCalls()).toHaveLength(1))
 
+    // The bump may land while the first download is still under way.
     uistates_store.update((s) => ({ ...s, notification_event: (s.notification_event ?? 0) + 1 }))
     await vi.waitFor(() => expect(notificationCalls()).toHaveLength(2))
   })

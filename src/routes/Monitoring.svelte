@@ -7,7 +7,6 @@
   import { config_store } from '../lib/stores/config'
   import { cabletemp_store } from '../lib/stores/cabletemp'
   import { uistates_store } from '../lib/stores/uistates'
-  import { serialQueue } from '../lib/queue'
   import {
     energyMetrics, sensorMetrics, serviceMetrics, vehicleMetrics,
     showVehicle, homeBatteryMetrics, showHomeBattery, safetyData, relayHealthData,
@@ -39,8 +38,8 @@
   // means Safety's config UI and this reading box always agree.
   $effect(() => {
     if (!$config_store?.cable_temp) return
-    serialQueue.add(() => cabletemp_store.download())
-    const poll = setInterval(() => serialQueue.add(() => cabletemp_store.download()), 10_000)
+    cabletemp_store.download()
+    const poll = setInterval(() => cabletemp_store.download(), 10_000)
     return () => clearInterval(poll)
   })
 

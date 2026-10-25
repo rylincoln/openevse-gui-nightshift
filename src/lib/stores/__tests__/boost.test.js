@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI', () => ({
+vi.mock('../../api/httpAPI', async (importOriginal) => ({
+  ...(await importOriginal()),
   httpAPI: vi.fn()
 }))
 
@@ -58,40 +59,56 @@ describe('boost_store', () => {
     expect(result).toBe(false)
   })
 
-  it('should return the parsed body from upload so 201/400/422 can be told apart', async () => {
-    httpAPI.mockResolvedValue({ msg: 'done' })
-    const data = { type: 'energy', value: 100 }
-    const res = await boost_store.upload(data)
-    expect(res).toEqual({ msg: 'done' })
-    expect(httpAPI).toHaveBeenCalledWith('POST', '/boost', JSON.stringify(data))
+  // Arming answers 201 when accepted, and 400 or 422 with the charger's
+  // reason when it refuses; the dashboard shows that reason.
+  const RAW = ['json', 60000, { raw: true }]
 
-    httpAPI.mockResolvedValue({ msg: 'no vehicle data source for this boost type' })
-    const res422 = await boost_store.upload({ type: 'soc', value: 80 })
-    expect(res422.msg).toContain('vehicle data source')
+  it('arms a boost, reporting the charger accepted it', async () => {
+    httpAPI.mockResolvedValue({ status: 201, body: { msg: 'done' } })
+    const data = { type: 'energy', value: 100 }
+    expect(await boost_store.upload(data)).toEqual({ ok: true })
+    expect(httpAPI).toHaveBeenCalledWith('POST', '/boost', JSON.stringify(data), ...RAW)
+  })
+
+  it.each([
+    [422, 'no vehicle data source for this boost type'],
+    [400, 'failed to parse JSON'],
+  ])('passes on the reason the charger gives for refusing a boost (%i)', async (status, msg) => {
+    httpAPI.mockResolvedValue({ status, body: { msg } })
+    expect(await boost_store.upload({ type: 'soc', value: 80 })).toEqual({ ok: false, reason: msg })
+  })
+
+  it('reports no reason when the charger cannot be reached', async () => {
+    httpAPI.mockResolvedValue('error')
+    expect(await boost_store.upload({ type: 'time', value: 600 })).toEqual({ ok: false })
   })
 
   it('should cancel a boost', async () => {
     boost_store.set({ type: 'time', value: 3600, remaining: 100 })
-    httpAPI.mockResolvedValue({ msg: 'done' })
+    httpAPI.mockResolvedValue({ status: 200, body: { msg: 'done' } })
     const result = await boost_store.remove()
     expect(result).toBe(true)
-    expect(httpAPI).toHaveBeenCalledWith('DELETE', '/boost')
+    expect(httpAPI).toHaveBeenCalledWith('DELETE', '/boost', null, ...RAW)
     expect(get(boost_store).type).toBe('none')
   })
 
-  it('should treat "no boost" (404) as an idempotent cancel success', async () => {
+  it('treats a 404 (no boost running) as an idempotent cancel success', async () => {
     boost_store.set({ type: 'time', value: 3600, remaining: 100 })
-    httpAPI.mockResolvedValue({ msg: 'no boost' })
+    httpAPI.mockResolvedValue({ status: 404, body: { msg: 'no boost' } })
     const result = await boost_store.remove()
     expect(result).toBe(true)
     expect(get(boost_store).type).toBe('none')
   })
 
-  it('should return false on remove failure', async () => {
-    httpAPI.mockResolvedValue('error')
-    const result = await boost_store.remove()
-    expect(result).toBe(false)
-  })
+  it.each([['error'], [{ status: 500, body: {} }]])(
+    'reports a failed cancel and keeps the boost (%j)',
+    async (reply) => {
+      boost_store.set({ type: 'time', value: 3600, remaining: 100 })
+      httpAPI.mockResolvedValue(reply)
+      expect(await boost_store.remove()).toBe(false)
+      expect(get(boost_store).type).toBe('time')
+    },
+  )
 
   it('should reset to the idle model', () => {
     boost_store.set({ type: 'soc', value: 80, remaining: 5 })

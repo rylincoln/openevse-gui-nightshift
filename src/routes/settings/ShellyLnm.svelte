@@ -39,12 +39,6 @@
   let power = $derived($status_store?.shelly_lnm_power)
   let voltage = $derived($status_store?.shelly_lnm_voltage)
 
-  // NumberInput emits null when the field is cleared to empty; the port is
-  // shown blank (no numeric fallback), so a clear must not write anything —
-  // same as the MQTT port.
-  function savePort(v: number | null): void {
-    if (v !== null) form.saveField('shelly_lnm_port', v)
-  }
 </script>
 
 <ConfigPage title={$_('config.pages.shellylnm')}>
@@ -103,7 +97,7 @@
           max={65535}
           placeholder="5555"
           revert={form.revert}
-          onchange={savePort}
+          onchange={(v) => form.saveField('shelly_lnm_port', v)}
         />
       </FormField>
       <FormField

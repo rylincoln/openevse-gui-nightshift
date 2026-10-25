@@ -6,7 +6,6 @@
   import { certificate_store } from '../../lib/stores/certificates'
   import { createConfigForm } from '../../lib/config/configForm.svelte'
   import { httpAPI } from '../../lib/api/httpAPI'
-  import { serialQueue } from '../../lib/queue'
   import { formatDuration, formatAgo } from '../../lib/format/duration'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
@@ -47,12 +46,10 @@
   let mqttData = $state<MqttStatus | null>(null)
 
   async function refreshMqttStatus(): Promise<void> {
-    // The device web server is single-threaded — route through serialQueue so
-    // this poll can't collide with concurrent store downloads (see queue.ts).
-    const res = await serialQueue.add(() => httpAPI<MqttStatus>('GET', '/mqtt'))
+    const res = await httpAPI<MqttStatus>('GET', '/mqtt')
     // Only accept responses that include mqtt_connected — guards against old
-    // firmware returning a generic 404 JSON that would corrupt mqttData.
-    if (res && res !== 'error' && 'mqtt_connected' in res) {
+    // firmware answering with some other JSON that would corrupt mqttData.
+    if (res !== 'error' && 'mqtt_connected' in res) {
       mqttData = res
     }
   }
@@ -141,14 +138,6 @@
   let lastRxElapsed = $derived(formatAgo(lastRxTime, nowMs))
   // ── end MQTT status ───────────────────────────────────────────────────────
 
-  // NumberInput emits null when the field is cleared to empty; the port is
-  // shown blank (no numeric fallback shown when unset), so a clear must not
-  // write anything — not a literal null — same as the cable-temp calibration
-  // and peer-priority fields.
-  function saveMqttPort(v: number | null): void {
-    if (v !== null) form.saveField('mqtt_port', v)
-  }
-
   // Reset MQTT connection: force immediate reconnect and refresh status
   let resetBusy = $state(false)
   async function resetMqtt(): Promise<void> {
@@ -157,7 +146,7 @@
     // Optimistically show "Connecting" while the reset is in-flight
     mqttData = { ...(mqttData ?? {}), mqtt_connected: 0, mqtt_status: 'connecting' }
     try {
-      await serialQueue.add(() => httpAPI('POST', '/mqtt', '{}'))
+      await httpAPI('POST', '/mqtt', '{}')
       // Poll every second for up to 15 s to pick up the reconnected state.
       // The reconnect path includes: MG_EV_CLOSE → loop → TCP connect → CONNACK,
       // which can take several seconds if DNS is not in LwIP's cache.
@@ -264,7 +253,7 @@
           value={$config_store?.mqtt_port ?? null}
           placeholder="1883"
           revert={form.revert}
-          onchange={saveMqttPort}
+          onchange={(v) => form.saveField('mqtt_port', v)}
         />
       </FormField>
       <FormField label={$_('config.mqtt.user')} status={$ss.mqtt_user ?? 'idle'}>

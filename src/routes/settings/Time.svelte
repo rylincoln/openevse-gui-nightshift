@@ -4,9 +4,8 @@
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
   import { createConfigForm } from '../../lib/config/configForm.svelte'
-  import { serialQueue } from '../../lib/queue'
   import { showWriteError } from '../../lib/alerts'
-  import { httpAPI } from '../../lib/api/httpAPI'
+  import { httpAPI, accepted } from '../../lib/api/httpAPI'
   import { createTzObj } from '../../lib/utils'
   import zones from '../../lib/config/zones.json'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
@@ -69,10 +68,8 @@
   })
 
   async function refreshNtpStatus(): Promise<void> {
-    // The device web server is single-threaded — route through serialQueue so
-    // this poll can't collide with concurrent store downloads (see queue.ts).
-    const res = await serialQueue.add(() => httpAPI<NtpStatus>('GET', '/time'))
-    if (res && res !== 'error') {
+    const res = await httpAPI<NtpStatus>('GET', '/time')
+    if (res !== 'error') {
       ntpData = res
       ntpFetchedAt = Date.now()
       shownIp = res.ntp_server_ip ?? null
@@ -84,10 +81,8 @@
     syncBusy = true
     shownIp = null   // clear DNS badge immediately on every Update Now press
     try {
-      const res = await serialQueue.add(() =>
-        httpAPI('POST', '/time', JSON.stringify({ sync_now: true }))
-      )
-      if (!res || res === 'error') { showWriteError(); return }
+      const res = await httpAPI('POST', '/time', JSON.stringify({ sync_now: true }))
+      if (res === 'error') { showWriteError(); return }
       // Poll at 500 ms intervals while connecting — the firmware does an early
       // DNS probe at 1 s, so the badge appears within ~1.5 s of pressing the
       // button.  Continue for up to 25 polls (~12 s) to cover slow servers;
@@ -157,8 +152,8 @@
         time: new Date().toISOString(),
         time_zone: $config_store?.time_zone,
       })
-      const res = await serialQueue.add(() => httpAPI<WriteResponse>('POST', '/time', body))
-      if (!res || res === 'error' || res.msg !== 'done') showWriteError()
+      const res = await httpAPI<WriteResponse>('POST', '/time', body)
+      if (!accepted(res)) showWriteError()
     } finally {
       busy = false
     }

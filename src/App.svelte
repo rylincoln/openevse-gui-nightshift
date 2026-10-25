@@ -22,6 +22,15 @@
   let progress = $state(0)
   let failed = $state(false)
 
+  // Setup holds the screen until it says it is finished. It writes
+  // wizard_passed before joining WiFi (the join turns off the setup
+  // hotspot), and the app taking over at that write would unmount the
+  // dialog that says where to reconnect.
+  let settingUp = $state(false)
+  $effect(() => {
+    if (loaded && $config_store && !$config_store.wizard_passed) settingUp = true
+  })
+
   // Tell the phone app (if we're inside its WebView) that this GUI owns the
   // drawer button, so it hides its fallback. Idempotent — the store's late
   // `openevsehost` listener may call it again, but the once-flag guards it.
@@ -30,6 +39,20 @@
     return theme.init()
   })
 </script>
+
+<!-- The one write-failure alert (showWriteError), for setup as much as for
+     the app: both write to the charger. -->
+{#snippet alerts()}
+  <AlertBox
+    visible={$uistates_store.alertbox.visible}
+    title={$uistates_store.alertbox.title}
+    body={$uistates_store.alertbox.body}
+    button={$uistates_store.alertbox.button}
+    closable={$uistates_store.alertbox.closable}
+    action={$uistates_store.alertbox.action}
+    onclose={() => ($uistates_store.alertbox.visible = false)}
+  />
+{/snippet}
 
 {#if $isLoading}
   <!-- Wait for the i18n catalog before rendering anything that uses $_ -->
@@ -59,22 +82,15 @@
     closable={false}
     action={() => location.reload()}
   />
-{:else if !$config_store?.wizard_passed}
+{:else if settingUp || !$config_store?.wizard_passed}
   <!-- First-run / unprovisioned device: gate the rest of the UI behind setup. -->
-  <Wizard />
+  <Wizard ondone={() => (settingUp = false)} />
   <WebSocket />
   <DataManager />
+  {@render alerts()}
 {:else}
   <AppShell />
   <WebSocket />
   <DataManager />
-  <AlertBox
-    visible={$uistates_store.alertbox.visible}
-    title={$uistates_store.alertbox.title}
-    body={$uistates_store.alertbox.body}
-    button={$uistates_store.alertbox.button}
-    closable={$uistates_store.alertbox.closable}
-    action={$uistates_store.alertbox.action}
-    onclose={() => ($uistates_store.alertbox.visible = false)}
-  />
+  {@render alerts()}
 {/if}

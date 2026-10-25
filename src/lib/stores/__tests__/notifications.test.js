@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../api/httpAPI', async (importOriginal) => ({ ...(await importOriginal()), httpAPI: vi.fn() }))
 
 import { notification_store } from '../notifications'
 import { httpAPI } from '../../api/httpAPI'
@@ -95,8 +95,9 @@ describe('notification_store', () => {
     // "no such active notification" means it cleared between render and tap;
     // the event for that clearing went out before the tap, so nothing further
     // is coming over the websocket and the store has to go and look.
+    // The 404 ("no such active notification") resolves to 'error'.
     httpAPI
-      .mockResolvedValueOnce('no such active notification')
+      .mockResolvedValueOnce('error')
       .mockResolvedValueOnce({ count: 0, max_severity: 'info', notifications: [] })
 
     const ok = await notification_store.ack('safety.ground_check')

@@ -13,7 +13,6 @@
   import { _ } from 'svelte-i18n'
   import { httpAPI, type RawResponse } from '../../lib/api/httpAPI'
   import { config_store } from '../../lib/stores/config'
-  import { serialQueue } from '../../lib/queue'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
   import FormField from '../../lib/components/config/FormField.svelte'
@@ -46,9 +45,8 @@
   // POST to an /installer endpoint. Resolves { status, body }, or null when the
   // charger could not be reached (httpAPI maps network failures to 'error').
   async function post(path: string, payload: Record<string, unknown>): Promise<InstallerResponse | null> {
-    const res = await serialQueue.add(() =>
-      httpAPI<InstallerBody | null>('POST', path, JSON.stringify(payload), 'json', 60000, { raw: true }))
-    return !res || res === 'error' ? null : res
+    const res = await httpAPI<InstallerBody | null>('POST', path, JSON.stringify(payload), 'json', 60000, { raw: true })
+    return res === 'error' ? null : res
   }
 
   // Wording for a refused password, shared by every action that sends one.

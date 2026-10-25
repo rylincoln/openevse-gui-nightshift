@@ -23,9 +23,9 @@
     limit?: Limit
     elapsedSec?: number
     sessionWh?: number
-    systemLimit?: boolean
+    defaultLimit?: boolean
     maxEnergyKwh?: number
-    onlimit?: (data: { type: LimitType; value: number }) => void
+    onlimit?: (data: { type: Exclude<LimitType, 'none'>; value: number }) => void
   }
   let {
     // vehicle-bar inputs
@@ -45,7 +45,7 @@
     limit = { type: 'none' } as Limit,
     elapsedSec = 0,
     sessionWh = 0,
-    systemLimit = false,
+    defaultLimit = false,
     maxEnergyKwh = 100,
     onlimit = () => {},
   }: Props = $props()
@@ -77,10 +77,10 @@
     else if (id === 'range') onunit('range')
   }
 
-  // Only the editor of the ACTIVE system limit is read-only; other editors
-  // stay usable (committing them overrides the default for this session and
-  // leaves the config untouched).
-  let editorDisabled = $derived((id: LimitPillId) => disabled || (systemLimit && activeType === id))
+  // Only the editor of the ACTIVE Default limit is read-only; other editors
+  // stay usable (committing one sets a User limit in its place and leaves the
+  // config untouched).
+  let editorDisabled = $derived((id: LimitPillId) => disabled || (defaultLimit && activeType === id))
 </script>
 
 {#snippet pillRow()}

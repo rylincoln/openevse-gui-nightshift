@@ -78,7 +78,7 @@ describe('Schedule', () => {
   })
 
   it('surfaces the global AlertBox when a save fails', async () => {
-    httpAPI.mockResolvedValue({}) // upload() needs msg:"done" — anything else is a failure
+    httpAPI.mockResolvedValue('error') // a refused write (non-2xx) or no reply
     const { getByText } = render(Schedule)
     await fireEvent.click(getByText('+ schedule.new'))
     await fireEvent.click(getByText('schedule.save'))

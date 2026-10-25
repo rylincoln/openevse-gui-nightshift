@@ -8,7 +8,7 @@ vi.mock('svelte-i18n', () => {
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t }
 })
-vi.mock('../../../lib/api/httpAPI', () => ({ httpAPI: vi.fn(() => Promise.resolve({ msg: 'restart gateway' })) }))
+vi.mock('../../../lib/api/httpAPI', async (importOriginal) => ({ ...(await importOriginal()), httpAPI: vi.fn(() => Promise.resolve({ msg: 'restart gateway' })) }))
 
 import { httpAPI } from '../../../lib/api/httpAPI'
 import { config_store } from '../../../lib/stores/config'

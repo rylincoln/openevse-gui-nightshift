@@ -8,7 +8,8 @@
   import { tick } from 'svelte'
   import { _ } from 'svelte-i18n'
   import Button from '../ui/Button.svelte'
-  import { boostTarget, fmtDur } from '../../dashboard/boost'
+  import { boostTarget } from '../../dashboard/boost'
+  import { fmtDur } from '../../utils'
   import type { Boost, LimitType } from '../../api/device'
   import { radioKeys } from '../../radioKeys'
 

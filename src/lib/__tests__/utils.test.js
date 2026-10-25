@@ -30,6 +30,7 @@ vi.mock('svelte/store', async () => {
 
 import {
   sec2time,
+  fmtDur,
   formatDate,
   displayTime,
   getTZ,
@@ -48,6 +49,14 @@ import {
   removeDuplicateObjects,
   hardMaxCurrent,
 } from '../utils'
+
+describe('fmtDur', () => {
+  it('formats minutes and seconds, adding hours past an hour', () => {
+    expect(fmtDur(90)).toBe('1:30')
+    expect(fmtDur(5400)).toBe('1:30:00')
+    expect(fmtDur(-3)).toBe('0:00')
+  })
+})
 
 describe('sec2time', () => {
   it('should format 0 seconds', () => {

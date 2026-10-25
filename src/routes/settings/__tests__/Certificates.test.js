@@ -45,20 +45,20 @@ describe('Certificates page', () => {
 
   it('generates a self-signed certificate and refreshes the list', async () => {
     httpAPI
-      .mockResolvedValueOnce({ msg: 'done', id: 'abc123' })
+      .mockResolvedValueOnce({ status: 200, body: { msg: 'done', id: 'abc123' } })
       .mockResolvedValueOnce([{ id: 'abc123', type: 'client', name: 'Self-signed (openevse)' }])
 
     const { getByText } = render(Certificates)
     await fireEvent.click(getByText('config.certificates.self_signed'))
 
-    expect(httpAPI).toHaveBeenCalledWith('POST', '/certificates/self-signed')
+    expect(httpAPI).toHaveBeenCalledWith('POST', '/certificates/self-signed', null, 'json', 60000, { raw: true })
     await vi.waitFor(() => {
       expect(get(certificate_store)).toHaveLength(1)
     })
   })
 
   it('surfaces the firmware reason when self-signing is refused', async () => {
-    httpAPI.mockResolvedValue({ msg: 'Self-signed certificate generation is not available.' })
+    httpAPI.mockResolvedValue({ status: 501, body: { msg: 'Self-signed certificate generation is not available.' } })
 
     const { getByText } = render(Certificates)
     await fireEvent.click(getByText('config.certificates.self_signed'))

@@ -176,9 +176,6 @@ importers:
       luxon:
         specifier: ^3.7.2
         version: 3.7.2
-      promise-batching-queue:
-        specifier: ^0.0.5
-        version: 0.0.5
       svelte-i18n:
         specifier: ^4.0.1
         version: 4.0.1(svelte@5.57.2)
@@ -2663,9 +2660,6 @@ packages:
   pretty-format@27.5.1:
     resolution: {integrity: sha512-Qb1gy5OrP5+zDf2Bvnzdl3jsTf1qXVMazbvCoKhtKqVs4/YK4ozX4gKQJJVyNe+cajNPn0KoC0MC3FUmaHWEmQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-
-  promise-batching-queue@0.0.5:
-    resolution: {integrity: sha512-XKIgkPimOpg0SeTC2+xFK7p00i5MHBhZnGRNzcvNjRR34YGB8ussO1wSX22KcLny/ptbde+d7oN8Be3BKzxTUA==}
 
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
@@ -5565,8 +5559,6 @@ snapshots:
       ansi-regex: 5.0.1
       ansi-styles: 5.2.0
       react-is: 17.0.2
-
-  promise-batching-queue@0.0.5: {}
 
   punycode@2.3.1: {}
 

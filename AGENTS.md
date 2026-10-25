@@ -27,8 +27,11 @@ pnpm screenshots       # regenerate docs/screenshots/*.png (deterministic)
   add a field there (optional if capability-gated) before reading it
   anywhere, and keep `dev/fixtures/` in agreement (`device.check.ts`
   enforces this).
-- **Device writes are serialised through a single queue** — the device's web
-  server is single-threaded. Never issue parallel writes.
+- **Device requests are serialised** — the device's web server is
+  single-threaded. `httpAPI` sends one request at a time; a bare `fetch` to
+  the charger skips that, so keep to the few that must (login/logout, the
+  offline probe, and the firmware upload, which pauses `httpAPI` while it
+  runs).
 - The route table is exact-match (`src/lib/routes.ts`); settings pages are
   catalogued in `src/lib/config/pages.ts` (single source of truth for hub,
   nav, and placeholder routes).

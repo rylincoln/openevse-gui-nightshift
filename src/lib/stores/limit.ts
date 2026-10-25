@@ -1,5 +1,5 @@
 import { writable, type Writable } from 'svelte/store'
-import { httpAPI } from '../api/httpAPI'
+import { httpAPI, accepted } from '../api/httpAPI'
 import type { Limit, WriteResponse } from '../api/device'
 
 const model: Limit = {
@@ -10,7 +10,7 @@ const model: Limit = {
 
 export interface LimitStore extends Writable<Limit> {
   download(): Promise<boolean>
-  upload(data: Partial<Limit>): Promise<boolean>
+  upload(data: Limit): Promise<boolean>
   remove(id?: unknown): Promise<boolean>
   reset(): boolean
 }
@@ -20,27 +20,26 @@ function createLimitStore(): LimitStore {
   const { subscribe, set, update } = P
 
   async function download(): Promise<boolean> {
-    const res = await httpAPI<Limit | WriteResponse>('GET', '/limit')
-    if (res && res !== 'error' && 'type' in res) {
-      P.update(() => res)
-      return true
-    } else if (res && res !== 'error' && 'msg' in res && res.msg == 'no limit') {
-      // reset limit to default
-      P.update(() => model)
+    const res = await httpAPI<Limit | WriteResponse | Record<string, never>>('GET', '/limit')
+    if (!accepted(res)) return false
+    // No limit is {} — or, before firmware v5, {"msg":"no limit"}.
+    P.update(() => ('type' in res ? (res as Limit) : model))
+    return true
+  }
+
+  async function upload(data: Limit): Promise<boolean> {
+    // Held only once the charger accepts it; the limit_version the write
+    // moves brings the charger's own copy.
+    if (accepted(await httpAPI<WriteResponse>('POST', '/limit', JSON.stringify(data)))) {
+      P.update(() => data)
       return true
     } else return false
   }
 
-  async function upload(data: Partial<Limit>): Promise<boolean> {
-    const res = await httpAPI<WriteResponse>('POST', '/limit', JSON.stringify(data))
-    if (res !== 'error' && res.msg == 'done') return true
-    else return false
-  }
-
   async function remove(_id?: unknown): Promise<boolean> {
-    const res = await httpAPI<WriteResponse>('DELETE', '/limit')
-    // "no limit" = nothing to delete — success for an idempotent remove
-    if (res !== 'error' && (res.msg == 'done' || res.msg == 'no limit')) {
+    // With no limit set the charger still answers 200 ("no limit"): the
+    // remove is idempotent.
+    if (accepted(await httpAPI<WriteResponse>('DELETE', '/limit'))) {
       P.update(() => model)
       return true
     } else return false

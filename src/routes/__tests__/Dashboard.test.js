@@ -6,7 +6,7 @@ vi.mock('svelte-i18n', () => {
   // Keys come back as-is, except that client names and the lines naming a
   // client show which name they were given, so a raw internal key would show.
   const t = (k, o) =>
-    k.startsWith('clients.') ? `name:${k.slice(8)}` : o?.values?.client ? `${k}(${o.values.client})` : k
+    k.startsWith('clients.') ? `name:${k.slice(8)}` : o?.values?.client ? `${k}(${o.values.client})` : o?.values?.value !== undefined ? `${k}(${o.values.value})` : k
   t.subscribe = (fn) => { fn(t); return () => {} }
   return { _: t, locale: { subscribe: (fn) => { fn('en'); return () => {} } } }
 })
@@ -207,9 +207,18 @@ describe('Dashboard', () => {
     limit_store.set({ type: 'soc', value: 80, auto_release: true })
     const { container, getByRole, queryByText } = render(Dashboard)
     // The reason shows in the status line, and the controls stay live (not locked).
-    expect(statusLine(container).getByText('dashboard.line.why.limit_reached')).toBeInTheDocument()
+    expect(statusLine(container).getByText('dashboard.line.why.limit_reached(80units.percent)')).toBeInTheDocument()
     expect(queryByText('dashboard.controls.locked_by')).not.toBeInTheDocument()
     expect(getByRole('radiogroup', { name: 'dashboard.mode.aria' })).toBeInTheDocument()
+  })
+
+  it('gives a reached range limit in the unit the owner picked', () => {
+    config_store.update((c) => ({ ...c, mqtt_vehicle_range_miles: true }))
+    status_store.set({ state: 254, total_day: 0, total_energy: 0 })
+    claims_target_store.set({ properties: {}, claims: { state: EvseClients.limit.id } })
+    limit_store.set({ type: 'range', value: 200, auto_release: true })
+    const { container } = render(Dashboard)
+    expect(statusLine(container).getByText('dashboard.line.why.limit_reached(200 units.miles)')).toBeInTheDocument()
   })
 
   it('clears the tripped limit when On is selected so charging resumes', async () => {
@@ -222,6 +231,35 @@ describe('Dashboard', () => {
     await fireEvent.click(getByText('dashboard.mode.on'))
     await vi.waitFor(() => {
       expect(httpAPI).toHaveBeenCalledWith('DELETE', '/limit')
+    })
+  })
+
+  it('shows Off picked while the Manual override holds the charger disabled', () => {
+    status_store.set({ state: 254, vehicle: 1, total_day: 0, total_energy: 0 })
+    claims_target_store.set({
+      properties: { state: 'disabled' },
+      claims: { state: EvseClients.manual.id },
+    })
+    const { getByRole } = render(Dashboard)
+    expect(getByRole('radio', { name: 'dashboard.mode.off' })).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('surfaces the global alert, and puts the rate back, when returning to the default rate fails', async () => {
+    status_store.set({ state: 1, total_day: 0, total_energy: 0 })
+    override_store.set({ charge_current: 20, auto_release: false })
+    claims_target_store.set({
+      properties: { state: 'active', charge_current: 20 },
+      claims: { state: null, charge_current: EvseClients.manual.id },
+    })
+    httpAPI.mockResolvedValue('error')
+    const { getByRole } = render(Dashboard)
+    await fireEvent.click(getByRole('button', { name: /^dashboard\.rate\.label/ }))
+    const slider = getByRole('slider', { name: /^dashboard\.rate\.label/ })
+    slider.value = '48' // the default rate (max_current_soft)
+    await fireEvent.change(slider)
+    await vi.waitFor(() => {
+      expect(httpAPI).toHaveBeenCalledWith('DELETE', '/override')
+      expect(get(uistates_store).alertbox.visible).toBe(true)
     })
   })
 
@@ -268,7 +306,7 @@ describe('Dashboard', () => {
     // Disabling a focused control throws keyboard focus to the page body.
     status_store.set({ state: 1, total_day: 0, total_energy: 0 })
     let release
-    // Held open until the end; serialQueue is shared, so it must settle.
+    // Held open until the end, then settled so nothing is left pending.
     httpAPI.mockReturnValue(new Promise((r) => { release = r }))
     const { getByRole } = render(Dashboard)
     const off = getByRole('radio', { name: 'dashboard.mode.off' })
@@ -303,7 +341,7 @@ describe('Dashboard', () => {
       }
       expect(slider).not.toBeDisabled()
     } finally {
-      release({ msg: 'done' }) // serialQueue is shared, so it must settle
+      release({ msg: 'done' }) // settle it so nothing is left pending
     }
     await vi.waitFor(() => {
       const posts = httpAPI.mock.calls.filter(([m, u]) => m === 'POST' && u === '/limit').map(([, , body]) => JSON.parse(body).value)
@@ -412,7 +450,7 @@ describe('Dashboard', () => {
     expect(container.querySelectorAll('section > [class*="max-lg:contents"]')).toHaveLength(2)
   })
 
-  it('renders the active system limit editor disabled', () => {
+  it('renders the active Default limit editor disabled', () => {
     status_store.set({ state: 1, total_day: 0, total_energy: 0 })
     limit_store.set({ type: 'energy', value: 10000, auto_release: false })
     const { getByRole } = render(Dashboard)
@@ -437,6 +475,19 @@ describe('Dashboard', () => {
     })
   })
 
+  // The write's own reply is enough; the limit_version it moves brings the
+  // charger's copy through DataManager.
+  it('shows a limit the charger accepted without asking for it again', async () => {
+    status_store.set({ state: 1, total_day: 0, total_energy: 0 })
+    httpAPI.mockResolvedValue({ msg: 'done' })
+    const { getByRole } = render(Dashboard)
+    const slider = getByRole('slider', { name: 'dashboard.limit.type_time' })
+    slider.value = '8' // 120 min
+    await fireEvent.change(slider)
+    await vi.waitFor(() => expect(get(limit_store)).toEqual({ type: 'time', value: 120, auto_release: true }))
+    expect(httpAPI).not.toHaveBeenCalledWith('GET', '/limit')
+  })
+
   it('drag-to-zero clears a user limit', async () => {
     // user limit: DELETE goes through
     status_store.set({ state: 1, total_day: 0, total_energy: 0 })
@@ -450,7 +501,7 @@ describe('Dashboard', () => {
     })
   })
 
-  it('does not DELETE a system limit when the bar commits at the ceiling', async () => {
+  it('does not DELETE a Default limit when the bar commits at the ceiling', async () => {
     status_store.set({ state: 3, power: 7000, voltage: 240, amp: 0, temp: 0, pilot: 0, total_day: 0, total_energy: 0, battery_level: 74, vehicle_charge_limit: 80, battery_range: 206, time_to_full_charge: 0 })
     limit_store.set({ type: 'soc', value: 70, auto_release: false })
     const { getByRole } = render(Dashboard)
@@ -462,7 +513,7 @@ describe('Dashboard', () => {
     expect(httpAPI).not.toHaveBeenCalledWith('POST', '/limit', expect.anything())
   })
 
-  it('does not DELETE a system limit when forcing On past a trip', async () => {
+  it('does not DELETE a Default limit when forcing On past a trip', async () => {
     status_store.set({ state: 254, total_day: 0, total_energy: 0 })
     claims_target_store.set({ properties: {}, claims: { state: EvseClients.limit.id } })
     limit_store.set({ type: 'energy', value: 10000, auto_release: false })
@@ -486,17 +537,20 @@ describe('Dashboard', () => {
   it('arms a boost via POST /boost and never touches /override or /limit', async () => {
     // boost_version present ⇒ the collapsed Boost button renders.
     status_store.set({ state: 1, total_day: 0, total_energy: 0, boost_version: 1 })
-    // A system (default) limit — the old boost path used to defensively clear
+    // A Default limit — the old boost path used to defensively clear
     // limits and rewrite the override; the device-side boost must not.
     limit_store.set({ type: 'energy', value: 10000, auto_release: false })
-    httpAPI.mockResolvedValue({ msg: 'done' })
+    // Arming reads the status as well as the body (raw: true).
+    httpAPI.mockImplementation((_m, _u, _b, _t, _to, opts) =>
+      Promise.resolve(opts?.raw ? { status: 201, body: { msg: 'done' } } : { msg: 'done' }))
     const { getByText } = render(Dashboard)
     // Tap "Boost" to expand the picker, then arm. Default dimension is time
     // (30 min) → POST {type:'time', value:1800}.
     await fireEvent.click(getByText('dashboard.boost.label'))
     await fireEvent.click(getByText('dashboard.boost.arm'))
     await vi.waitFor(() => {
-      expect(httpAPI).toHaveBeenCalledWith('POST', '/boost', JSON.stringify({ type: 'time', value: 1800 }))
+      expect(httpAPI).toHaveBeenCalledWith(
+        'POST', '/boost', JSON.stringify({ type: 'time', value: 1800 }), 'json', 60000, { raw: true })
     })
     // Flush so any (buggy) follow-up limit/override write would have landed.
     await new Promise((r) => setTimeout(r, 0))
@@ -504,7 +558,22 @@ describe('Dashboard', () => {
     expect(httpAPI).not.toHaveBeenCalledWith('POST', '/override', expect.anything())
   })
 
-  it('never DELETEs a system limit from the inline editor, even if events reach it', async () => {
+  it.each([
+    ['refuses it for want of a vehicle data source', { status: 422, body: { msg: 'no vehicle data source for this boost type' } }, 'dashboard.boost.no_vehicle_source'],
+    ['cannot be reached', 'error', 'alert.write_failed_body'],
+  ])('says why when the charger %s', async (_, reply, body) => {
+    status_store.set({ state: 1, total_day: 0, total_energy: 0, boost_version: 1 })
+    httpAPI.mockImplementation((method, url) =>
+      Promise.resolve(method === 'POST' && url === '/boost' ? reply : {}))
+    const { getByText } = render(Dashboard)
+    await fireEvent.click(getByText('dashboard.boost.label'))
+    await fireEvent.click(getByText('dashboard.boost.arm'))
+    await vi.waitFor(() => expect(get(uistates_store).alertbox.visible).toBe(true))
+    expect(get(uistates_store).alertbox.body).toBe(body)
+    expect(httpAPI).not.toHaveBeenCalledWith('GET', '/boost')
+  })
+
+  it('never DELETEs a Default limit from the inline editor, even if events reach it', async () => {
     // Defense-in-depth: the active system editor is disabled and the idle
     // editors suppress no-change commits, but the setInlineLimit guard must
     // hold even if a change event reaches the slider (jsdom dispatches to
@@ -556,6 +625,29 @@ describe('Dashboard', () => {
     expect(queryByText('dashboard.loadsharing.tile_limited')).not.toBeInTheDocument()
     // The verdict lives on /loadsharing/status; the version tick fetches it.
     expect(httpAPI).toHaveBeenCalledWith('GET', '/loadsharing/status')
+  })
+
+  // Every frame is a new status object; only the counter says the group's
+  // status changed, and the charger's web server is single-threaded.
+  it('fetches the load-sharing status when its counter moves, not on every frame', async () => {
+    config_store.set({ labs_enabled: true,
+      max_current_soft: 32, divert_enabled: false, current_shaper_enabled: false,
+      loadsharing_enabled: true, loadsharing_role: true, loadsharing_controller_host: 'controller.local',
+    })
+    httpAPI.mockImplementation((m, url) =>
+      Promise.resolve(url === '/loadsharing/status' ? { failsafe_active: false, online_count: 2, peers: [] } : {}),
+    )
+    status_store.set({ state: 1, total_day: 0, total_energy: 0, pilot: 32, loadsharing_status_version: 1 })
+    const statusGets = () => httpAPI.mock.calls.filter(([m, u]) => m === 'GET' && u === '/loadsharing/status')
+    render(Dashboard)
+    await vi.waitFor(() => expect(statusGets()).toHaveLength(1))
+
+    for (const amp of [6000, 12000, 16000]) status_store.update((st) => ({ ...st, amp }))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(statusGets()).toHaveLength(1)
+
+    status_store.update((st) => ({ ...st, loadsharing_status_version: 2 }))
+    await vi.waitFor(() => expect(statusGets()).toHaveLength(2))
   })
 
   it('shows the limited card, one amber reason, and tags the current tile', async () => {

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n'
   import { schedule_store } from '../lib/stores/schedule'
-  import { serialQueue } from '../lib/queue'
   import { showWriteError } from '../lib/alerts'
   import { nextTimerId, type Timer } from '../lib/schedule/timers'
   import Button from '../lib/components/ui/Button.svelte'
@@ -33,10 +32,10 @@
       const timer = editingTimer
         ? { ...editingTimer, ...data }
         : { id: nextTimerId(timers), ...data }
-      const ok = await serialQueue.add(() => schedule_store.upload(timer))
+      const ok = await schedule_store.upload(timer)
       if (ok) {
         editorOpen = false
-        await serialQueue.add(() => schedule_store.download())
+        await schedule_store.download()
       } else {
         showWriteError()
       }
@@ -50,9 +49,9 @@
     busy = true
     removingId = id
     try {
-      const ok = await serialQueue.add(() => schedule_store.remove(id))
+      const ok = await schedule_store.remove(id)
       if (ok) {
-        await serialQueue.add(() => schedule_store.download())
+        await schedule_store.download()
       } else {
         showWriteError()
       }

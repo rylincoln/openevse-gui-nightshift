@@ -10,12 +10,8 @@
   import ReadOnlyRow from '../../lib/components/config/ReadOnlyRow.svelte'
   import TextInput from '../../lib/components/ui/TextInput.svelte'
   import PasswordInput from '../../lib/components/ui/PasswordInput.svelte'
-  import { serialQueue } from '../../lib/queue'
-  import { httpAPI } from '../../lib/api/httpAPI'
-  import { showWriteError } from '../../lib/alerts'
-  import { normalizeNetworks, signalIcon, signalPercent, isSecured, type WifiNetwork } from '../../lib/config/wifi'
-  import Icon from '../../lib/icons/Icon.svelte'
-  import Button from '../../lib/components/ui/Button.svelte'
+  import WifiJoin from '../../lib/components/config/WifiJoin.svelte'
+  import { signalPercent } from '../../lib/config/wifi'
 
   const form = createConfigForm()
   const ss = form.saveState
@@ -32,60 +28,9 @@
     signalPct === null ? '' : `(${$status_store?.srssi} ${$_('units.dbm')})`,
   )
 
-  // ── WiFi scan / join ────────────────────────────────────────────────────
-  let networks = $state<WifiNetwork[]>([])
-  let scanning = $state(false)
-  let scanError = $state(false)
-  let selected = $state<WifiNetwork | null>(null) // the picked network object
-  let wifiPass = $state('')
-  let manual = $state(false)
-  let manualSsid = $state('')
-  let joining = $state(false)
+  // Once the charger takes the new network it leaves this one; say so
+  // rather than offer the picker again.
   let joined = $state(false)
-
-  async function scanWifi(): Promise<void> {
-    if (scanning) return
-    scanning = true
-    scanError = false
-    networks = []
-    selected = null
-    const res = await serialQueue.add(() => httpAPI<WifiNetwork[]>('GET', '/scan'))
-    scanning = false
-    if (!res || res === 'error' || !Array.isArray(res)) {
-      scanError = true
-      return
-    }
-    networks = normalizeNetworks(res)
-  }
-
-  function pickNetwork(n: WifiNetwork): void {
-    selected = n
-    manual = false
-    wifiPass = ''
-  }
-
-  function toggleManual(): void {
-    manual = !manual
-    selected = null
-    wifiPass = ''
-  }
-
-  async function joinSsid(ssid: string): Promise<void> {
-    const normalizedSsid = ssid.trim()
-    if (joining || !normalizedSsid) return
-    joining = true
-    const ok = await serialQueue.add(() =>
-      config_store.upload({ ssid: normalizedSsid, pass: wifiPass }),
-    )
-    joining = false
-    if (ok) {
-      joined = true
-      networks = []
-      selected = null
-    } else {
-      showWriteError()
-    }
-  }
 
   // /status reports the network mode as a firmware code; say it in words.
   const MODE_KEYS: Record<string, string> = {
@@ -96,14 +41,6 @@
   }
   function modeLabel(mode: string | undefined): string | undefined {
     return mode && MODE_KEYS[mode] ? $_(MODE_KEYS[mode]) : mode
-  }
-
-  function joinWifi(): void {
-    if (selected) joinSsid(selected.ssid)
-  }
-
-  function joinManualWifi(): void {
-    joinSsid(manualSsid)
   }
 </script>
 
@@ -129,97 +66,7 @@
     {#if joined}
       <p class="py-2 text-sm text-text-dim">{$_('config.network.connecting')}</p>
     {:else}
-      <div class="py-1">
-        <Button
-          label={scanning ? $_('config.network.scanning') : $_('config.network.scan')}
-          variant="ghost"
-          disabled={scanning}
-          onclick={scanWifi}
-        />
-      </div>
-
-      {#if scanError}
-        <p class="py-2 text-sm text-error">{$_('config.network.scan_error')}</p>
-      {:else if networks.length > 0}
-        <ul class="divide-y divide-border">
-          {#each networks as n (n.ssid)}
-            <li>
-              <button
-                type="button"
-                onclick={() => pickNetwork(n)}
-                class="flex w-full items-center gap-3 py-2 text-left text-sm
-                       {selected?.ssid === n.ssid ? 'text-accent' : 'text-text'}"
-              >
-                <Icon icon={signalIcon(n.rssi)} size={18} class="text-text-dim" />
-                <span class="flex-1">{n.ssid}</span>
-                {#if isSecured(n)}
-                  <Icon icon="mdi:lock-outline" size={14} class="text-text-dim" />
-                {/if}
-              </button>
-
-              {#if selected?.ssid === n.ssid}
-                <div class="flex items-end gap-2 pb-3 pl-7">
-                  {#if isSecured(n)}
-                    <input
-                      type="password"
-                      placeholder={$_('config.network.wifi_password')}
-                      aria-label={$_('config.network.wifi_password')}
-                      value={wifiPass}
-                      oninput={(e) => (wifiPass = e.currentTarget.value)}
-                      class="flex-1 rounded-xl border border-border bg-surface-2 px-3 py-2
-                             text-sm text-text focus:border-accent"
-                    />
-                  {/if}
-                  <div class="shrink-0">
-                    <Button
-                      label={joining ? $_('config.network.connecting_btn') : $_('config.network.connect')}
-                      disabled={joining}
-                      onclick={joinWifi}
-                    />
-                  </div>
-                </div>
-              {/if}
-            </li>
-          {/each}
-        </ul>
-      {/if}
-
-      <div class="mt-3 border-t border-border pt-4">
-        <Button
-          label={manual ? $_('config.network.cancel_manual') : $_('config.network.manual')}
-          variant="ghost"
-          disabled={joining}
-          onclick={toggleManual}
-        />
-
-        {#if manual}
-          <div class="mt-3 space-y-3">
-            <input
-              type="text"
-              placeholder={$_('config.network.ssid')}
-              aria-label={$_('config.network.ssid')}
-              value={manualSsid}
-              oninput={(e) => (manualSsid = e.currentTarget.value)}
-              class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2
-                     text-sm text-text focus:border-accent"
-            />
-            <input
-              type="password"
-              placeholder={$_('config.network.wifi_password')}
-              aria-label={$_('config.network.wifi_password')}
-              value={wifiPass}
-              oninput={(e) => (wifiPass = e.currentTarget.value)}
-              class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2
-                     text-sm text-text focus:border-accent"
-            />
-            <Button
-              label={joining ? $_('config.network.connecting_btn') : $_('config.network.connect')}
-              disabled={joining || !manualSsid.trim()}
-              onclick={joinManualWifi}
-            />
-          </div>
-        {/if}
-      </div>
+      <WifiJoin join={(ssid, pass) => form.saveFields({ ssid, pass })} onjoined={() => (joined = true)} />
     {/if}
   </ConfigSection>
 

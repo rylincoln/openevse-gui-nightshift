@@ -7,7 +7,6 @@
   import { uistates_store } from '../../lib/stores/uistates'
   import { rfid_users_store } from '../../lib/stores/rfid_users'
   import { createConfigForm } from '../../lib/config/configForm.svelte'
-  import { serialQueue } from '../../lib/queue'
   import { showWriteError, showRfidScanError } from '../../lib/alerts'
   import { httpAPI } from '../../lib/api/httpAPI'
   import { parseTags, serializeTags, addTag, removeTag } from '../../lib/config/rfid'
@@ -45,10 +44,8 @@
     // keyed off the response status rather than its wording, so a future
     // change to the firmware's message text can't turn a rejected scan into a
     // silently-ignored click again.
-    const res = await serialQueue.add(() =>
-      httpAPI<string>('GET', '/rfid/add', null, 'text', 60000, { raw: true }),
-    )
-    if (!res || res === 'error') {
+    const res = await httpAPI<string>('GET', '/rfid/add', null, 'text', 60000, { raw: true })
+    if (res === 'error') {
       showWriteError()
       return
     }

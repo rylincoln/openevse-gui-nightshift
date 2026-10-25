@@ -119,8 +119,12 @@ export function mockPlugin() {
   // 255 off; "reset" returns to the fixture). null = use the fixture state.
   let stateOverride = null
 
-  // Dev-only claims/target served to the dashboard. getMode() turns a
-  // manual + "disabled" claim into Off mode, and displayState() then renders
+  // Solar divert mode set by POST /divertmode (1 normal, 2 eco); null = the
+  // fixture's.
+  let divertMode = null
+
+  // Dev-only claims/target served to the dashboard. readChargeMode() turns a
+  // manual + "disabled" claim into Off, and displayState() then renders
   // EVSE state 254 as "off" instead of "sleeping". So the switcher keeps the
   // derived mode coherent with the previewed state: Off only for the dedicated
   // off code (255), Auto otherwise (so 254 -> sleeping). Bumping claimsVersion
@@ -201,6 +205,7 @@ export function mockPlugin() {
       ...baseStatus,
       state,
       vehicle,
+      divertmode: divertMode ?? baseStatus.divertmode,
       config_version: configVersion,
       // Exactly the two fields the firmware sends here — the list lives on
       // its own endpoint. Their presence is the GUI's capability gate.
@@ -594,7 +599,7 @@ export function mockPlugin() {
               const msg = buildStatusMessage(tickCount)
               for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
               res.writeHead(201, { 'Content-Type': 'application/json' })
-              res.end(JSON.stringify({ msg: 'erased' }))
+              res.end(JSON.stringify({ msg: 'done' }))
             })
             return
           }
@@ -609,7 +614,7 @@ export function mockPlugin() {
             const msg = buildStatusMessage(tickCount)
             for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
             res.writeHead(200, { 'Content-Type': 'application/json' })
-            res.end(JSON.stringify({ msg: 'erased' }))
+            res.end(JSON.stringify({ msg: 'done' }))
             return
           }
         }
@@ -703,7 +708,7 @@ export function mockPlugin() {
                 if (rfid && typeof name === 'string') rfidUsers[rfid] = name
               } catch { /* ignore malformed body */ }
               res.writeHead(200, { 'Content-Type': 'application/json' })
-              res.end(JSON.stringify({ msg: 'erased' }))
+              res.end(JSON.stringify({ msg: 'User name saved' }))
             })
             return
           }
@@ -711,7 +716,7 @@ export function mockPlugin() {
             const m = req.url?.match(/[?&]rfid=([^&]*)/)
             if (m) delete rfidUsers[decodeURIComponent(m[1])]
             res.writeHead(200, { 'Content-Type': 'application/json' })
-            res.end(JSON.stringify({ msg: 'erased' }))
+            res.end(JSON.stringify({ msg: 'User name removed' }))
             return
           }
         }
@@ -761,6 +766,22 @@ export function mockPlugin() {
           return
         }
 
+        // Divert mode: the firmware answers in plain text, and the new mode
+        // arrives on the next status frame.
+        if (url === '/api/divertmode' && req.method === 'POST') {
+          let body = ''
+          req.on('data', (c) => { body += c })
+          req.on('end', () => {
+            const dm = Number(new URLSearchParams(body).get('divertmode'))
+            if (dm === 1 || dm === 2) divertMode = dm
+            const msg = buildStatusMessage(tickCount)
+            for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
+            res.writeHead(200, { 'Content-Type': 'text/plain' })
+            res.end('Divert Mode changed')
+          })
+          return
+        }
+
         // Config writes. The device merges the body into its stored config,
         // answers {"msg":"done"} and bumps config_version; DataManager watches
         // that counter and re-downloads, so a save here round-trips exactly as
@@ -778,6 +799,17 @@ export function mockPlugin() {
             }
             Object.assign(configWrites, data)
             configVersion++
+            // As the firmware's config_changed: a limit_default_* write applies
+            // the Default limit at once (auto_release false), or clears
+            // whatever limit is set when the type becomes none.
+            if (Object.keys(data).some((k) => k.startsWith('limit_default_'))) {
+              const cfg = effectiveFixture('/api/config')
+              const type = cfg.limit_default_type || 'none'
+              const value = Number(cfg.limit_default_value) || 0
+              if (type === 'none') limit = null
+              else if (value) limit = { type, value, auto_release: false }
+              limitVersion++
+            }
             const msg = buildStatusMessage(tickCount)
             for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
             res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -789,6 +821,14 @@ export function mockPlugin() {
         if (url === '/api/certificates' && req.method === 'POST') {
           res.writeHead(200, { 'Content-Type': 'application/json' })
           res.end(JSON.stringify({ msg: 'done', id: String(Date.now()) }))
+          return
+        }
+
+        // The charger makes the key pair itself, so the private key never
+        // leaves it; the mock only hands back an id.
+        if (url === '/api/certificates/self-signed' && req.method === 'POST') {
+          res.writeHead(200, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ msg: 'done', id: Date.now().toString(16) }))
           return
         }
 

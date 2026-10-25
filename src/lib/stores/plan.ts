@@ -1,5 +1,5 @@
 import { writable, type Writable } from 'svelte/store'
-import { httpAPI, isErrorBody } from '../api/httpAPI'
+import { httpAPI, accepted } from '../api/httpAPI'
 import type { Plan } from '../api/device'
 
 export interface PlanStore extends Writable<Plan | undefined> {
@@ -12,7 +12,7 @@ function createPlanStore(): PlanStore {
 
   async function download(): Promise<boolean> {
     const res = await httpAPI<Plan>('GET', '/schedule/plan')
-    if (res && res !== 'error' && !isErrorBody(res)) {
+    if (accepted(res)) {
       P.update(() => res)
       return true
     } else return false

@@ -10,7 +10,7 @@ vi.mock('svelte-i18n', () => {
   }
   return { _: t }
 })
-vi.mock('../../../api/httpAPI', () => ({ httpAPI: vi.fn() }))
+vi.mock('../../../api/httpAPI', async (importOriginal) => ({ ...(await importOriginal()), httpAPI: vi.fn() }))
 
 import { httpAPI } from '../../../api/httpAPI'
 import { notification_store } from '../../../stores/notifications'
@@ -132,9 +132,10 @@ describe('NotificationPanel', () => {
   it('stays quiet when an ack misses because the advisory already cleared', async () => {
     // A 404 means it went away between render and tap; the re-read inside
     // ack() has already corrected the list, so there is nothing to alert about.
+    // httpAPI resolves the 404 to 'error', as it does a failed request.
     seed([item('safety.ground_check')])
     httpAPI
-      .mockResolvedValueOnce('no such active notification')
+      .mockResolvedValueOnce('error')
       .mockResolvedValueOnce({ count: 0, max_severity: 'info', notifications: [] })
 
     const { getByText } = render(NotificationPanel, { props: { visible: true } })

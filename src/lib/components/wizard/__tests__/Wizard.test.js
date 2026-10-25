@@ -8,35 +8,33 @@ vi.mock('svelte-i18n', () => {
   return { _: t }
 })
 
-// We don't care about the queue's batching for unit tests — just resolve.
-vi.mock('../../../queue', () => ({
-  serialQueue: { add: (fn) => Promise.resolve(fn()) },
-}))
-
 // Each step pulls in real stores / form helpers / http — stub them so the
 // route renders without an exploded dependency graph. vi.mock is hoisted,
 // so the spy has to live inside vi.hoisted to be reachable from the factory.
-const { saveParam, upload } = vi.hoisted(() => ({
-  saveParam: vi.fn(() => Promise.resolve(true)),
+const { upload } = vi.hoisted(() => ({
   upload: vi.fn(() => Promise.resolve(true)),
 }))
 vi.mock('../../../stores/config', async () => {
   const { writable } = await import('svelte/store')
   const config_store = writable({ wizard_passed: false, hostname: 'openevse' })
-  return { config_store: Object.assign(config_store, { saveParam, upload }) }
+  return { config_store: Object.assign(config_store, { upload }) }
 })
-vi.mock('../../../api/httpAPI', () => ({
+vi.mock('../../../api/httpAPI', async (importOriginal) => ({
+  ...(await importOriginal()),
   httpAPI: vi.fn(() => Promise.resolve([])),
 }))
 
+import { get } from 'svelte/store'
 import { status_store } from '../../../stores/status'
 import { config_store } from '../../../stores/config'
+import { uistates_store } from '../../../stores/uistates'
 
 import Wizard from '../../../../routes/Wizard.svelte'
 
 beforeEach(() => {
-  saveParam.mockClear()
-  upload.mockClear()
+  upload.mockReset()
+  upload.mockResolvedValue(true)
+  uistates_store.resetAlertBox()
   status_store.set({ ipaddress: '10.0.0.5' })
   // Saving credentials writes into the store; don't let it seed the next test.
   config_store.set({ wizard_passed: false, hostname: 'openevse' })
@@ -151,27 +149,29 @@ describe('Wizard route', () => {
     await fireEvent.click(getByText('config.network.connect'))
   }
 
-  it('writes wizard_passed (no reconnect dialog) when joining from the home network', async () => {
+  it('writes wizard_passed, and is done, when joining from the home network', async () => {
     status_store.set({ ipaddress: '10.0.0.5' })
-    const view = render(Wizard)
+    const ondone = vi.fn()
+    const view = render(Wizard, { ondone })
     await joinFromWifiStep(view)
 
-    await vi.waitFor(() => {
-      expect(saveParam).toHaveBeenCalledWith('wizard_passed', true)
-    })
-    // Already routable — App.svelte swaps to the dashboard, no reconnect prompt.
+    // Already routable: App.svelte swaps to the dashboard, no reconnect prompt.
+    await vi.waitFor(() => expect(ondone).toHaveBeenCalled())
+    expect(upload).toHaveBeenCalledWith({ wizard_passed: true })
     expect(view.queryByText('wizard.reconnect.title')).toBeNull()
   })
 
-  it('shows the reconnect dialog when joining while still on the device AP', async () => {
+  // This page is about to lose the charger; it stays on what to do next.
+  it('shows the reconnect dialog, and stays, when joining while still on the device AP', async () => {
     status_store.set({ ipaddress: '192.168.4.1' })
-    const view = render(Wizard)
+    const ondone = vi.fn()
+    const view = render(Wizard, { ondone })
     await joinFromWifiStep(view)
 
-    await vi.waitFor(() => {
-      expect(saveParam).toHaveBeenCalledWith('wizard_passed', true)
-    })
-    expect(view.getByText('wizard.reconnect.title')).toBeInTheDocument()
+    expect(await view.findByText('wizard.reconnect.title')).toBeInTheDocument()
+    expect(upload).toHaveBeenCalledWith({ wizard_passed: true })
+    await fireEvent.click(view.getByText('wizard.reconnect.dismiss'))
+    expect(ondone).not.toHaveBeenCalled()
   })
 
   it('can join a network entered manually when scanning finds nothing', async () => {
@@ -183,6 +183,13 @@ describe('Wizard route', () => {
     })
   })
 
+  it('says so when the charger refuses to record that setup is done', async () => {
+    upload.mockImplementation((data) => Promise.resolve(!('wizard_passed' in data)))
+    const view = render(Wizard)
+    await joinFromWifiStep(view)
+    await vi.waitFor(() => expect(get(uistates_store).alertbox.visible).toBe(true))
+  })
+
   // The charger may already be on the home network (set up before, or by
   // WPS): joining again must not be the only way to finish.
   it('offers to keep the current network and finish when the charger is already on WiFi', async () => {
@@ -192,9 +199,9 @@ describe('Wizard route', () => {
     expect(getByText('wizard.wifi.current')).toBeInTheDocument()
     await fireEvent.click(getByText('wizard.wifi.keep'))
     await vi.waitFor(() => {
-      expect(saveParam).toHaveBeenCalledWith('wizard_passed', true)
+      expect(upload).toHaveBeenCalledWith({ wizard_passed: true })
     })
-    expect(upload).not.toHaveBeenCalled()
+    expect(upload.mock.calls).toEqual([[{ wizard_passed: true }]])
     expect(queryByText('wizard.reconnect.title')).toBeNull()
   })
 
@@ -299,8 +306,8 @@ describe('Wizard route', () => {
     await fireEvent.click(getByText('wizard.finish'))
 
     await vi.waitFor(() => {
-      expect(saveParam).toHaveBeenCalledWith('wizard_passed', true)
+      expect(upload).toHaveBeenCalledWith({ wizard_passed: true })
     })
-    expect(upload).not.toHaveBeenCalled()
+    expect(upload.mock.calls).toEqual([[{ wizard_passed: true }]])
   })
 })

@@ -6,9 +6,9 @@
     from '../../lib/config/firmware'
   import { config_store } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
-  import { serialQueue } from '../../lib/queue'
-  import { httpAPI } from '../../lib/api/httpAPI'
+  import { httpAPI, pauseRequests, resumeRequests } from '../../lib/api/httpAPI'
   import { showWriteError } from '../../lib/alerts'
+  import { createConfigForm } from '../../lib/config/configForm.svelte'
   import { sanitizeConfig } from '../../lib/config/backup'
   import { JSONTryParse } from '../../lib/utils'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
@@ -148,10 +148,8 @@
       // set, so this is always non-null in practice; the `!` mirrors the
       // original JS's unguarded `ch.asset.browser_download_url`, including
       // its throw-into-catch behaviour if that ever isn't true.
-      const res = await serialQueue.add(() =>
-        httpAPI<WriteResponse>('POST', '/update', JSON.stringify({ url: ch.asset!.browser_download_url })),
-      )
-      if (!res || res === 'error') {
+      const res = await httpAPI<WriteResponse>('POST', '/update', JSON.stringify({ url: ch.asset!.browser_download_url }))
+      if (res === 'error') {
         showWriteError()
         uploading = false
         return
@@ -171,10 +169,8 @@
     if (!device || busy) return
     busy = true
     try {
-      const res = await serialQueue.add(() =>
-        httpAPI<WriteResponse>('POST', '/restart', JSON.stringify({ device })),
-      )
-      if (!res || res === 'error') showWriteError()
+      const res = await httpAPI<WriteResponse>('POST', '/restart', JSON.stringify({ device }))
+      if (res === 'error') showWriteError()
     } finally {
       busy = false
     }
@@ -182,14 +178,14 @@
 
   async function factoryReset(): Promise<void> {
     confirmReset = false
-    const res = await serialQueue.add(() => httpAPI<WriteResponse>('GET', '/reset'))
-    if (!res || res === 'error') showWriteError()
+    const res = await httpAPI<WriteResponse>('GET', '/reset')
+    if (res === 'error') showWriteError()
   }
 
   async function uploadFirmware(): Promise<void> {
     if (!firmwareFile || uploading) return
     uploading = true
-    serialQueue.pause()
+    pauseRequests()
     try {
       // The image goes up as the raw request body, not multipart/form-data.
       // The firmware's HTTP server (Mongoose 7) buffers a whole multipart body
@@ -213,7 +209,7 @@
     } catch {
       showWriteError()
     } finally {
-      serialQueue.resume()
+      resumeRequests()
       uploading = false
     }
   }
@@ -246,13 +242,13 @@
     pendingRestore = { name: file.name, data: parsed as Partial<Config> }
   }
 
+  // A refused restore raises the write-failure alert.
+  const form = createConfigForm()
   async function restoreConfig(): Promise<void> {
     const backup = pendingRestore
     pendingRestore = null
     if (!backup) return
-    const ok = await serialQueue.add(() => config_store.upload(backup.data))
-    if (ok) restoreResult = { ok: true, name: backup.name }
-    else showWriteError()
+    if (await form.saveFields(backup.data)) restoreResult = { ok: true, name: backup.name }
   }
 </script>
 

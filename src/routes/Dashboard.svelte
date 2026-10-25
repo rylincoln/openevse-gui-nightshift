@@ -9,11 +9,9 @@
   import { claims_target_store } from '../lib/stores/claims_target'
   import { plan_store } from '../lib/stores/plan'
   import { energy_store } from '../lib/stores/energy'
-  import { uistates_store } from '../lib/stores/uistates'
   import { uisettings_store } from '../lib/stores/uisettings'
   import { loadsharing_store } from '../lib/stores/loadsharing'
-  import { httpAPI } from '../lib/api/httpAPI'
-  import { serialQueue } from '../lib/queue'
+  import { httpAPI, accepted } from '../lib/api/httpAPI'
   import { EvseClients } from '../lib/vars'
   import { sec2time, temp_round, round, clientid2name, hardMaxCurrent } from '../lib/utils'
   import { formatTemp } from '../lib/temperature'
@@ -24,7 +22,7 @@
   import { boostTarget } from '../lib/dashboard/boost'
   import { rateCap } from '../lib/dashboard/rate'
   import { formatClock } from '../lib/format/clock'
-  import { socCeiling, estMaxRange, hmsShort } from '../lib/dashboard/soc'
+  import { estMaxRange, hmsShort } from '../lib/dashboard/soc'
   import { loadSharingView } from '../lib/dashboard/loadsharing'
   import { createWriteRunner } from '../lib/dashboard/writes'
 
@@ -35,13 +33,32 @@
   import ShaperDivertRow from '../lib/components/dashboard/ShaperDivertRow.svelte'
   import LoadSharingCard from '../lib/components/dashboard/LoadSharingCard.svelte'
   import ThrottleBadge from '../lib/components/dashboard/ThrottleBadge.svelte'
-  import { selectedSegment, type ControlSegment } from '../lib/dashboard/controls'
+  import {
+    readChargeMode,
+    selectChargeMode,
+    setChargeRate,
+    type ChargeModeCharger,
+    type ChargeModeSnapshot,
+    type ControlSegment,
+  } from '../lib/dashboard/chargeMode'
   import ChargeControls from '../lib/components/dashboard/ChargeControls.svelte'
   import BoostCard from '../lib/components/dashboard/BoostCard.svelte'
   import RatePill from '../lib/components/dashboard/RatePill.svelte'
   import ChargeLimitCard from '../lib/components/dashboard/ChargeLimitCard.svelte'
   import AdvisoryStrip from '../lib/components/notifications/AdvisoryStrip.svelte'
-  import type { Limit, LimitType } from '../lib/api/device'
+  import { versionedResources } from '../lib/data/versioned'
+  import {
+    readChargeLimit,
+    setUserLimit,
+    setKnob,
+    knobPercent,
+    limitText,
+    type ChargeLimitCharger,
+    type Knob,
+    type LimitTarget,
+    type LimitWrite,
+  } from '../lib/chargeLimit'
+  import type { LimitType, Status } from '../lib/api/device'
 
   // Controls stay enabled while a write is in flight (disabling a focused
   // control drops keyboard focus); input made meanwhile is held, latest per
@@ -50,8 +67,27 @@
   let rateNonce = $state(0)
 
   // ── derived view-model ──────────────────────────────────────────────────
-  let mode = $derived($uistates_store?.mode ?? 0)
-  let display = $derived(displayState($status_store, mode))
+  let minAmps = $derived($config_store?.min_current_hard ?? 6)
+  // Rate pill slider stops at the configured soft max (Settings > Charger), so
+  // the home page can't request — or display — more current than the user has
+  // allowed. Falls back to the hardware ceiling when the soft max is unset —
+  // and past a hardware ceiling the firmware has not read yet (0), which
+  // would otherwise pin the pill at 0 A (see hardMaxCurrent).
+  let maxAmps = $derived(
+    Math.min($config_store?.max_current_soft ?? Infinity, hardMaxCurrent($config_store, 48)),
+  )
+  let defaultAmps = $derived($config_store?.max_current_soft ?? maxAmps)
+
+  // The charge mode, who owns the decision, and whether it can be changed.
+  let modeSnapshot: ChargeModeSnapshot = $derived({
+    claimsTarget: $claims_target_store,
+    divertmode: $status_store?.divertmode,
+    divertEnabled: !!$config_store?.divert_enabled,
+    override: $override_store,
+    defaultRate: defaultAmps,
+  })
+  let chargeMode = $derived(readChargeMode(modeSnapshot))
+  let display = $derived(displayState($status_store, chargeMode.segment))
   let charging = $derived(display === 'charging')
   // Is a car physically plugged in? Prefers the firmware `vehicle` flag, which
   // stays accurate through Sleeping/Off where the state code alone can't tell.
@@ -59,30 +95,13 @@
   // While charging, show the session chart hero (it polls /energy/raw); every
   // other state keeps the PowerRing.
   let showChart = $derived(charging)
-  // Rate pill slider stops at the configured soft max (Settings > Charger), so
-  // the home page can't request — or display — more current than the user has
-  // allowed. Falls back to the hardware ceiling when the soft max is unset —
-  // and past a hardware ceiling the firmware has not read yet (0), which
-  // would otherwise pin the pill at 0 A (see hardMaxCurrent).
-  let minAmps = $derived($config_store?.min_current_hard ?? 6)
-  let maxAmps = $derived(
-    Math.min($config_store?.max_current_soft ?? Infinity, hardMaxCurrent($config_store, 48)),
-  )
-  let defaultAmps = $derived($config_store?.max_current_soft ?? maxAmps)
   let fill = $derived(ringFill($status_store, $config_store, $limit_store))
 
-  let socRangeLimit = $derived($limit_store?.type === 'soc' || $limit_store?.type === 'range')
-
-  // A default limit applied by the firmware (config limit_default_*) reports
-  // auto_release: false on /limit — it's config-driven, so the dashboard
-  // shows it but offers no way to delete it.
-  let systemLimit = $derived($limit_store?.auto_release === false)
-
-  let claimOwner = $derived($claims_target_store?.claims?.state)
-  // A reached charge limit grabs the state-claim to stop charging. Unlike OCPP
-  // or RFID it's the user's own setting, not an external authority — so we don't
-  // lock the controls; we surface it as the status reason and let On clear it.
-  let limitTripped = $derived(claimOwner === EvseClients.limit.id)
+  // The Default limit is shown, and may be replaced for this session, but
+  // never deleted from here (see chargeLimit.ts).
+  let defaultLimit = $derived(readChargeLimit($limit_store)?.isDefault ?? false)
+  // Range readouts honour the owner's unit, the limit and boost targets too.
+  let rangeUnit = $derived($_($config_store?.mqtt_vehicle_range_miles ? 'units.miles' : 'units.km'))
 
   let kw = $derived((($status_store?.power ?? 0) / 1000).toFixed(1))
   // Shown on the PowerRing while charging (the non-Labs / chart-off path).
@@ -147,9 +166,11 @@
   // /loadsharing/status, not on the websocket; the firmware ticks
   // loadsharing_status_version when either changes, so fetch on the tick —
   // the same trigger Settings → Load sharing uses.
+  const loadSharingStatus = versionedResources<Status, 'status'>({
+    status: { version: (s) => s.loadsharing_status_version, download: () => loadsharing_store.downloadStatus() },
+  })
   $effect(() => {
-    const version = $status_store?.loadsharing_status_version
-    if (loadSharingVisible && version !== undefined) loadsharing_store.downloadStatus()
+    if (loadSharingVisible && $status_store) loadSharingStatus.observe($status_store)
   })
   let loadSharing = $derived(
     loadSharingVisible
@@ -164,39 +185,8 @@
   )
   let currentLimited = $derived(loadSharing !== null && loadSharing.state !== 'sharing')
 
-  // OCPP/RFID are external authorities that genuinely own the charge — lock the
-  // mode controls. A reached limit is handled separately (see limitTripped).
-  let modeLocked = $derived(
-    claimOwner === EvseClients.ocpp.id ||
-    claimOwner === EvseClients.rfid.id,
-  )
-  let modeLockLabel = $derived(
-    claimOwner === EvseClients.ocpp.id
-      ? 'OCPP'
-      : claimOwner === EvseClients.rfid.id
-        ? 'RFID'
-        : '',
-  )
-
-  let showEco = $derived(!!$config_store?.divert_enabled)
-  let ecoOn = $derived($status_store?.divertmode === 2 && mode === 0)
-  let chargeSegment = $derived(
-    selectedSegment({
-      mode,
-      divertmode: $status_store?.divertmode,
-      divertEnabled: !!$config_store?.divert_enabled,
-    }),
-  )
-
-  function formatLimit(l: Limit | null | undefined): string {
-    if (!l || !l.type || l.type === 'none') return ''
-    if (l.type === 'time') return sec2time(l.value * 60)
-    if (l.type === 'energy') return `${round(l.value / 1000, 1)} kWh`
-    if (l.type === 'soc') return `${l.value}%`
-    if (l.type === 'range') return `${l.value} km`
-    return ''
-  }
-
+  // Eco: solar divert sets the charge rate, so the rate control stands aside.
+  let ecoOn = $derived(chargeMode.segment === 'eco')
 
   // ── charge-limit bar view-model ─────────────────────────────────────────
   let hasSoc = $derived(
@@ -209,145 +199,61 @@
       : null,
   )
   let maxRange = $derived(estMaxRange($status_store?.battery_range, $status_store?.battery_level))
-  // The bar owns soc + range limits; the row owns time + energy.
-  let barLimitActive = $derived(socRangeLimit)
   // Display unit: follows the active range limit by default; the toggle overrides.
   let userUnit = $state<'percent' | 'range' | null>(null)
-  let limitUnit = $derived(userUnit ?? ($limit_store?.type === 'range' ? 'range' : 'percent'))
-  // Knob position is always a percent. Map the active limit back to a percent.
-  let socTarget = $derived(
-    $limit_store?.type === 'soc'
-      ? $limit_store.value
-      : $limit_store?.type === 'range' && maxRange !== null
-        ? // clamp: a stale range limit above a shrunken max-range estimate must
-          // not map past 100% (the knob would then auto-clear on first touch)
-          Math.round(Math.min(100, ($limit_store.value / maxRange) * 100))
-        : socCeiling(vehicleLimit),
-  )
+  let knob: Knob = $derived({
+    unit: userUnit ?? ($limit_store?.type === 'range' ? 'range' : 'percent'),
+    maxRange,
+    vehicleLimit,
+  })
+  let socTarget = $derived(knobPercent($limit_store, knob))
   // Bumped on a failed bar write to remount the card back to the confirmed value.
   let socNonce = $state(0)
 
-  // ── actions (all writes serialized) ─────────────────────────────────────
+  // ── actions ─────────────────────────────────────────────────────────────
+  // The charge limit's charger seam.
+  const limitCharger: ChargeLimitCharger = {
+    setLimit: (l) => limit_store.upload(l),
+    clearLimit: () => limit_store.remove(),
+  }
+  // The charge mode's charger seam.
+  const charger: ChargeModeCharger = {
+    setOverride: (o) => override_store.upload(o),
+    clearOverride: () => override_store.clear(),
+    setDivertMode: async (dm) => accepted(await httpAPI('POST', '/divertmode', `divertmode=${dm}`, 'text')),
+    clearUserLimit: async () => (await setUserLimit(null, $limit_store, limitCharger)) !== 'failed',
+  }
+
   function setSegment(seg: ControlSegment): Promise<void> {
     return writes.run('mode', async () => {
-      let ok = true
-      if (seg === 'on' || seg === 'off') {
-        const cur = $override_store?.charge_current
-        const data = {
-          state: seg === 'on' ? 'active' : 'disabled',
-          charge_current: cur ?? $config_store?.max_current_soft,
-          auto_release: false,
-        }
-        ok = await serialQueue.add(() => override_store.upload(data))
-        // Forcing On past a reached limit: the limit claim outranks manual, so
-        // the override alone won't resume — clear the tripped limit too.
-        // Never DELETE a system limit: the firmware only re-applies the
-        // config default at boot or on a config write, so deleting it here
-        // would silently discard the configured limit.
-        if (ok && seg === 'on' && limitTripped && !systemLimit) {
-          ok = await serialQueue.add(() => limit_store.remove())
-        }
-      } else {
-        // 'auto' or 'eco': release the manual override, then set the divert
-        // state explicitly so we land on the intended segment regardless of
-        // the prior divertmode (On->Auto must turn divert off; On->Eco must turn it on).
-        // Only clear when an override is actually set — clear() returns false
-        // (with no request) on an empty/unset store, which would otherwise be
-        // mistaken for a write failure and fire a spurious error.
-        if ($override_store && Object.keys($override_store).length > 0) {
-          ok = await serialQueue.add(() => override_store.clear())
-        }
-        // If releasing the override failed, don't push divertmode on top of a
-        // device we couldn't reach — surface the error and stop.
-        if (!ok) {
-          showWriteError()
-          return
-        }
-        const dm = seg === 'eco' ? 2 : 1
-        const res = await serialQueue.add(() =>
-          httpAPI('POST', '/divertmode', `divertmode=${dm}`, 'text'),
-        )
-        if (res === 'error') ok = false
-      }
-      if (!ok) showWriteError()
+      if (!(await selectChargeMode(seg, modeSnapshot, charger))) showWriteError()
     })
   }
 
   function setChargeAmps(val: number): Promise<void> {
     return writes.run('rate', async () => {
-      if (val === defaultAmps) {
-        await serialQueue.add(() => override_store.removeProp('charge_current'))
-      } else {
-        const current = $override_store ?? {}
-        // auto_release: false to keep the override sticky — see setSegment.
-        const ok = await serialQueue.add(() =>
-          override_store.upload({ ...current, charge_current: val, auto_release: false }),
-        )
-        if (!ok) {
-          showWriteError()
-          rateNonce++ // remount RatePill so the slider reverts to the confirmed value
-        }
-      }
-    })
-  }
-
-
-  // Inline editors commit device-unit values; 0 means clear. A system limit
-  // is never DELETEd from here — snap the card back instead (shipped rule).
-  function setInlineLimit({ type, value }: { type: LimitType; value: number }): Promise<void> {
-    return writes.run('limit', async () => {
-      if (!value) {
-        if (systemLimit) {
-          socNonce++
-          return
-        }
-        return clearLimit()
-      }
-      const ok = await serialQueue.add(() => limit_store.upload({ type, value, auto_release: true }))
-      if (ok) {
-        await serialQueue.add(() => limit_store.download())
-      } else {
+      if (!(await setChargeRate(val, modeSnapshot, charger))) {
         showWriteError()
-        socNonce++
+        rateNonce++ // remount RatePill so the slider reverts to the confirmed value
       }
     })
   }
 
-  async function clearLimit(): Promise<void> {
-    const ok = await serialQueue.add(() => limit_store.remove())
-    if (!ok) {
-      showWriteError()
-      socNonce++ // remount the card so a dragged-to-zero knob reverts
-    }
+
+  // The inline editors commit device-unit values; 0 means clear.
+  function setInlineLimit({ type, value }: { type: LimitTarget; value: number }): Promise<void> {
+    return writes.run('limit', async () => settle(await setUserLimit(value ? { type, value } : null, $limit_store, limitCharger)))
   }
 
-  // Snap-to-clear: a knob at/above the vehicle limit means "no limit". Below it,
-  // write a soc or range limit depending on the active display unit.
   function setTarget(pct: number): Promise<void> {
-    return writes.run('limit', async () => {
-      let ok
-      if (pct >= socCeiling(vehicleLimit)) {
-        if (barLimitActive && systemLimit) {
-          // A system (default) limit can't be cleared from the bar — snap the
-          // knob back to the configured limit instead of deleting it.
-          socNonce++
-          ok = true
-        } else {
-          ok = barLimitActive ? await serialQueue.add(() => limit_store.remove()) : true
-        }
-      } else {
-        const data: Limit =
-          limitUnit === 'range' && maxRange !== null
-            ? { type: 'range', value: Math.round((pct / 100) * maxRange), auto_release: true }
-            : { type: 'soc', value: pct, auto_release: true }
-        ok = await serialQueue.add(() => limit_store.upload(data))
-        if (ok) await serialQueue.add(() => limit_store.download())
-      }
-      if (!ok) {
-        showWriteError()
-        socNonce++ // remount the card so the knob reverts to the confirmed value
-      }
-    })
+    return writes.run('limit', async () => settle(await setKnob(pct, knob, $limit_store, limitCharger)))
+  }
+
+  // A refused write raises the alert; either way the card remounts on the
+  // limit the charger holds, so a knob or slider goes back to it.
+  function settle(res: LimitWrite): void {
+    if (res === 'failed') showWriteError()
+    if (res !== 'done') socNonce++
   }
 
   // Boost: a device-side claim (priority 200) that charges NOW until a chosen
@@ -370,13 +276,13 @@
   let status = $derived(
     chargerStatus({
       display,
-      segment: chargeSegment,
-      stateOwner: claimOwner ? clientid2name(claimOwner) : '',
+      segment: chargeMode.segment,
+      stateOwner: chargeMode.owner,
       vehicle: connected,
       fault: $status_store?.state,
       plan: $plan_store,
-      limitText: formatLimit($limit_store),
-      boostText: boostTarget(activeBoost, $_, $_($config_store?.mqtt_vehicle_range_miles ? 'units.miles' : 'units.km')),
+      limitText: limitText($limit_store, $_, rangeUnit),
+      boostText: boostTarget(activeBoost, $_, rangeUnit),
       time: (t) => formatClock(t, $locale),
       clientName: (k) => $_(`clients.${k}`),
     }),
@@ -396,24 +302,24 @@
 
   function armBoost({ type, value }: { type: LimitType; value: number }): Promise<void> {
     return writes.run('boost', async () => {
-      const res = await serialQueue.add(() => boost_store.upload({ type, value }))
-      if (res && res !== 'error' && res.msg === 'done') {
+      const res = await boost_store.upload({ type, value })
+      if (res.ok) {
         // Reconcile from the device rather than trusting the 201: an
         // already-met soc/range target also returns 201 but leaves nothing
         // running, so flipping to "active" here would show a ghost boost.
-        await serialQueue.add(boost_store.download)
-      } else if (res && res !== 'error' && res.msg) {
-        showBoostError(res.msg) // 422 (no vehicle source) / 400 (bad value)
+        await boost_store.download()
+      } else if (res.reason) {
+        showBoostError(res.reason) // 422 (no vehicle source) / 400 (bad value)
       } else {
-        showWriteError() // network / parse failure
+        showWriteError() // the charger could not be reached
       }
     })
   }
 
   function cancelBoost(): Promise<void> {
     return writes.run('boost', async () => {
-      await serialQueue.add(() => boost_store.remove())
-      await serialQueue.add(boost_store.download)
+      await boost_store.remove()
+      await boost_store.download()
     })
   }
 
@@ -525,10 +431,10 @@
          layout doesn't reflow. -->
     <div class="max-lg:order-3">
       <ChargeControls
-        segment={chargeSegment}
-        divertEnabled={showEco}
-        locked={modeLocked}
-        lockLabel={modeLockLabel}
+        segment={chargeMode.segment}
+        divertEnabled={modeSnapshot.divertEnabled}
+        locked={chargeMode.locked !== null}
+        lockLabel={chargeMode.locked ?? ''}
         disabled={display === 'error'}
         onsegment={setSegment}
       />
@@ -545,7 +451,7 @@
           estMaxRange={maxRange}
           rangeMiles={!!$config_store?.mqtt_vehicle_range_miles}
           maxEnergyKwh={$uisettings_store?.max_energy_kwh ?? 100}
-          disabled={modeLocked || display === 'error'}
+          disabled={chargeMode.locked !== null || display === 'error'}
           onarm={armBoost}
           oncancel={cancelBoost}
         />
@@ -583,7 +489,7 @@
           limit={$limit_store}
           elapsedSec={$status_store?.session_elapsed ?? 0}
           sessionWh={$status_store?.session_energy ?? 0}
-          {systemLimit}
+          {defaultLimit}
           maxEnergyKwh={$uisettings_store?.max_energy_kwh ?? 100}
           onlimit={setInlineLimit}
         />

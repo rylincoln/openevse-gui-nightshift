@@ -12,8 +12,8 @@
   import { _ } from 'svelte-i18n'
   import { config_store } from '../lib/stores/config'
   import { status_store } from '../lib/stores/status'
-  import { serialQueue } from '../lib/queue'
   import { navigate } from '../lib/router'
+  import { createConfigForm } from '../lib/config/configForm.svelte'
   import WizardShell from '../lib/components/wizard/WizardShell.svelte'
   import FinishDialog from '../lib/components/wizard/FinishDialog.svelte'
   import Welcome from '../lib/components/wizard/steps/Welcome.svelte'
@@ -22,6 +22,12 @@
   import TimeStep from '../lib/components/wizard/steps/TimeStep.svelte'
   import Security from '../lib/components/wizard/steps/Security.svelte'
   import FirmwareInfo from '../lib/components/wizard/steps/FirmwareInfo.svelte'
+
+  interface Props {
+    /** Setup is finished and the dashboard can take over (App.svelte). */
+    ondone?: () => void
+  }
+  let { ondone = () => {} }: Props = $props()
 
   // WiFi is provisioned LAST on purpose: joining the network makes the ESP32's
   // softAP hop to the router's channel, which drops a phone/laptop that set the
@@ -88,26 +94,33 @@
     return $status_store?.ipaddress === '192.168.4.1'
   }
 
+  const form = createConfigForm()
+
   // Persist the "setup done" flag. Called by the WiFi step BEFORE it joins the
   // network — the join drops the softAP, so wizard_passed must be written while
   // the device is still reachable, or the wizard would reappear next boot.
   async function markComplete() {
     if (!$config_store?.wizard_passed) {
-      await serialQueue.add(() => config_store.saveParam('wizard_passed', true))
+      await form.saveField('wizard_passed', true)
     }
   }
 
   // The WiFi step has joined (request sent, AP about to drop). markComplete
   // already wrote wizard_passed before the join. If we're still on the device
-  // AP the user must physically switch networks, so show the reconnect address;
-  // otherwise we're already on the home network, so collapse straight to the
-  // dashboard (App.svelte swaps to AppShell once wizard_passed is true).
+  // AP the user must physically switch networks, so show the reconnect address
+  // and stay on it; otherwise we're already on the home network, so go
+  // straight to the dashboard.
   function onWifiJoined() {
     if (isOnDeviceAp()) {
       finishDialog = true
     } else {
-      navigate('/')
+      done()
     }
+  }
+
+  function done() {
+    navigate('/')
+    ondone()
   }
 
   function dismissFinish() {
@@ -123,7 +136,7 @@
     if (isOnDeviceAp()) {
       finishDialog = true
     } else {
-      navigate('/')
+      done()
     }
   }
 </script>

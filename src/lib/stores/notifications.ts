@@ -1,5 +1,5 @@
 import { writable, type Writable } from 'svelte/store'
-import { httpAPI } from '../api/httpAPI'
+import { httpAPI, accepted } from '../api/httpAPI'
 import { normalizeNotifications } from '../notifications/notifications'
 import type { NormalizedNotification } from '../notifications/notifications'
 
@@ -34,12 +34,12 @@ function createNotificationStore(): NotificationStore {
 
   async function download(): Promise<boolean> {
     const res = await httpAPI('GET', '/notifications')
-    // Firmware without the advisory engine has no such route, so the SPA index
-    // comes back and httpAPI's response.json() throws → 'error'. DataManager's
+    // Firmware without the advisory engine has no such route, so its 404 (or
+    // the SPA index, which response.json() cannot parse) is 'error'. DataManager's
     // capability gate means such a build never reaches this call at all; the
     // check is here so a transient failure leaves the last good list standing
     // rather than blanking the panel.
-    if (!res || res === 'error' || typeof res !== 'object') return false
+    if (!accepted(res) || typeof res !== 'object' || res === null) return false
     P.set(normalizeNotifications(res))
     return true
   }
@@ -51,13 +51,12 @@ function createNotificationStore(): NotificationStore {
     // everything else. The firmware accepts both, but the body is the form it
     // finds first. The reply is text/plain ("acknowledged" / "id required" /
     // "no such active notification"), never JSON.
-    const res = await httpAPI(
+    const ok = accepted(await httpAPI(
       'POST',
       '/notifications/ack',
       'id=' + encodeURIComponent(id),
       'text',
-    )
-    const ok = typeof res === 'string' && res.includes('acknowledged')
+    ))
     // On success the firmware's ack() calls pushEvent() (notifications.cpp),
     // so the badge fields arrive over the websocket and DataManager re-reads
     // the list through the normal path — a second GET here would only queue

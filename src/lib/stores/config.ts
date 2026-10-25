@@ -1,5 +1,5 @@
 import { writable, type Writable } from 'svelte/store'
-import { httpAPI, isErrorBody } from '../api/httpAPI'
+import { httpAPI, accepted } from '../api/httpAPI'
 import type { Config, WriteResponse } from '../api/device'
 
 /** `/config` plus the two flags this store derives from `firmware`. */
@@ -11,8 +11,8 @@ export interface ConfigState extends Config {
 
 export interface ConfigStore extends Writable<ConfigState | undefined> {
   download(): Promise<boolean>
+  /** POST /config. Pages write through createConfigForm (config/configForm.svelte.ts), not this. */
   upload(data: Partial<Config>): Promise<boolean>
-  saveParam<K extends keyof Config>(name: K, val: Config[K]): Promise<boolean>
 }
 
 function createConfigStore(): ConfigStore {
@@ -37,27 +37,15 @@ function createConfigStore(): ConfigStore {
 
   async function download(): Promise<boolean> {
     const res = await httpAPI<Config>('GET', '/config')
-    if (res && res !== 'error' && !isErrorBody(res)) {
+    if (accepted(res)) {
       P.update(() => withDerived(res))
       return true
     } else return false
   }
 
   async function upload(data: Partial<Config>): Promise<boolean> {
-    const res = await httpAPI<WriteResponse>('POST', '/config', JSON.stringify(data))
-    if (res !== 'error' && (res.msg == 'done' || res.msg == 'no change')) return true
-    else return false
-  }
-
-  async function saveParam<K extends keyof Config>(name: K, val: Config[K]): Promise<boolean> {
-    const data = { [name]: val } as Partial<Config>
-    if (await config_store.upload(data)) {
-      // After a successful param save we should refresh (lightweight: update current object)
-      update((current) => withDerived({ ...current, [name]: val } as ConfigState))
-      return true
-    } else {
-      return false
-    }
+    // "done" or "no change": either way the charger holds these values now.
+    return accepted(await httpAPI<WriteResponse>('POST', '/config', JSON.stringify(data)))
   }
 
   // Wrapped set/update so external callers always get derived property maintained
@@ -79,7 +67,6 @@ function createConfigStore(): ConfigStore {
     update: updateWithDerived,
     download,
     upload,
-    saveParam,
   }
 }
 

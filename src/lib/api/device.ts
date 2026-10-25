@@ -499,7 +499,7 @@ export interface Config {
 
 export type LimitType = 'none' | 'time' | 'energy' | 'soc' | 'range'
 
-/** `GET /limit`. `auto_release: false` ⇒ system (config-driven) limit. */
+/** `GET /limit`. `auto_release: false` ⇒ the Default limit (config limit_default_*); see chargeLimit.ts. */
 export interface Limit {
   type: LimitType
   value: number

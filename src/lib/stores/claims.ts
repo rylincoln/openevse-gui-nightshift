@@ -1,5 +1,5 @@
 import { writable, type Writable } from 'svelte/store'
-import { httpAPI, isErrorBody } from '../api/httpAPI'
+import { httpAPI, accepted } from '../api/httpAPI'
 import type { Claim, ErrorBody } from '../api/device'
 
 // GET /claims → array of active EVSE claims, each with its *actual* runtime
@@ -20,7 +20,7 @@ function createClaimsStore(): ClaimsStore {
       set(res)
       return true
     }
-    if (res && res !== 'error' && !isErrorBody(res)) {
+    if (accepted(res)) {
       // Some firmware wraps it; accept an object with a claims array too.
       set(Array.isArray(res.claims) ? res.claims : [])
       return true

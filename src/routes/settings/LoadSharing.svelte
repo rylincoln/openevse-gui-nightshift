@@ -18,27 +18,11 @@
   import Button from '../../lib/components/ui/Button.svelte'
   import IconButton from '../../lib/components/ui/IconButton.svelte'
   import Modal from '../../lib/components/ui/Modal.svelte'
-  import type { LoadSharingPeer, LoadSharingStatus } from '../../lib/api/device'
+  import { versionedResources } from '../../lib/data/versioned'
+  import type { LoadSharingPeer, LoadSharingStatus, Status } from '../../lib/api/device'
 
   const form = createConfigForm()
   const ss = form.saveState
-
-  // NumberInput emits null when a field is cleared to empty; every one of
-  // these is shown blank (no numeric fallback), so clearing must not write
-  // a literal null — matching the mqtt_port/divert/shaper fixes.
-  function saveGroupField(
-    name: 'loadsharing_group_max_current' | 'loadsharing_safety_factor' | 'loadsharing_heartbeat_timeout' | 'loadsharing_failsafe_safe_current' | 'loadsharing_failsafe_peer_assumed_current',
-    v: number | null,
-  ): void {
-    if (v !== null) form.saveField(name, v)
-  }
-
-  // loadsharing_rotation_interval shows a real default (1800) rather than a
-  // blank box, so clearing it should restore that default, not send null —
-  // same as www_https_port.
-  function saveRotationInterval(v: number | null): void {
-    form.saveField('loadsharing_rotation_interval', v ?? 1800)
-  }
 
   // Labs-gated page: if the OpenEVSE Labs switch is off, a deep link here
   // bounces back to the settings index rather than exposing the surface.
@@ -208,24 +192,17 @@
     await form.saveField('loadsharing_role', false)
   }
 
-  // Watch for peer list changes via version number
-  $effect(() => {
-    const version = $status_store?.loadsharing_peers_version
-    if (version !== undefined && enabled) {
-      loadsharing_store.downloadPeers()
-    }
+  // The peer list and the group summary (failsafe_active, online_count,
+  // offline_count, allocations) come from their own GETs; the websocket
+  // /status payload carries only their version counters (and
+  // loadsharing_joined_peers). Fetched on first sight and whenever a counter
+  // moves, while this page is open.
+  const versioned = versionedResources<Status, 'peers' | 'status'>({
+    peers: { version: (s) => s.loadsharing_peers_version, download: () => loadsharing_store.downloadPeers() },
+    status: { version: (s) => s.loadsharing_status_version, download: () => loadsharing_store.downloadStatus() },
   })
-
-  // Watch for peer status changes via version number.
-  // The websocket /status payload only carries loadsharing_joined_peers and the
-  // version counters; the group summary fields (failsafe_active, online_count,
-  // offline_count, allocations) come from GET /loadsharing/status, so fetch it
-  // whenever the version ticks (and on first load).
   $effect(() => {
-    const statusVersion = $status_store?.loadsharing_status_version
-    if (statusVersion !== undefined && enabled) {
-      loadsharing_store.downloadStatus()
-    }
+    if (enabled && $status_store) versioned.observe($status_store)
   })
 </script>
 
@@ -261,7 +238,7 @@
           min={0}
           step={0.1}
           revert={form.revert}
-          onchange={(v) => saveGroupField('loadsharing_group_max_current', v)}
+          onchange={(v) => form.saveField('loadsharing_group_max_current', v)}
         />
       </FormField>
       {#if hasSafetyFactor}
@@ -274,7 +251,7 @@
             min={0}
             step={0.01}
             revert={form.revert}
-            onchange={(v) => saveGroupField('loadsharing_safety_factor', v)}
+            onchange={(v) => form.saveField('loadsharing_safety_factor', v)}
           />
         </FormField>
       {/if}
@@ -288,7 +265,7 @@
             min={0}
             step={1}
             revert={form.revert}
-            onchange={(v) => saveGroupField('loadsharing_heartbeat_timeout', v)}
+            onchange={(v) => form.saveField('loadsharing_heartbeat_timeout', v)}
           />
         </FormField>
       {/if}
@@ -314,7 +291,7 @@
             min={0}
             step={0.1}
             revert={form.revert}
-            onchange={(v) => saveGroupField('loadsharing_failsafe_safe_current', v)}
+            onchange={(v) => form.saveField('loadsharing_failsafe_safe_current', v)}
           />
         </FormField>
       {/if}
@@ -328,7 +305,7 @@
             min={0}
             step={0.1}
             revert={form.revert}
-            onchange={(v) => saveGroupField('loadsharing_failsafe_peer_assumed_current', v)}
+            onchange={(v) => form.saveField('loadsharing_failsafe_peer_assumed_current', v)}
           />
         </FormField>
       {/if}
@@ -341,7 +318,7 @@
           min={0}
           step={1}
           revert={form.revert}
-          onchange={saveRotationInterval}
+          onchange={(v) => form.saveField('loadsharing_rotation_interval', v)}
         />
       </FormField>
     </ConfigSection>

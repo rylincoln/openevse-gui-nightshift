@@ -28,10 +28,6 @@ describe('config_store', () => {
     expect(typeof config_store.upload).toBe('function')
   })
 
-  it('should have saveParam method', () => {
-    expect(typeof config_store.saveParam).toBe('function')
-  })
-
   it('should download config and update store', async () => {
     const mockConfig = { hostname: 'openevse', firmware: 'v1.0.0' }
     httpAPI.mockResolvedValue(mockConfig)
@@ -121,25 +117,5 @@ describe('config_store', () => {
     const state = get(config_store)
     expect(state.firmware_is_eu).toBe(false)
     expect(state.hostname).toBe('updated')
-  })
-
-  it('should save individual parameter', async () => {
-    config_store.set({ firmware: 'v5.1.0', hostname: 'openevse' })
-    httpAPI.mockResolvedValue({ msg: 'done' })
-
-    const result = await config_store.saveParam('hostname', 'newname')
-    expect(result).toBe(true)
-    expect(httpAPI).toHaveBeenCalledWith('POST', '/config', JSON.stringify({ hostname: 'newname' }))
-
-    const state = get(config_store)
-    expect(state.hostname).toBe('newname')
-  })
-
-  it('should return false when saveParam upload fails', async () => {
-    config_store.set({ firmware: 'v5.1.0', hostname: 'openevse' })
-    httpAPI.mockResolvedValue({ msg: 'error' })
-
-    const result = await config_store.saveParam('hostname', 'fail')
-    expect(result).toBe(false)
   })
 })
