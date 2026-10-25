@@ -50,4 +50,28 @@ describe('BoostCard', () => {
     await fireEvent.click(getByText('dashboard.boost.arm'))
     expect(onarm).toHaveBeenCalledWith({ type: 'time', value: 1800 })
   })
+
+  // Opening and closing swap the focused button out of the DOM; without
+  // these hand-offs keyboard focus falls back to the page body.
+  it('moves focus to the selected target type when the picker opens', async () => {
+    const { getByText, getByRole } = render(BoostCard, { props: { ...base } })
+    const toggle = getByText('dashboard.boost.label')
+    toggle.focus()
+    await fireEvent.click(toggle)
+    await vi.waitFor(() => expect(document.activeElement).toBe(getByRole('radio', { name: 'dashboard.boost.type_time' })))
+  })
+
+  it('returns focus to the Boost button when the picker is closed', async () => {
+    const { getByText } = render(BoostCard, { props: { ...base } })
+    await fireEvent.click(getByText('dashboard.boost.label'))
+    await fireEvent.click(getByText('dashboard.boost.close'))
+    await vi.waitFor(() => expect(document.activeElement).toBe(getByText('dashboard.boost.label')))
+  })
+
+  it('returns focus to the Boost button after arming', async () => {
+    const { getByText } = render(BoostCard, { props: { ...base, onarm: vi.fn() } })
+    await fireEvent.click(getByText('dashboard.boost.label'))
+    await fireEvent.click(getByText('dashboard.boost.arm'))
+    await vi.waitFor(() => expect(document.activeElement).toBe(getByText('dashboard.boost.label')))
+  })
 })

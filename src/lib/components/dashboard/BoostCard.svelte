@@ -5,6 +5,7 @@
   // truth; it only interpolates the *time* remaining by the wall-seconds since
   // the last device read (reset on every read), so a reboot that clears the
   // boost can't leave a phantom counting down.
+  import { tick } from 'svelte'
   import { _ } from 'svelte-i18n'
   import Button from '../ui/Button.svelte'
   import type { Boost, LimitType } from '../../api/device'
@@ -57,6 +58,22 @@
   // the resting dashboard isn't a second wall of dimension pills next to the
   // charge-limit card. The active Boosting strip shows independently.
   let expanded = $state(false)
+  let root: HTMLElement | undefined = $state()
+
+  // Opening and closing swap the focused button out of the DOM, which drops
+  // keyboard focus to the page. Hand it across — but only if it was in this
+  // card (or already lost), never stealing it from elsewhere.
+  async function setExpanded(next: boolean): Promise<void> {
+    const active = document.activeElement
+    const ours = !active || active === document.body || !!root?.contains(active)
+    expanded = next
+    await tick()
+    if (!ours) return
+    const target = next
+      ? root?.querySelector<HTMLElement>('[role="radio"][aria-checked="true"]')
+      : root?.querySelector<HTMLElement>('[data-boost-toggle] button')
+    target?.focus()
+  }
 
   // ── per-dimension value state (in the slider's own units) ───────────────
   let timeMin = $state(30) // minutes → seconds on submit
@@ -146,7 +163,7 @@
     // Collapse back to the button once armed; the active strip takes over.
     // A rejected arm (rare — soc/range are pre-gated) still collapses, and the
     // alert explains why; re-open to adjust.
-    expanded = false
+    setExpanded(false)
   }
 
   // ── active-boost readout (device-owned) ─────────────────────────────────
@@ -189,7 +206,7 @@
   })
 </script>
 
-<div class="mt-2 space-y-2">
+<div class="mt-2 space-y-2" bind:this={root}>
   {#if active}
     <div
       data-boost-active
@@ -208,12 +225,14 @@
   {#if !expanded}
     <!-- Resting state: a single button. "Replace boost" while one is active,
          otherwise "Boost". Tapping reveals the picker below. -->
-    <Button
-      label={active ? $_('dashboard.boost.replace') : $_('dashboard.boost.label')}
-      variant="ghost"
-      {disabled}
-      onclick={() => (expanded = true)}
-    />
+    <div data-boost-toggle>
+      <Button
+        label={active ? $_('dashboard.boost.replace') : $_('dashboard.boost.label')}
+        variant="ghost"
+        {disabled}
+        onclick={() => setExpanded(true)}
+      />
+    </div>
   {:else}
     <div class="rounded-xl bg-surface-2 px-3 py-3">
       <!-- header: current pick on the left, dimension pills on the right -->
@@ -262,7 +281,7 @@
           />
         </div>
         <div class="flex-1">
-          <Button label={$_('dashboard.boost.close')} variant="ghost" onclick={() => (expanded = false)} />
+          <Button label={$_('dashboard.boost.close')} variant="ghost" onclick={() => setExpanded(false)} />
         </div>
       </div>
     </div>

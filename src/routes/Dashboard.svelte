@@ -23,6 +23,7 @@
   import { displayState, ringFill, connectedReason, maxPowerW, vehicleConnected } from '../lib/dashboard/state'
   import { socCeiling, estMaxRange, hmsShort } from '../lib/dashboard/soc'
   import { loadSharingView } from '../lib/dashboard/loadsharing'
+  import { createWriteRunner } from '../lib/dashboard/writes'
 
   import PlugPill from '../lib/components/dashboard/PlugPill.svelte'
   import PowerRing from '../lib/components/dashboard/PowerRing.svelte'
@@ -47,7 +48,10 @@
   // caller's needs.
   type I18nValues = NonNullable<ComponentProps<typeof PowerRing>['reasonValues']>
 
-  let busy = $state(false)
+  // Controls stay enabled while a write is in flight (disabling a focused
+  // control drops keyboard focus); input made meanwhile is held, latest per
+  // control, and written once the current write finishes.
+  const writes = createWriteRunner()
   let rateNonce = $state(0)
 
   // ── derived view-model ──────────────────────────────────────────────────
@@ -227,10 +231,8 @@
   let socNonce = $state(0)
 
   // ── actions (all writes serialized) ─────────────────────────────────────
-  async function setSegment(seg: ControlSegment): Promise<void> {
-    if (busy) return
-    busy = true
-    try {
+  function setSegment(seg: ControlSegment): Promise<void> {
+    return writes.run('mode', async () => {
       let ok = true
       if (seg === 'on' || seg === 'off') {
         const cur = $override_store?.charge_current
@@ -271,15 +273,11 @@
         if (res === 'error') ok = false
       }
       if (!ok) showWriteError()
-    } finally {
-      busy = false
-    }
+    })
   }
 
-  async function setChargeAmps(val: number): Promise<void> {
-    if (busy) return
-    busy = true
-    try {
+  function setChargeAmps(val: number): Promise<void> {
+    return writes.run('rate', async () => {
       if (val === defaultAmps) {
         await serialQueue.add(() => override_store.removeProp('charge_current'))
       } else {
@@ -293,25 +291,21 @@
           rateNonce++ // remount RatePill so the slider reverts to the confirmed value
         }
       }
-    } finally {
-      busy = false
-    }
+    })
   }
 
 
   // Inline editors commit device-unit values; 0 means clear. A system limit
   // is never DELETEd from here — snap the card back instead (shipped rule).
-  async function setInlineLimit({ type, value }: { type: LimitType; value: number }): Promise<void> {
-    if (busy) return
-    if (!value) {
-      if (systemLimit) {
-        socNonce++
-        return
+  function setInlineLimit({ type, value }: { type: LimitType; value: number }): Promise<void> {
+    return writes.run('limit', async () => {
+      if (!value) {
+        if (systemLimit) {
+          socNonce++
+          return
+        }
+        return clearLimit()
       }
-      return clearLimit()
-    }
-    busy = true
-    try {
       const ok = await serialQueue.add(() => limit_store.upload({ type, value, auto_release: true }))
       if (ok) {
         await serialQueue.add(() => limit_store.download())
@@ -319,9 +313,7 @@
         showWriteError()
         socNonce++
       }
-    } finally {
-      busy = false
-    }
+    })
   }
 
   async function clearLimit(): Promise<void> {
@@ -334,10 +326,8 @@
 
   // Snap-to-clear: a knob at/above the vehicle limit means "no limit". Below it,
   // write a soc or range limit depending on the active display unit.
-  async function setTarget(pct: number): Promise<void> {
-    if (busy) return
-    busy = true
-    try {
+  function setTarget(pct: number): Promise<void> {
+    return writes.run('limit', async () => {
       let ok
       if (pct >= socCeiling(vehicleLimit)) {
         if (barLimitActive && systemLimit) {
@@ -360,9 +350,7 @@
         showWriteError()
         socNonce++ // remount the card so the knob reverts to the confirmed value
       }
-    } finally {
-      busy = false
-    }
+    })
   }
 
   // Boost: a device-side claim (priority 200) that charges NOW until a chosen
@@ -385,10 +373,8 @@
   // uses. Hidden (not just disabled) when absent; the 422 backstop still runs.
   let canRange = $derived(hasSoc && Number.isFinite(maxRange))
 
-  async function armBoost({ type, value }: { type: LimitType; value: number }): Promise<void> {
-    if (busy) return
-    busy = true
-    try {
+  function armBoost({ type, value }: { type: LimitType; value: number }): Promise<void> {
+    return writes.run('boost', async () => {
       const res = await serialQueue.add(() => boost_store.upload({ type, value }))
       if (res && res !== 'error' && res.msg === 'done') {
         // Reconcile from the device rather than trusting the 201: an
@@ -400,20 +386,14 @@
       } else {
         showWriteError() // network / parse failure
       }
-    } finally {
-      busy = false
-    }
+    })
   }
 
-  async function cancelBoost(): Promise<void> {
-    if (busy) return
-    busy = true
-    try {
+  function cancelBoost(): Promise<void> {
+    return writes.run('boost', async () => {
       await serialQueue.add(() => boost_store.remove())
       await serialQueue.add(boost_store.download)
-    } finally {
-      busy = false
-    }
+    })
   }
 
   // While charging, refresh the raw energy log every 10 s so the session chart
@@ -467,7 +447,7 @@
         phases={$config_store?.is_threephase ? 3 : 1}
         sessionElapsed={$status_store?.session_elapsed ?? 0}
         chartError={$energy_store.error.raw}
-        rateDisabled={busy || ecoOn || display === 'error'}
+        rateDisabled={ecoOn || display === 'error'}
         {connected}
         onrate={setChargeAmps}
       />
@@ -491,7 +471,7 @@
               min={minAmps}
               max={maxAmps}
               claimedBy={rateClaimedBy}
-              disabled={busy || ecoOn || display === 'error'}
+              disabled={ecoOn || display === 'error'}
               onchange={setChargeAmps}
             />
           {/key}
@@ -524,7 +504,7 @@
         divertEnabled={showEco}
         locked={modeLocked}
         lockLabel={modeLockLabel}
-        disabled={busy || display === 'error'}
+        disabled={display === 'error'}
         onsegment={setSegment}
       />
 
@@ -540,7 +520,7 @@
           estMaxRange={maxRange}
           rangeMiles={!!$config_store?.mqtt_vehicle_range_miles}
           maxEnergyKwh={$uisettings_store?.max_energy_kwh ?? 100}
-          disabled={busy || modeLocked || display === 'error'}
+          disabled={modeLocked || display === 'error'}
           onarm={armBoost}
           oncancel={cancelBoost}
         />
@@ -573,7 +553,6 @@
           timeToFull={$status_store?.time_to_full_charge ?? 0}
           {charging}
           estMaxRange={maxRange}
-          disabled={busy}
           ontarget={setTarget}
           onunit={(u) => (userUnit = u)}
           limit={$limit_store}

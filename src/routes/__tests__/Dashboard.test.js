@@ -185,6 +185,53 @@ describe('Dashboard', () => {
     })
   })
 
+  it('keeps the mode control enabled and focused while its write is in flight', async () => {
+    // Disabling a focused control throws keyboard focus to the page body.
+    status_store.set({ state: 1, total_day: 0, total_energy: 0 })
+    let release
+    // Held open until the end; serialQueue is shared, so it must settle.
+    httpAPI.mockReturnValue(new Promise((r) => { release = r }))
+    const { getByRole } = render(Dashboard)
+    const off = getByRole('radio', { name: 'dashboard.mode.off' })
+    off.focus()
+    await fireEvent.click(off)
+    await vi.waitFor(() => expect(httpAPI).toHaveBeenCalledWith('POST', '/override', expect.any(String)))
+    try {
+      for (const radio of [off, getByRole('radio', { name: 'dashboard.mode.on' })]) {
+        expect(radio).not.toBeDisabled()
+      }
+      expect(document.activeElement).toBe(off)
+    } finally {
+      release({ msg: 'done' })
+    }
+  })
+
+  it('writes the last limit the slider reached during a write, skipping the steps between', async () => {
+    status_store.set({ state: 3, power: 7000, voltage: 240, amp: 0, temp: 0, pilot: 0, total_day: 0, total_energy: 0, battery_level: 74, vehicle_charge_limit: 90, battery_range: 206, time_to_full_charge: 0 })
+    let release
+    const firstWrite = new Promise((r) => { release = r })
+    httpAPI.mockImplementation((method, url) =>
+      method === 'POST' && url === '/limit' && !release.used
+        ? ((release.used = true), firstWrite)
+        : Promise.resolve({ msg: 'done' }),
+    )
+    const { getByRole } = render(Dashboard)
+    const slider = getByRole('slider', { name: 'dashboard.vehicle.target_aria' })
+    try {
+      for (const v of ['85', '84', '83']) {
+        slider.value = v
+        await fireEvent.change(slider)
+      }
+      expect(slider).not.toBeDisabled()
+    } finally {
+      release({ msg: 'done' }) // serialQueue is shared, so it must settle
+    }
+    await vi.waitFor(() => {
+      const posts = httpAPI.mock.calls.filter(([m, u]) => m === 'POST' && u === '/limit').map(([, , body]) => JSON.parse(body).value)
+      expect(posts).toEqual([85, 83])
+    })
+  })
+
   it('shows the charge-limit bar when battery_level is present', () => {
     status_store.set({ state: 3, power: 7000, voltage: 240, amp: 0, temp: 0, pilot: 0, total_day: 0, total_energy: 0, battery_level: 74, vehicle_charge_limit: 80, battery_range: 206, time_to_full_charge: 0 })
     const { getByRole } = render(Dashboard)
