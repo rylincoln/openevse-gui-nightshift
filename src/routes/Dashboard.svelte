@@ -9,7 +9,6 @@
   import { claims_target_store } from '../lib/stores/claims_target'
   import { plan_store } from '../lib/stores/plan'
   import { energy_store } from '../lib/stores/energy'
-  import { uistates_store } from '../lib/stores/uistates'
   import { uisettings_store } from '../lib/stores/uisettings'
   import { loadsharing_store } from '../lib/stores/loadsharing'
   import { httpAPI } from '../lib/api/httpAPI'
@@ -35,7 +34,14 @@
   import ShaperDivertRow from '../lib/components/dashboard/ShaperDivertRow.svelte'
   import LoadSharingCard from '../lib/components/dashboard/LoadSharingCard.svelte'
   import ThrottleBadge from '../lib/components/dashboard/ThrottleBadge.svelte'
-  import { selectedSegment, type ControlSegment } from '../lib/dashboard/controls'
+  import {
+    readChargeMode,
+    selectChargeMode,
+    setChargeRate,
+    type ChargeModeCharger,
+    type ChargeModeSnapshot,
+    type ControlSegment,
+  } from '../lib/dashboard/chargeMode'
   import ChargeControls from '../lib/components/dashboard/ChargeControls.svelte'
   import BoostCard from '../lib/components/dashboard/BoostCard.svelte'
   import RatePill from '../lib/components/dashboard/RatePill.svelte'
@@ -50,8 +56,28 @@
   let rateNonce = $state(0)
 
   // ── derived view-model ──────────────────────────────────────────────────
-  let mode = $derived($uistates_store?.mode ?? 0)
-  let display = $derived(displayState($status_store, mode))
+  let minAmps = $derived($config_store?.min_current_hard ?? 6)
+  // Rate pill slider stops at the configured soft max (Settings > Charger), so
+  // the home page can't request — or display — more current than the user has
+  // allowed. Falls back to the hardware ceiling when the soft max is unset —
+  // and past a hardware ceiling the firmware has not read yet (0), which
+  // would otherwise pin the pill at 0 A (see hardMaxCurrent).
+  let maxAmps = $derived(
+    Math.min($config_store?.max_current_soft ?? Infinity, hardMaxCurrent($config_store, 48)),
+  )
+  let defaultAmps = $derived($config_store?.max_current_soft ?? maxAmps)
+
+  // The charge mode, who owns the decision, and whether it can be changed.
+  let modeSnapshot: ChargeModeSnapshot = $derived({
+    claimsTarget: $claims_target_store,
+    divertmode: $status_store?.divertmode,
+    divertEnabled: !!$config_store?.divert_enabled,
+    override: $override_store,
+    limit: $limit_store,
+    defaultRate: defaultAmps,
+  })
+  let chargeMode = $derived(readChargeMode(modeSnapshot))
+  let display = $derived(displayState($status_store, chargeMode.segment))
   let charging = $derived(display === 'charging')
   // Is a car physically plugged in? Prefers the firmware `vehicle` flag, which
   // stays accurate through Sleeping/Off where the state code alone can't tell.
@@ -59,16 +85,6 @@
   // While charging, show the session chart hero (it polls /energy/raw); every
   // other state keeps the PowerRing.
   let showChart = $derived(charging)
-  // Rate pill slider stops at the configured soft max (Settings > Charger), so
-  // the home page can't request — or display — more current than the user has
-  // allowed. Falls back to the hardware ceiling when the soft max is unset —
-  // and past a hardware ceiling the firmware has not read yet (0), which
-  // would otherwise pin the pill at 0 A (see hardMaxCurrent).
-  let minAmps = $derived($config_store?.min_current_hard ?? 6)
-  let maxAmps = $derived(
-    Math.min($config_store?.max_current_soft ?? Infinity, hardMaxCurrent($config_store, 48)),
-  )
-  let defaultAmps = $derived($config_store?.max_current_soft ?? maxAmps)
   let fill = $derived(ringFill($status_store, $config_store, $limit_store))
 
   let socRangeLimit = $derived($limit_store?.type === 'soc' || $limit_store?.type === 'range')
@@ -77,12 +93,6 @@
   // auto_release: false on /limit — it's config-driven, so the dashboard
   // shows it but offers no way to delete it.
   let systemLimit = $derived($limit_store?.auto_release === false)
-
-  let claimOwner = $derived($claims_target_store?.claims?.state)
-  // A reached charge limit grabs the state-claim to stop charging. Unlike OCPP
-  // or RFID it's the user's own setting, not an external authority — so we don't
-  // lock the controls; we surface it as the status reason and let On clear it.
-  let limitTripped = $derived(claimOwner === EvseClients.limit.id)
 
   let kw = $derived((($status_store?.power ?? 0) / 1000).toFixed(1))
   // Shown on the PowerRing while charging (the non-Labs / chart-off path).
@@ -164,29 +174,8 @@
   )
   let currentLimited = $derived(loadSharing !== null && loadSharing.state !== 'sharing')
 
-  // OCPP/RFID are external authorities that genuinely own the charge — lock the
-  // mode controls. A reached limit is handled separately (see limitTripped).
-  let modeLocked = $derived(
-    claimOwner === EvseClients.ocpp.id ||
-    claimOwner === EvseClients.rfid.id,
-  )
-  let modeLockLabel = $derived(
-    claimOwner === EvseClients.ocpp.id
-      ? 'OCPP'
-      : claimOwner === EvseClients.rfid.id
-        ? 'RFID'
-        : '',
-  )
-
-  let showEco = $derived(!!$config_store?.divert_enabled)
-  let ecoOn = $derived($status_store?.divertmode === 2 && mode === 0)
-  let chargeSegment = $derived(
-    selectedSegment({
-      mode,
-      divertmode: $status_store?.divertmode,
-      divertEnabled: !!$config_store?.divert_enabled,
-    }),
-  )
+  // Eco: solar divert sets the charge rate, so the rate control stands aside.
+  let ecoOn = $derived(chargeMode.segment === 'eco')
 
   function formatLimit(l: Limit | null | undefined): string {
     if (!l || !l.type || l.type === 'none') return ''
@@ -228,65 +217,28 @@
   let socNonce = $state(0)
 
   // ── actions (all writes serialized) ─────────────────────────────────────
+  // The charge mode's charger seam: every write goes through the queue.
+  const charger: ChargeModeCharger = {
+    setOverride: (o) => serialQueue.add(() => override_store.upload(o)),
+    clearOverride: () => serialQueue.add(() => override_store.clear()),
+    setDivertMode: async (dm) => {
+      const res = await serialQueue.add(() => httpAPI('POST', '/divertmode', `divertmode=${dm}`, 'text'))
+      return res !== false && res !== 'error'
+    },
+    clearLimit: () => serialQueue.add(() => limit_store.remove()),
+  }
+
   function setSegment(seg: ControlSegment): Promise<void> {
     return writes.run('mode', async () => {
-      let ok = true
-      if (seg === 'on' || seg === 'off') {
-        const cur = $override_store?.charge_current
-        const data = {
-          state: seg === 'on' ? 'active' : 'disabled',
-          charge_current: cur ?? $config_store?.max_current_soft,
-          auto_release: false,
-        }
-        ok = await serialQueue.add(() => override_store.upload(data))
-        // Forcing On past a reached limit: the limit claim outranks manual, so
-        // the override alone won't resume — clear the tripped limit too.
-        // Never DELETE a system limit: the firmware only re-applies the
-        // config default at boot or on a config write, so deleting it here
-        // would silently discard the configured limit.
-        if (ok && seg === 'on' && limitTripped && !systemLimit) {
-          ok = await serialQueue.add(() => limit_store.remove())
-        }
-      } else {
-        // 'auto' or 'eco': release the manual override, then set the divert
-        // state explicitly so we land on the intended segment regardless of
-        // the prior divertmode (On->Auto must turn divert off; On->Eco must turn it on).
-        // Only clear when an override is actually set — clear() returns false
-        // (with no request) on an empty/unset store, which would otherwise be
-        // mistaken for a write failure and fire a spurious error.
-        if ($override_store && Object.keys($override_store).length > 0) {
-          ok = await serialQueue.add(() => override_store.clear())
-        }
-        // If releasing the override failed, don't push divertmode on top of a
-        // device we couldn't reach — surface the error and stop.
-        if (!ok) {
-          showWriteError()
-          return
-        }
-        const dm = seg === 'eco' ? 2 : 1
-        const res = await serialQueue.add(() =>
-          httpAPI('POST', '/divertmode', `divertmode=${dm}`, 'text'),
-        )
-        if (res === 'error') ok = false
-      }
-      if (!ok) showWriteError()
+      if (!(await selectChargeMode(seg, modeSnapshot, charger))) showWriteError()
     })
   }
 
   function setChargeAmps(val: number): Promise<void> {
     return writes.run('rate', async () => {
-      if (val === defaultAmps) {
-        await serialQueue.add(() => override_store.removeProp('charge_current'))
-      } else {
-        const current = $override_store ?? {}
-        // auto_release: false to keep the override sticky — see setSegment.
-        const ok = await serialQueue.add(() =>
-          override_store.upload({ ...current, charge_current: val, auto_release: false }),
-        )
-        if (!ok) {
-          showWriteError()
-          rateNonce++ // remount RatePill so the slider reverts to the confirmed value
-        }
+      if (!(await setChargeRate(val, modeSnapshot, charger))) {
+        showWriteError()
+        rateNonce++ // remount RatePill so the slider reverts to the confirmed value
       }
     })
   }
@@ -370,8 +322,8 @@
   let status = $derived(
     chargerStatus({
       display,
-      segment: chargeSegment,
-      stateOwner: claimOwner ? clientid2name(claimOwner) : '',
+      segment: chargeMode.segment,
+      stateOwner: chargeMode.owner,
       vehicle: connected,
       fault: $status_store?.state,
       plan: $plan_store,
@@ -525,10 +477,10 @@
          layout doesn't reflow. -->
     <div class="max-lg:order-3">
       <ChargeControls
-        segment={chargeSegment}
-        divertEnabled={showEco}
-        locked={modeLocked}
-        lockLabel={modeLockLabel}
+        segment={chargeMode.segment}
+        divertEnabled={modeSnapshot.divertEnabled}
+        locked={chargeMode.locked !== null}
+        lockLabel={chargeMode.locked ?? ''}
         disabled={display === 'error'}
         onsegment={setSegment}
       />
@@ -545,7 +497,7 @@
           estMaxRange={maxRange}
           rangeMiles={!!$config_store?.mqtt_vehicle_range_miles}
           maxEnergyKwh={$uisettings_store?.max_energy_kwh ?? 100}
-          disabled={modeLocked || display === 'error'}
+          disabled={chargeMode.locked !== null || display === 'error'}
           onarm={armBoost}
           oncancel={cancelBoost}
         />

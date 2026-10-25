@@ -119,8 +119,12 @@ export function mockPlugin() {
   // 255 off; "reset" returns to the fixture). null = use the fixture state.
   let stateOverride = null
 
-  // Dev-only claims/target served to the dashboard. getMode() turns a
-  // manual + "disabled" claim into Off mode, and displayState() then renders
+  // Solar divert mode set by POST /divertmode (1 normal, 2 eco); null = the
+  // fixture's.
+  let divertMode = null
+
+  // Dev-only claims/target served to the dashboard. readChargeMode() turns a
+  // manual + "disabled" claim into Off, and displayState() then renders
   // EVSE state 254 as "off" instead of "sleeping". So the switcher keeps the
   // derived mode coherent with the previewed state: Off only for the dedicated
   // off code (255), Auto otherwise (so 254 -> sleeping). Bumping claimsVersion
@@ -201,6 +205,7 @@ export function mockPlugin() {
       ...baseStatus,
       state,
       vehicle,
+      divertmode: divertMode ?? baseStatus.divertmode,
       config_version: configVersion,
       // Exactly the two fields the firmware sends here — the list lives on
       // its own endpoint. Their presence is the GUI's capability gate.
@@ -758,6 +763,22 @@ export function mockPlugin() {
           const rapi = rapiParam ? decodeURIComponent(rapiParam[1]) : ''
           res.writeHead(200, { 'Content-Type': 'application/json' })
           res.end(JSON.stringify({ cmd: rapi, ret: '$OK^20' }))
+          return
+        }
+
+        // Divert mode: the firmware answers in plain text, and the new mode
+        // arrives on the next status frame.
+        if (url === '/api/divertmode' && req.method === 'POST') {
+          let body = ''
+          req.on('data', (c) => { body += c })
+          req.on('end', () => {
+            const dm = Number(new URLSearchParams(body).get('divertmode'))
+            if (dm === 1 || dm === 2) divertMode = dm
+            const msg = buildStatusMessage(tickCount)
+            for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
+            res.writeHead(200, { 'Content-Type': 'text/plain' })
+            res.end('Divert Mode changed')
+          })
           return
         }
 

@@ -225,6 +225,35 @@ describe('Dashboard', () => {
     })
   })
 
+  it('shows Off picked while the Manual override holds the charger disabled', () => {
+    status_store.set({ state: 254, vehicle: 1, total_day: 0, total_energy: 0 })
+    claims_target_store.set({
+      properties: { state: 'disabled' },
+      claims: { state: EvseClients.manual.id },
+    })
+    const { getByRole } = render(Dashboard)
+    expect(getByRole('radio', { name: 'dashboard.mode.off' })).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('surfaces the global alert, and puts the rate back, when returning to the default rate fails', async () => {
+    status_store.set({ state: 1, total_day: 0, total_energy: 0 })
+    override_store.set({ charge_current: 20, auto_release: false })
+    claims_target_store.set({
+      properties: { state: 'active', charge_current: 20 },
+      claims: { state: null, charge_current: EvseClients.manual.id },
+    })
+    httpAPI.mockResolvedValue('error')
+    const { getByRole } = render(Dashboard)
+    await fireEvent.click(getByRole('button', { name: /^dashboard\.rate\.label/ }))
+    const slider = getByRole('slider', { name: /^dashboard\.rate\.label/ })
+    slider.value = '48' // the default rate (max_current_soft)
+    await fireEvent.change(slider)
+    await vi.waitFor(() => {
+      expect(httpAPI).toHaveBeenCalledWith('DELETE', '/override')
+      expect(get(uistates_store).alertbox.visible).toBe(true)
+    })
+  })
+
   it('surfaces the global alert when a mode write fails', async () => {
     status_store.set({ state: 1, total_day: 0, total_energy: 0 })
     httpAPI.mockResolvedValue('error')

@@ -1,5 +1,5 @@
 import { get, writable, type Writable } from 'svelte/store'
-import { httpAPI } from '../api/httpAPI'
+import { httpAPI, isErrorBody } from '../api/httpAPI'
 import { status_store } from './status'
 import type { Override, ErrorBody, WriteResponse } from '../api/device'
 
@@ -49,7 +49,8 @@ function createOverrideStore(): Writable<Override | undefined> & {
   async function clear(): Promise<boolean> {
     if (get(override_store)) {
       const res = await httpAPI('DELETE', '/override')
-      if (res) {
+      // httpAPI resolves a failed request to the (truthy) string 'error'.
+      if (res !== 'error' && !isErrorBody(res)) {
         const store: Override = {}
         P.update(() => store)
         return true

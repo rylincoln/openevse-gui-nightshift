@@ -1,7 +1,7 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n'
-  import { controlSegments } from '../../dashboard/controls'
-  import type { ControlSegment } from '../../dashboard/controls'
+  import { controlSegments } from '../../dashboard/chargeMode'
+  import type { ControlSegment } from '../../dashboard/chargeMode'
   import { radioKeys } from '../../radioKeys'
 
   interface Props {

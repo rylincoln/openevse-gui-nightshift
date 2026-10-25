@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
 
-vi.mock('../../api/httpAPI', () => ({
+vi.mock('../../api/httpAPI', async (importOriginal) => ({
+  ...(await importOriginal()),
   httpAPI: vi.fn()
 }))
 
@@ -93,6 +94,28 @@ describe('override_store', () => {
     const result = await override_store.upload({ charge_current: 20 })
     expect(result).toBe(true)
   })
+
+  it('clear releases the override and empties the store', async () => {
+    override_store.set({ state: 'disabled', auto_release: false })
+    httpAPI.mockResolvedValue({ msg: 'Deleted' })
+
+    expect(await override_store.clear()).toBe(true)
+    expect(httpAPI).toHaveBeenCalledWith('DELETE', '/override')
+    expect(get(override_store)).toEqual({})
+  })
+
+  // httpAPI never rejects: a failed request resolves to the string 'error',
+  // which is truthy, so it must not pass for a release.
+  it.each([['error'], [{ msg: 'error' }]])(
+    'clear reports failure and keeps the override when the request fails (%j)',
+    async (reply) => {
+      override_store.set({ state: 'disabled', auto_release: false })
+      httpAPI.mockResolvedValue(reply)
+
+      expect(await override_store.clear()).toBe(false)
+      expect(get(override_store)).toEqual({ state: 'disabled', auto_release: false })
+    },
+  )
 
   it('should toggle override', async () => {
     httpAPI.mockResolvedValue({ msg: 'Updated' })

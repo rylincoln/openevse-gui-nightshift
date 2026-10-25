@@ -35,19 +35,19 @@ describe('displayState', () => {
   it('treats Disabled (255) as off only when the owner picked Off', () => {
     // A scheduled rule or the default state can hold the charger Disabled
     // rather than Sleeping (config pause_uses_disabled); that is still a pause.
-    expect(displayState({ state: 255 }, 2)).toBe('off')
-    expect(displayState({ state: 255 }, 0)).toBe('sleeping')
+    expect(displayState({ state: 255 }, 'off')).toBe('off')
+    expect(displayState({ state: 255 }, 'auto')).toBe('sleeping')
   })
-  it('treats state 254 with mode=Off (2) as off, not sleeping', () => {
+  it('treats state 254 with Off picked as off, not sleeping', () => {
     // The "Off" mode just drops charge_current to 0 — device sits in
-    // sleeping (254). Without the mode hint, that's indistinguishable
+    // sleeping (254). Without the charge mode, that's indistinguishable
     // from auto-waiting-on-a-timer.
-    expect(displayState({ state: 254 }, 2)).toBe('off')
-    expect(displayState({ state: 254 }, 0)).toBe('sleeping')
-    expect(displayState({ state: 254 }, 1)).toBe('sleeping')
+    expect(displayState({ state: 254 }, 'off')).toBe('off')
+    expect(displayState({ state: 254 }, 'auto')).toBe('sleeping')
+    expect(displayState({ state: 254 }, 'on')).toBe('sleeping')
     // Same disambiguation for an unplugged-but-disabled device (state 1 + Off).
-    expect(displayState({ state: 1 }, 2)).toBe('off')
-    expect(displayState({ state: 1 }, 0)).toBe('idle')
+    expect(displayState({ state: 1 }, 'off')).toBe('off')
+    expect(displayState({ state: 1 }, 'auto')).toBe('idle')
     expect(displayState({ state: 4 })).toBe('error')
     expect(displayState({ state: 9 })).toBe('error')
     expect(displayState({ state: 11 })).toBe('error')

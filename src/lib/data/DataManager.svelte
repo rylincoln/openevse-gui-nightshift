@@ -5,7 +5,6 @@
   import { notification_store } from '../stores/notifications'
   import { badgeSignature } from '../notifications/notifications'
   import { uisettings_store } from '../stores/uisettings'
-  import { EvseClients } from '../vars'
   import { uistates_store } from '../stores/uistates'
   import { status_store } from '../stores/status'
   import { schedule_store } from '../stores/schedule'
@@ -15,9 +14,8 @@
   import { claims_target_store } from '../stores/claims_target'
   import { claims_store } from '../stores/claims'
   import { override_store } from '../stores/override'
-  import { clientid2name, formatDate } from '../utils'
+  import { formatDate } from '../utils'
   import { serialQueue } from '../queue'
-  import { onMount } from 'svelte'
   import { locale, locales } from 'svelte-i18n'
   import { _ } from 'svelte-i18n'
 
@@ -67,10 +65,6 @@
   let refresh_notifications = false
   let prev_ip: string | undefined
   let ip_changed = false
-
-  onMount(() => {
-    getMode($claims_target_store?.properties?.state, $claims_target_store?.claims?.state)
-  })
 
   export function refreshDateTime(t: string | undefined, tz: string | undefined): void { // params: time (isostring) , timezone
     // t is undefined only before status_store's first download; App.svelte
@@ -143,9 +137,6 @@
       // The claims list (with real per-claim priorities) changes in lockstep
       // with the target, so refresh it on the same version bump.
       await serialQueue.add(claims_store.download)
-      if (res) {
-        getMode($claims_target_store?.properties?.state, $claims_target_store?.claims?.state)
-      }
       refresh_target = false
       return res
     }
@@ -245,27 +236,6 @@
 
   export function refreshChargingState(val: boolean): void {
     $uistates_store.charging = val
-  }
-
-  function getMode(evseState: string | null | undefined, clientid: number | null | undefined): void {
-    $uistates_store.stateclaimfrom = clientid2name(clientid)
-    if (clientid == EvseClients["manual"].id) {
-      // Mode Manual
-      switch (evseState) {
-        case "active":
-          $uistates_store.mode = 1 // On
-          break
-        case "disabled":
-          $uistates_store.mode = 2 // Off
-          break;
-        default:
-          break
-      }
-    }
-    else {
-      // mode Auto
-      $uistates_store.mode = 0
-    }
   }
 
   function countDivertUpdate(val: number | undefined): void {

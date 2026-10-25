@@ -48,10 +48,7 @@ export interface UiStates {
   notification_event: number
   logidx_min: number
   logidx_max: number
-  // (todo) derived from other stores
-  mode?: 0 | 1 | 2 // 0:Auto 1:On 2:Off
   charging: boolean
-  stateclaimfrom: string | null // "manual", "timer", "divert", "shaper", "ocpp", "mqtt", "rfid"
   time_localestring: string | null
   error: boolean
   error_desc: string
@@ -100,9 +97,7 @@ const model: UiStates = {
   notification_event: 0,
   logidx_min: 0,
   logidx_max: 0,
-  mode: undefined,
   charging: false,
-  stateclaimfrom: null,
   time_localestring: null,
   error: false,
   error_desc: '',

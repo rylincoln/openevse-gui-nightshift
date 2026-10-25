@@ -5,7 +5,7 @@
  */
 import type { Plan } from '../api/device'
 import type { DisplayState } from './state'
-import type { ControlSegment } from './controls'
+import type { ControlSegment } from './chargeMode'
 
 export type StatusTone = 'charging' | 'success' | 'accent' | 'sleep' | 'dim' | 'error'
 
