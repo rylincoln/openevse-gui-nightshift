@@ -147,25 +147,29 @@ describe('Wizard route', () => {
     await fireEvent.click(getByText('config.network.connect'))
   }
 
-  it('writes wizard_passed (no reconnect dialog) when joining from the home network', async () => {
+  it('writes wizard_passed, and is done, when joining from the home network', async () => {
     status_store.set({ ipaddress: '10.0.0.5' })
-    const view = render(Wizard)
+    const ondone = vi.fn()
+    const view = render(Wizard, { ondone })
     await joinFromWifiStep(view)
 
-    await vi.waitFor(() => {
-      expect(saveParam).toHaveBeenCalledWith('wizard_passed', true)
-    })
-    // Already routable — App.svelte swaps to the dashboard, no reconnect prompt.
+    // Already routable: App.svelte swaps to the dashboard, no reconnect prompt.
+    await vi.waitFor(() => expect(ondone).toHaveBeenCalled())
+    expect(saveParam).toHaveBeenCalledWith('wizard_passed', true)
     expect(view.queryByText('wizard.reconnect.title')).toBeNull()
   })
 
-  it('shows the reconnect dialog when joining while still on the device AP', async () => {
+  // This page is about to lose the charger; it stays on what to do next.
+  it('shows the reconnect dialog, and stays, when joining while still on the device AP', async () => {
     status_store.set({ ipaddress: '192.168.4.1' })
-    const view = render(Wizard)
+    const ondone = vi.fn()
+    const view = render(Wizard, { ondone })
     await joinFromWifiStep(view)
 
     expect(await view.findByText('wizard.reconnect.title')).toBeInTheDocument()
     expect(saveParam).toHaveBeenCalledWith('wizard_passed', true)
+    await fireEvent.click(view.getByText('wizard.reconnect.dismiss'))
+    expect(ondone).not.toHaveBeenCalled()
   })
 
   it('can join a network entered manually when scanning finds nothing', async () => {

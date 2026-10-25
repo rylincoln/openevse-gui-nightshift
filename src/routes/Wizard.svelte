@@ -22,6 +22,12 @@
   import Security from '../lib/components/wizard/steps/Security.svelte'
   import FirmwareInfo from '../lib/components/wizard/steps/FirmwareInfo.svelte'
 
+  interface Props {
+    /** Setup is finished and the dashboard can take over (App.svelte). */
+    ondone?: () => void
+  }
+  let { ondone = () => {} }: Props = $props()
+
   // WiFi is provisioned LAST on purpose: joining the network makes the ESP32's
   // softAP hop to the router's channel, which drops a phone/laptop that set the
   // device up over that AP. Doing every other step first (all reachable on the
@@ -98,15 +104,20 @@
 
   // The WiFi step has joined (request sent, AP about to drop). markComplete
   // already wrote wizard_passed before the join. If we're still on the device
-  // AP the user must physically switch networks, so show the reconnect address;
-  // otherwise we're already on the home network, so collapse straight to the
-  // dashboard (App.svelte swaps to AppShell once wizard_passed is true).
+  // AP the user must physically switch networks, so show the reconnect address
+  // and stay on it; otherwise we're already on the home network, so go
+  // straight to the dashboard.
   function onWifiJoined() {
     if (isOnDeviceAp()) {
       finishDialog = true
     } else {
-      navigate('/')
+      done()
     }
+  }
+
+  function done() {
+    navigate('/')
+    ondone()
   }
 
   function dismissFinish() {
@@ -122,7 +133,7 @@
     if (isOnDeviceAp()) {
       finishDialog = true
     } else {
-      navigate('/')
+      done()
     }
   }
 </script>
