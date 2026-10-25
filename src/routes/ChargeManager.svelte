@@ -418,7 +418,7 @@
       type="button"
       disabled={busy}
       onclick={() => (pickerOpen = true)}
-      class="rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-white
+      class="rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-surface
              transition hover:opacity-90 disabled:opacity-40"
     >
       + {$_('charge_manager.global_add')}

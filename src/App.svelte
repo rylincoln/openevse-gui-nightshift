@@ -40,7 +40,11 @@
        the wizard instead of the login page. -->
   <Login />
 {:else if !loaded}
-  <Loader {progress} />
+  <!-- The loader sits above every dialog, so it has to go once loading has
+       failed or it hides the alert below. -->
+  {#if !failed}
+    <Loader {progress} />
+  {/if}
   <FetchData
     onProgress={(p) => (progress = p)}
     onLoaded={() => (loaded = true)}
@@ -48,8 +52,8 @@
   />
   <AlertBox
     visible={failed}
-    title={$_('connection.error')}
-    body={$_('connection.lost_body')}
+    title={$_('connection.load_failed')}
+    body={$_('connection.load_failed_body')}
     button={true}
     label={$_('connection.reconnect')}
     closable={false}

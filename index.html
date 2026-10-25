@@ -4,8 +4,10 @@
     <meta charset="UTF-8" />
     <!-- viewport-fit=cover lets the app draw under the iOS notch / home
          indicator; safe-area-inset-* CSS env() vars then carry the
-         offsets we pad against in Header and BottomNav. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=no, viewport-fit=cover" />
+         offsets we pad against in Header and BottomNav. No maximum-scale or
+         user-scalable=no: Android honours them, and they lock pinch-zoom off
+         for people who need it (WCAG 1.4.4). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="OpenEVSE UI" />
     <!-- "Add to Home Screen" on iOS: run in standalone mode and let the
          app draw under the translucent status bar. -->

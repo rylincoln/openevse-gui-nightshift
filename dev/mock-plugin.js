@@ -137,6 +137,13 @@ export function mockPlugin() {
   let boost = null // active boost {type, value, remaining, started} or null
   let boostVersion = baseFixtures['/api/status'].boost_version ?? 1
 
+  // Dev-only in-memory charge limit, mirroring the firmware's /limit. Without
+  // it every dashboard limit write 404'd into the write-error alert. Each
+  // change bumps limit_version and flips status.limit, which is what makes
+  // DataManager re-read GET /api/limit.
+  let limit = null // {type, value, auto_release} or null
+  let limitVersion = baseFixtures['/api/status'].limit_version ?? 1
+
   // A captured crash dump for the Memory & health preview (fork firmware PR
   // #1210). Starts present so the section is visible; DELETE flips it off so
   // the "Clear dump" flow can be exercised without hardware.
@@ -192,6 +199,8 @@ export function mockPlugin() {
       claims_version: claimsVersion,
       boost: !!boost,
       boost_version: boostVersion,
+      limit: !!limit,
+      limit_version: limitVersion,
       loadsharing_peers_version: loadsharingPeersVersion,
       loadsharing_status_version: loadsharingStatusVersion,
       uptime: (baseStatus.uptime ?? 0) + tickCount * 2,
@@ -592,6 +601,52 @@ export function mockPlugin() {
             for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
             res.writeHead(200, { 'Content-Type': 'application/json' })
             res.end(JSON.stringify({ msg: 'erased' }))
+            return
+          }
+        }
+
+        // Charge limit. As on the device: GET returns the limit or {} (a 200)
+        // when none is set; POST sets it (201 "done"); DELETE clears it
+        // ("done") or answers "no limit" when there is nothing to clear.
+        if (url === '/api/limit') {
+          const changed = () => {
+            limitVersion++
+            const msg = buildStatusMessage(tickCount)
+            for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(msg)
+          }
+          if (req.method === 'GET') {
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify(limit ?? {}))
+            return
+          }
+          if (req.method === 'POST') {
+            let body = ''
+            req.on('data', (c) => { body += c })
+            req.on('end', () => {
+              let data
+              try { data = JSON.parse(body) } catch { data = null }
+              const types = ['time', 'energy', 'soc', 'range']
+              if (!data || !types.includes(data.type) || !Number.isFinite(data.value)) {
+                res.writeHead(400, { 'Content-Type': 'application/json' })
+                res.end(JSON.stringify({ msg: 'failed to parse JSON' }))
+                return
+              }
+              limit = { type: data.type, value: data.value, auto_release: data.auto_release ?? true }
+              changed()
+              res.writeHead(201, { 'Content-Type': 'application/json' })
+              res.end(JSON.stringify({ msg: 'done' }))
+            })
+            return
+          }
+          if (req.method === 'DELETE') {
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            if (!limit) {
+              res.end(JSON.stringify({ msg: 'no limit' }))
+              return
+            }
+            limit = null
+            changed()
+            res.end(JSON.stringify({ msg: 'done' }))
             return
           }
         }
