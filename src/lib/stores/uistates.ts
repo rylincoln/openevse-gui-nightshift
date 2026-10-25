@@ -70,7 +70,6 @@ export interface UiStates {
   }
   status_expanded: boolean
   breakpoint?: string
-  has_fetched: boolean
   wizard_step: number
   // undefined on a charger without the matching capability (vehicle-data
   // integration, solar/divert mode, an RFID reader) — the source /status
@@ -120,7 +119,6 @@ const model: UiStates = {
   },
   status_expanded: false,
   breakpoint: undefined,
-  has_fetched: false,
   wizard_step: 0,
   vehicle_state_update: 0,
   divert_update: 0,

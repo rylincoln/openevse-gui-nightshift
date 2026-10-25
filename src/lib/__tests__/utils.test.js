@@ -18,7 +18,6 @@ vi.mock('svelte/store', async () => {
       if (store && store._mockValue !== undefined) return store._mockValue
       // Default mock values for stores
       return {
-        has_fetched: false,
         tesla_enabled: false,
         mqtt_vehicle_range_miles: false,
         ipaddress: '192.168.1.1',

@@ -29,7 +29,6 @@ describe('uistates_store', () => {
       ws_connected: true,
       status_expanded: false,
       breakpoint: undefined,
-      has_fetched: false,
       wizard_step: 0,
       vehicle_state_update: 0,
       divert_update: 0,
@@ -71,7 +70,6 @@ describe('uistates_store', () => {
   it('should initialize with default values', () => {
     const state = get(uistates_store)
     expect(state.charging).toBe(false)
-    expect(state.has_fetched).toBe(false)
     expect(state.ws_connected).toBe(true)
     expect(state.wizard_step).toBe(0)
     expect(state.networks).toEqual([])
@@ -136,14 +134,14 @@ describe('uistates_store', () => {
     uistates_store.update(state => {
       state.charging = true
       state.mode = 1
-      state.has_fetched = true
+      state.status_expanded = true
       return state
     })
 
     const state = get(uistates_store)
     expect(state.charging).toBe(true)
     expect(state.mode).toBe(1)
-    expect(state.has_fetched).toBe(true)
+    expect(state.status_expanded).toBe(true)
   })
 
   it('should set networks list', () => {
