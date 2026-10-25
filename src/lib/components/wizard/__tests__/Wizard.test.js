@@ -164,10 +164,8 @@ describe('Wizard route', () => {
     const view = render(Wizard)
     await joinFromWifiStep(view)
 
-    await vi.waitFor(() => {
-      expect(saveParam).toHaveBeenCalledWith('wizard_passed', true)
-    })
-    expect(view.getByText('wizard.reconnect.title')).toBeInTheDocument()
+    expect(await view.findByText('wizard.reconnect.title')).toBeInTheDocument()
+    expect(saveParam).toHaveBeenCalledWith('wizard_passed', true)
   })
 
   it('can join a network entered manually when scanning finds nothing', async () => {
