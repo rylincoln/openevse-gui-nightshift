@@ -1283,6 +1283,7 @@
       "error": "Failed to load energy data",
       "no_samples": "No samples recorded yet",
       "summary": "{measure}: lowest {min}, highest {max}, latest {latest}.",
+      "summary_bars": "{n} bars totalling {total} kWh; the highest is {max} kWh, for {label}.",
       "axis": {
         "current": "Current (A)",
         "temperature": "Temperature ({unit})",

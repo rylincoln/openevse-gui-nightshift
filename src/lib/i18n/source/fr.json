@@ -1283,6 +1283,7 @@
       "error": "Échec du chargement des données d'énergie",
       "no_samples": "Aucun échantillon enregistré",
       "summary": "{measure} : minimum {min}, maximum {max}, dernière valeur {latest}.",
+      "summary_bars": "{n} barres totalisant {total} kWh ; la plus haute est de {max} kWh, pour {label}.",
       "axis": {
         "current": "Courant (A)",
         "temperature": "Température ({unit})",

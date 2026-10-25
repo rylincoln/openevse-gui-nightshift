@@ -1283,6 +1283,7 @@
       "error": "No se pudieron cargar los datos de energía",
       "no_samples": "Aún no hay muestras registradas",
       "summary": "{measure}: mínimo {min}, máximo {max}, último {latest}.",
+      "summary_bars": "{n} barras que suman {total} kWh; la más alta es de {max} kWh, para {label}.",
       "axis": {
         "current": "Corriente (A)",
         "temperature": "Temperatura ({unit})",

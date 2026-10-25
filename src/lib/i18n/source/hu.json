@@ -1283,6 +1283,7 @@
       "error": "Nem sikerült betölteni az energia adatokat",
       "no_samples": "Még nincs rögzített minta",
       "summary": "{measure}: legkisebb {min}, legnagyobb {max}, legutóbbi {latest}.",
+      "summary_bars": "{n} oszlop, összesen {total} kWh; a legmagasabb {max} kWh ({label}).",
       "axis": {
         "current": "Áram (A)",
         "temperature": "Hőmérséklet ({unit})",
