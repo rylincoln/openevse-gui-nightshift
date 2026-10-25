@@ -30,7 +30,7 @@
   <a
     href="#/schedule"
     class="mb-4 inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5
-           text-sm font-semibold text-white transition hover:opacity-90"
+           text-sm font-semibold text-surface transition hover:opacity-90"
   >
     + {$_('config.add_in_charge_manager')}
   </a>

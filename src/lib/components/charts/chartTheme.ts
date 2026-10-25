@@ -16,11 +16,11 @@ export interface ChartTheme {
 
 export function readChartTheme(): ChartTheme {
   return {
-    accent: v('--accent', '#0f9b98'),
-    charging: v('--charging', '#0f9b98'),
-    warning: v('--warning', '#d98a2b'),
-    success: v('--success', '#2ea052'),
-    axisText: v('--text-dim', '#5b6b72'),
+    accent: v('--accent', '#026664'),
+    charging: v('--charging', '#026664'),
+    warning: v('--warning', '#844f04'),
+    success: v('--success', '#05692e'),
+    axisText: v('--text-dim', '#51616b'),
     grid: v('--border', '#e4eae9'),
   }
 }

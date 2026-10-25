@@ -35,21 +35,24 @@
   --color-mark-bolt: var(--mark-bolt);
 }
 
-/* Light theme — also the fallback when no data-theme is set */
+/* Light theme — also the fallback when no data-theme is set.
+   Every token that carries text (text-dim, accent and the status colours)
+   must reach 4.5:1 on the surfaces and on its own 15% tint, in both themes;
+   src/__tests__/theme-contrast.test.js fails the suite when one doesn't. */
 :root,
 [data-theme="light"] {
   --surface: #f0f4f3;
   --surface-2: #e1ebe9;
   --surface-3: #cddbd9;
   --text: #13202b;
-  --text-dim: #566670;
-  --accent: #0f9b98;
+  --text-dim: #51616b;
+  --accent: #026664;
   --border: #d1dcda;
-  --charging: #0f9b98;
-  --error: #d6453d;
-  --warning: #d98a2b;
-  --sleep: #6792b3;
-  --success: #2ea052;
+  --charging: #026664;
+  --error: #af1a1b;
+  --warning: #844f04;
+  --sleep: #365f7e;
+  --success: #05692e;
   /* The bolt in the app mark. Deliberately outside the semantic set: red,
      amber, green and blue are all spoken for by error/warning/success/sleep,
      and teal is the accent the mark's enclosure already inherits. Violet is
@@ -65,13 +68,13 @@
   --surface-2: #2b3241;
   --surface-3: #353d4e;
   --text: #e8ecf2;
-  --text-dim: #949eae;
+  --text-dim: #9ea8b8;
   --accent: #3cc6bd;
   --border: #404a5d;
   --charging: #3cc6bd;
-  --error: #f06e66;
+  --error: #ff9188;
   --warning: #e7a948;
-  --sleep: #7da7c8;
+  --sleep: #8db7d9;
   --success: #5dc975;
   --mark-bolt: #8b5cf6;
   --accent-glow: 0 0 8px rgba(60, 198, 189, 0.55);
