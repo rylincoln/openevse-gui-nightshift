@@ -10,6 +10,12 @@ vi.mock('svelte-i18n', () => {
 import LimitSliderBar from '../LimitSliderBar.svelte'
 
 describe('LimitSliderBar', () => {
+  // The range input is invisible over the bar, so the bar shows its focus.
+  it('rings the bar while its slider has keyboard focus', () => {
+    const { getByRole } = render(LimitSliderBar, { props: { kind: 'time', value: 0 } })
+    expect(getByRole('slider').parentElement.className).toContain('has-[:focus-visible]:outline-2')
+  })
+
   it('commits a time limit in minutes', async () => {
     const onchange = vi.fn()
     const { getByRole } = render(LimitSliderBar, { props: { kind: 'time', value: 0, onchange } })

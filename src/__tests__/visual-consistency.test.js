@@ -39,6 +39,22 @@ describe('visual consistency', () => {
     expect(rule).not.toMatch(/#[0-9a-f]{3,8}\b/i)
   })
 
+  // One accent focus ring for every control. Text fields used to remove it
+  // and rely on a 1 px border change, too faint to see.
+  it('draws one focus ring that no field hides', () => {
+    const css = readFileSync(join(SRC, 'app.css'), 'utf8')
+    expect(css).toMatch(/:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--accent\)/)
+    expect(offending(/focus:outline-none/)).toEqual([])
+  })
+
+  it('spins loading icons only when motion is welcome', () => {
+    expect(offending(/(?<!motion-safe:)\banimate-spin\b/)).toEqual([])
+  })
+
+  it('colours with theme tokens, never a raw hex value', () => {
+    expect(offending(/-\[#[0-9a-f]{3,8}\]/i)).toEqual([])
+  })
+
   // One page width for every screen, so the title stays put as you move
   // between them; narrower content sits inside it, aligned left.
   it('gives every screen the same page width', () => {

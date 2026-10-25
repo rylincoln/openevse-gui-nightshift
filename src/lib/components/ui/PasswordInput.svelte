@@ -60,7 +60,7 @@
     onfocus={() => (focused = true)}
     onblur={blur}
     class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 pr-10 text-sm
-           text-text placeholder:text-text-dim focus:border-accent focus:outline-none
+           text-text placeholder:text-text-dim focus:border-accent
            disabled:opacity-40"
   />
   <button

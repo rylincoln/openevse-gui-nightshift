@@ -107,6 +107,15 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
+/* One focus ring for every control, in the accent. In the base layer, so a
+   component can still restyle its own. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
 /* One style for every section heading, from the Settings hub to Charge
    Manager to a settings page: larger and stronger than a field label, in
    sentence case. */

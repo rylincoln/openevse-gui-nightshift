@@ -61,7 +61,7 @@
         <span class="text-lg font-semibold tabular-nums text-text">{value}</span>
       {/if}
       {#if status === 'saving'}
-        <Icon icon="mdi:loading" size={16} class="animate-spin text-text-dim" />
+        <Icon icon="mdi:loading" size={16} class="motion-safe:animate-spin text-text-dim" />
       {:else if status === 'saved'}
         <Icon icon="mdi:check" size={16} class="text-accent" />
       {:else if status === 'error'}

@@ -32,6 +32,16 @@ describe('ChargeControls', () => {
     expect(getByText('dashboard.mode.auto').getAttribute('aria-checked')).toBe('false')
   })
 
+  // A radio group is one tab stop; the arrow keys move between modes.
+  it('is one tab stop, and the arrow keys pick the next mode', async () => {
+    const onsegment = vi.fn()
+    const { getAllByRole } = render(ChargeControls, { props: { ...base, segment: 'auto', onsegment } })
+    const radios = getAllByRole('radio')
+    expect(radios.map((r) => r.getAttribute('tabindex'))).toEqual(['-1', '0', '-1', '-1'])
+    await fireEvent.keyDown(radios[1], { key: 'ArrowRight' })
+    expect(onsegment).toHaveBeenLastCalledWith('eco')
+  })
+
   it('emits onsegment with the clicked segment key', async () => {
     const onsegment = vi.fn()
     const { getByText } = render(ChargeControls, { props: { ...base, onsegment } })

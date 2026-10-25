@@ -63,7 +63,7 @@
       value={name}
       oninput={(e) => (name = e.currentTarget.value)}
       class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm text-text
-             focus:border-accent focus:outline-none"
+             focus:border-accent"
     />
 
     <label class="mb-1 mt-3 block text-sm text-text" for="cert-body">
@@ -77,7 +77,7 @@
       oninput={(e) => (certificate = e.currentTarget.value)}
       placeholder="-----BEGIN CERTIFICATE-----"
       class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 font-mono text-xs
-             text-text focus:border-accent focus:outline-none"
+             text-text focus:border-accent"
     ></textarea>
 
     {#if type === 'client'}
@@ -92,7 +92,7 @@
         oninput={(e) => (privateKey = e.currentTarget.value)}
         placeholder="-----BEGIN RSA PRIVATE KEY-----"
         class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 font-mono text-xs
-               text-text focus:border-accent focus:outline-none"
+               text-text focus:border-accent"
       ></textarea>
     {/if}
 

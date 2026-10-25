@@ -113,7 +113,9 @@
 
   <!-- bar block — percent geometry; labels via fmt() -->
   <div class="relative h-[72px]">
-    <div class="absolute inset-x-0 top-[28px] h-[34px]">
+    <!-- The range input is invisible over the bar, so the bar shows its focus. -->
+    <div class="absolute inset-x-0 top-[28px] h-[34px] rounded-full has-[:focus-visible]:outline-2
+                has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
       <div class="absolute inset-0 rounded-full bg-surface-3"></div>
       <div
         class="absolute inset-y-0 left-0 rounded-l-full {charging
@@ -127,7 +129,13 @@
           style="left: {seg.fillPct}%; width: {seg.zoneEndPct - seg.fillPct}%"
         ></div>
       {/if}
-      <div class="absolute left-3 top-1/2 -translate-y-1/2 text-[15px] font-bold text-[#04121d]">
+      <!-- The label spans the bar so its ink can change at the fill's edge:
+           surface ink over the fill, text ink over the track. -->
+      <div
+        class="pointer-events-none absolute inset-0 flex items-center bg-clip-text pl-3
+               text-[15px] font-bold text-transparent"
+        style="background-image: linear-gradient(90deg, var(--surface) {seg.fillPct}%, var(--text) {seg.fillPct}%)"
+      >
         {fmt(soc)}
       </div>
       <input

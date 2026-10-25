@@ -112,7 +112,7 @@
       />
       {#if removing}
         <span class="grid place-items-center p-2 text-text-dim">
-          <Icon icon="mdi:loading" size={16} class="animate-spin" />
+          <Icon icon="mdi:loading" size={16} class="motion-safe:animate-spin" />
         </span>
       {:else}
         <IconButton

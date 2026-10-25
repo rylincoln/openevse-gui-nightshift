@@ -170,7 +170,7 @@
             value={teslaUser}
             oninput={(e) => (teslaUser = e.currentTarget.value)}
             class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm
-                   text-text focus:border-accent focus:outline-none"
+                   text-text focus:border-accent"
           />
         </FormField>
         <FormField label={$_('config.vehicle.password')}>
@@ -180,7 +180,7 @@
             value={teslaPass}
             oninput={(e) => (teslaPass = e.currentTarget.value)}
             class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm
-                   text-text focus:border-accent focus:outline-none"
+                   text-text focus:border-accent"
           />
         </FormField>
         {#if loginFailed}

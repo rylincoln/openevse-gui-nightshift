@@ -212,7 +212,7 @@
                     value={wifiPass}
                     oninput={(e) => (wifiPass = e.currentTarget.value)}
                     class="flex-1 rounded-xl border border-border bg-surface-2 px-3 py-2
-                           text-sm text-text focus:border-accent focus:outline-none"
+                           text-sm text-text focus:border-accent"
                   />
                 {/if}
                 <div class="shrink-0">
@@ -248,7 +248,7 @@
             value={manualSsid}
             oninput={(e) => (manualSsid = e.currentTarget.value)}
             class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2
-                   text-sm text-text focus:border-accent focus:outline-none"
+                   text-sm text-text focus:border-accent"
           />
           <input
             type="password"
@@ -257,7 +257,7 @@
             value={wifiPass}
             oninput={(e) => (wifiPass = e.currentTarget.value)}
             class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2
-                   text-sm text-text focus:border-accent focus:outline-none"
+                   text-sm text-text focus:border-accent"
           />
           <Button
             label={joining ? $_('config.network.connecting_btn') : $_('config.network.connect')}

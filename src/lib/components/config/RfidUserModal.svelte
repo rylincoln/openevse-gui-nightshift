@@ -54,7 +54,7 @@
       maxlength="32"
       placeholder={$_('config.rfid.user_name_placeholder')}
       class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm text-text
-             placeholder:text-text-dim focus:border-accent focus:outline-none"
+             placeholder:text-text-dim focus:border-accent"
     />
 
     <div class="mt-4 flex gap-2">

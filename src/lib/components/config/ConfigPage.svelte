@@ -27,7 +27,7 @@
 
     {#if loading}
       <div class="flex justify-center py-10">
-        <Icon icon="mdi:loading" size={28} class="animate-spin text-text-dim" />
+        <Icon icon="mdi:loading" size={28} class="motion-safe:animate-spin text-text-dim" />
       </div>
     {:else}
       {@render children?.()}

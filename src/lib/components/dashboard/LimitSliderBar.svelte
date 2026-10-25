@@ -130,7 +130,9 @@
 
   <!-- bar block — same geometry family as VehicleSocBar -->
   <div class="relative h-[72px]">
-    <div class="absolute inset-x-0 top-[28px] h-[34px]">
+    <!-- The range input is invisible over the bar, so the bar shows its focus. -->
+    <div class="absolute inset-x-0 top-[28px] h-[34px] rounded-full has-[:focus-visible]:outline-2
+                has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
       <div class="absolute inset-0 rounded-full bg-surface-3"></div>
       <div
         data-fill

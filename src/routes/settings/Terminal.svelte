@@ -536,7 +536,7 @@
         }
       }}
       class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 font-mono text-sm
-             text-text focus:border-accent focus:outline-none"
+             text-text focus:border-accent"
     />
     <div class="mt-2 flex gap-2">
       <Button label={$_('config.terminal.send')} disabled={sending} onclick={send} />

@@ -17,10 +17,13 @@ describe('ProgressRing', () => {
   })
   it('omits the breathe animation by default', () => {
     const { container } = render(ProgressRing, { props: { fill: 0.5 } })
-    expect(ringLayer(container).getAttribute('style')).not.toContain('breathe')
+    expect(ringLayer(container).classList.contains('breathe')).toBe(false)
   })
-  it('adds the breathe animation when pulse is true', () => {
+  // Through the .breathe class, which stops under prefers-reduced-motion; an
+  // inline animation ran regardless.
+  it('breathes through the reduced-motion-aware class when pulse is true', () => {
     const { container } = render(ProgressRing, { props: { fill: 0.5, pulse: true } })
-    expect(ringLayer(container).getAttribute('style')).toContain('breathe')
+    expect(ringLayer(container).classList.contains('breathe')).toBe(true)
+    expect(ringLayer(container).getAttribute('style')).not.toContain('animation')
   })
 })

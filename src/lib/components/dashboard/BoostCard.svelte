@@ -10,6 +10,7 @@
   import Button from '../ui/Button.svelte'
   import { boostTarget, fmtDur } from '../../dashboard/boost'
   import type { Boost, LimitType } from '../../api/device'
+  import { radioKeys } from '../../radioKeys'
 
   interface Props {
     // live boost {type, value, remaining, started} or null
@@ -228,6 +229,7 @@
         <div
           role="radiogroup"
           aria-label={$_('dashboard.boost.pills_aria')}
+          {@attach radioKeys}
           class="flex shrink-0 flex-wrap justify-end gap-1.5"
         >
           {#each dims as dim}
@@ -235,6 +237,7 @@
               type="button"
               role="radio"
               aria-checked={selected === dim.id}
+              tabindex={selected === dim.id ? 0 : -1}
               {disabled}
               onclick={() => (userPick = dim.id)}
               class="tap-target rounded-full border px-3 py-1 text-[11px] font-semibold transition
