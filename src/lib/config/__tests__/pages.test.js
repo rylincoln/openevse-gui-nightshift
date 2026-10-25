@@ -1,6 +1,7 @@
 // src/lib/config/__tests__/pages.test.js
 import { describe, it, expect } from 'vitest'
-import { SETTINGS_PAGES, SECTIONS, pagesBySection } from '../pages'
+import { SETTINGS_PAGES, SETTINGS_LINKS, SECTIONS, pagesBySection } from '../pages'
+import en from '../../i18n/en.json'
 
 describe('SETTINGS_PAGES', () => {
   it('puts Installer Tools in the system group, right below Developer Tools', () => {
@@ -21,6 +22,12 @@ describe('SETTINGS_PAGES', () => {
       expect(SECTIONS).toContain(p.section)
     }
   })
+  it('says in one line what each page holds', () => {
+    for (const p of SETTINGS_PAGES) {
+      expect(p.descKey).toBe('config.page_desc.' + p.key)
+      expect(en.config.page_desc[p.key]).toBeTypeOf('string')
+    }
+  })
   it('routes are unique', () => {
     const routes = SETTINGS_PAGES.map((p) => p.route)
     expect(new Set(routes).size).toBe(routes.length)
@@ -28,6 +35,16 @@ describe('SETTINGS_PAGES', () => {
   it('keys are unique', () => {
     const keys = SETTINGS_PAGES.map((p) => p.key)
     expect(new Set(keys).size).toBe(keys.length)
+  })
+})
+
+describe('SETTINGS_LINKS', () => {
+  // Owners look for the schedule under Settings; it lives in Charge Manager.
+  it('points the charger section at the Charge Manager', () => {
+    const cm = SETTINGS_LINKS.find((l) => l.route === '/schedule')
+    expect(cm.section).toBe('charger')
+    expect(en.nav[cm.labelKey.replace('nav.', '')]).toBeTypeOf('string')
+    expect(en.config.page_desc[cm.descKey.replace('config.page_desc.', '')]).toBeTypeOf('string')
   })
 })
 

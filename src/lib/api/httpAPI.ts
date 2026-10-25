@@ -1,5 +1,3 @@
-import { get } from 'svelte/store'
-import { uistates_store } from '../stores/uistates'
 import { redirect } from '../router'
 import type { ErrorBody } from './device'
 
@@ -61,10 +59,12 @@ export async function httpAPI<T = unknown>(
     headers: { 'Content-Type': content_type, 'X-Requested-With': 'OpenEVSE' },
   }
   if (body) data.body = body
-  // do not timeout on the first request, in case authentication is needed
-  if (get(uistates_store).has_fetched) {
-    setTimeout(() => controller.abort(), timeout)
-  }
+  // Every request gives up after `timeout`, the first included. (The first
+  // was once exempt so a browser's Basic-auth prompt could wait on the user,
+  // but the firmware answers this app's X-Requested-With requests with a
+  // plain 401, never that prompt, and the exemption left the loader up for
+  // good when a charger accepted the connection and then went quiet.)
+  const timer = setTimeout(() => controller.abort(), timeout)
   if (import.meta.env.DEV) {
     if (!url.includes('http', 0)) url = '/api' + url
   }
@@ -84,9 +84,6 @@ export async function httpAPI<T = unknown>(
       console.log(error)
       return 'error' as const
     })
-  uistates_store.update((x) => {
-    x.has_fetched = true
-    return x
-  })
+    .finally(() => clearTimeout(timer))
   return res
 }

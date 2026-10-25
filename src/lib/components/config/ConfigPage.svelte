@@ -12,21 +12,25 @@
   let { title = '', loading = false, children }: Props = $props()
 </script>
 
-<section class="p-4 lg:mx-auto lg:max-w-2xl">
-  <a
-    href="#/settings"
-    class="mb-3 inline-flex items-center gap-1 text-sm text-text-dim hover:text-text"
-  >
-    <Icon icon="mdi:chevron-left" size={18} />
-    <span>{$_('config.back')}</span>
-  </a>
-  <h1 class="mb-4 text-lg font-semibold text-text">{title}</h1>
+<!-- The page width every screen shares, so the title doesn't move between
+     screens; a form reads better narrower, in a column aligned to its left. -->
+<section class="p-4 lg:mx-auto lg:w-full lg:max-w-5xl">
+  <div class="lg:max-w-2xl">
+    <a
+      href="#/settings"
+      class="tap-target mb-3 inline-flex items-center gap-1 text-sm text-text-dim hover:text-text"
+    >
+      <Icon icon="mdi:chevron-left" size={18} />
+      <span>{$_('config.back')}</span>
+    </a>
+    <h1 class="mb-4 text-lg font-semibold text-text">{title}</h1>
 
-  {#if loading}
-    <div class="flex justify-center py-10">
-      <Icon icon="mdi:loading" size={28} class="animate-spin text-text-dim" />
-    </div>
-  {:else}
-    {@render children?.()}
-  {/if}
+    {#if loading}
+      <div class="flex justify-center py-10">
+        <Icon icon="mdi:loading" size={28} class="motion-safe:animate-spin text-text-dim" />
+      </div>
+    {:else}
+      {@render children?.()}
+    {/if}
+  </div>
 </section>

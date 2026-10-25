@@ -49,7 +49,7 @@
 
   {#if displayHost}
     <div class="mb-4 rounded-xl border border-border bg-surface p-3">
-      <p class="text-xs uppercase tracking-wider text-text-dim">
+      <p class="text-xs text-text-dim">
         {$_('wizard.reconnect.address_label')}
       </p>
       <button

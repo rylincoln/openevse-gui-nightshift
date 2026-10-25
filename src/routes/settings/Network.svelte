@@ -87,6 +87,17 @@
     }
   }
 
+  // /status reports the network mode as a firmware code; say it in words.
+  const MODE_KEYS: Record<string, string> = {
+    STA: 'config.network.mode_sta',
+    AP: 'config.network.mode_ap',
+    'STA+AP': 'config.network.mode_sta_ap',
+    Wired: 'config.network.mode_wired',
+  }
+  function modeLabel(mode: string | undefined): string | undefined {
+    return mode && MODE_KEYS[mode] ? $_(MODE_KEYS[mode]) : mode
+  }
+
   function joinWifi(): void {
     if (selected) joinSsid(selected.ssid)
   }
@@ -98,7 +109,7 @@
 
 <ConfigPage title={$_('config.pages.network')}>
   <ConfigSection title={$_('config.network.status')}>
-    <ReadOnlyRow label={$_('config.network.mode')} value={$status_store?.mode} />
+    <ReadOnlyRow label={$_('config.network.mode')} value={modeLabel($status_store?.mode)} />
     <ReadOnlyRow label={$_('config.network.ip')} value={$status_store?.ipaddress} />
     {#if $status_store?.macaddress}
       <ReadOnlyRow label={$_('config.network.mac')} value={$status_store.macaddress} />
@@ -156,7 +167,7 @@
                       value={wifiPass}
                       oninput={(e) => (wifiPass = e.currentTarget.value)}
                       class="flex-1 rounded-xl border border-border bg-surface-2 px-3 py-2
-                             text-sm text-text focus:border-accent focus:outline-none"
+                             text-sm text-text focus:border-accent"
                     />
                   {/if}
                   <div class="shrink-0">
@@ -190,7 +201,7 @@
               value={manualSsid}
               oninput={(e) => (manualSsid = e.currentTarget.value)}
               class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2
-                     text-sm text-text focus:border-accent focus:outline-none"
+                     text-sm text-text focus:border-accent"
             />
             <input
               type="password"
@@ -199,7 +210,7 @@
               value={wifiPass}
               oninput={(e) => (wifiPass = e.currentTarget.value)}
               class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2
-                     text-sm text-text focus:border-accent focus:outline-none"
+                     text-sm text-text focus:border-accent"
             />
             <Button
               label={joining ? $_('config.network.connecting_btn') : $_('config.network.connect')}

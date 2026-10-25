@@ -9,7 +9,7 @@ vi.mock('svelte-i18n', () => {
 })
 
 import Settings from '../Settings.svelte'
-import { SETTINGS_PAGES } from '../../lib/config/pages'
+import { SETTINGS_PAGES, SETTINGS_LINKS } from '../../lib/config/pages'
 import { config_store } from '../../lib/stores/config'
 
 const SUPPORT_LINKS = [
@@ -32,10 +32,23 @@ describe('Settings hub', () => {
     config_store.update((c) => ({ ...c, labs_enabled: true }))
     const { getAllByRole } = render(Settings)
     const links = getAllByRole('link')
-    expect(links).toHaveLength(SETTINGS_PAGES.length + SUPPORT_LINKS.length)
+    expect(links).toHaveLength(SETTINGS_PAGES.length + SETTINGS_LINKS.length + SUPPORT_LINKS.length)
     for (const p of SETTINGS_PAGES) {
       expect(links.some((l) => l.getAttribute('href') === '#' + p.route)).toBe(true)
     }
+  })
+
+  it('says under each page name what the page holds', () => {
+    const { getByRole } = render(Settings)
+    const network = getByRole('link', { name: /config\.pages\.network/ })
+    expect(network).toHaveTextContent('config.page_desc.network')
+  })
+
+  it('sends owners looking for the schedule to the Charge Manager', () => {
+    const { getByRole } = render(Settings)
+    const link = getByRole('link', { name: /nav\.charge_manager/ })
+    expect(link).toHaveAttribute('href', '#/schedule')
+    expect(link).toHaveTextContent('config.page_desc.charge_manager')
   })
 
   it('hides the Labs-gated Load Sharing link until labs_enabled is on', () => {
@@ -59,7 +72,7 @@ describe('Settings hub', () => {
 
   it('lays the section cards out as a two-column grid on desktop', () => {
     const { container, getByText } = render(Settings)
-    expect(container.querySelector('section').className).toContain('lg:max-w-4xl')
+    expect(container.querySelector('section').className).toContain('lg:max-w-5xl')
     expect(container.querySelector('[class*="lg:grid-cols-2"]')).toBeTruthy()
     const supportCard = getByText('config.sections.support').closest('[class*="lg:col-span-2"]')
     expect(supportCard).toBeTruthy()

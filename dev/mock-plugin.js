@@ -126,7 +126,12 @@ export function mockPlugin() {
   // off code (255), Auto otherwise (so 254 -> sleeping). Bumping claimsVersion
   // makes DataManager re-download claims/target live over the WebSocket.
   const claimsOff = baseFixtures['/api/claims/target']
-  const claimsAuto = { properties: {}, claims: { state: null, charge_current: null } }
+  // As the firmware serialises it with no claims: the target properties are
+  // always there (the defaults), and `claims` lists only claimed properties.
+  const claimsAuto = {
+    properties: { state: 'active', charge_current: baseFixtures['/api/config'].max_current_soft, auto_release: false },
+    claims: {},
+  }
   let claimsState = claimsOff
   let claimsVersion = baseFixtures['/api/status'].claims_version ?? 1
 
@@ -188,10 +193,14 @@ export function mockPlugin() {
     const baseStatus = effectiveFixture('/api/status')
     const state = stateOverride == null ? baseStatus.state : stateOverride
     const charging = state === 3
+    // The plug follows a previewed state that implies one: Ready has no car,
+    // Connected and Charging do. Paused, Off and faults keep the fixture's.
+    const vehicle = stateOverride === 1 ? 0 : stateOverride === 2 || charging ? 1 : baseStatus.vehicle
     const advisories = notificationList()
     return JSON.stringify({
       ...baseStatus,
       state,
+      vehicle,
       config_version: configVersion,
       // Exactly the two fields the firmware sends here — the list lives on
       // its own endpoint. Their presence is the GUI's capability gate.

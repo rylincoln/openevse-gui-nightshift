@@ -1,9 +1,10 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n'
-  import PlugPill from './PlugPill.svelte'
+  import StatusLine from './StatusLine.svelte'
   import RatePill from './RatePill.svelte'
   import SessionChart from './SessionChart.svelte'
   import type { EnergySample } from '../../api/device'
+  import type { ChargerStatus, I18nRef } from '../../dashboard/status'
 
   interface Props {
     kw?: string
@@ -14,6 +15,9 @@
     minAmps?: number
     maxAmps?: number
     rateClaimedBy?: string
+    /** Who is capping the current below the charge rate. */
+    cap?: I18nRef | null
+    capText?: string
     rateNonce?: number
     samples?: EnergySample[]
     voltage?: number
@@ -21,7 +25,7 @@
     sessionElapsed?: number
     chartError?: boolean
     rateDisabled?: boolean
-    connected?: boolean
+    status: ChargerStatus
     onrate?: (value: number) => void
   }
   let {
@@ -33,6 +37,8 @@
     minAmps = 6,
     maxAmps = 48,
     rateClaimedBy = '',
+    cap = null,
+    capText = '',
     rateNonce = 0,
     samples = [],
     voltage = 0,
@@ -40,31 +46,41 @@
     sessionElapsed = 0,
     chartError = false,
     rateDisabled = false,
-    connected = false,
+    status,
     onrate = () => {},
   }: Props = $props()
 </script>
 
 <div>
-  <!-- status row: plug pill · rate pill -->
-  <div class="flex items-center justify-between gap-2 px-1">
-    <PlugPill {connected} />
-    {#key rateNonce}
-      <RatePill {amps} min={minAmps} max={maxAmps} claimedBy={rateClaimedBy} disabled={rateDisabled} onchange={onrate} />
-    {/key}
+  <!-- status row: status line · rate pill -->
+  <div class="flex items-start justify-between gap-2 px-1">
+    <StatusLine {status} {cap} />
+    <div class="shrink-0">
+      {#key rateNonce}
+        <RatePill
+          {amps}
+          min={minAmps}
+          max={maxAmps}
+          claimedBy={rateClaimedBy}
+          {capText}
+          disabled={rateDisabled}
+          onchange={onrate}
+        />
+      {/key}
+    </div>
   </div>
 
   <!-- readout strip: keeps the ring's at-a-glance kW · SOC identity -->
   <div class="flex items-center justify-center gap-6 py-3">
     <div class="text-center">
       <div class="text-4xl font-extrabold leading-none text-text">{kw}</div>
-      <div class="mt-0.5 text-[10px] font-bold tracking-widest text-accent">KW</div>
+      <div class="mt-0.5 text-xs font-semibold text-accent">{$_('units.kw')}</div>
     </div>
     {#if hasSoc && soc != null}
       <div class="w-px self-stretch bg-border"></div>
       <div class="text-center">
         <div class="text-4xl font-extrabold leading-none text-text">{Math.round(soc)}<span class="text-xl">%</span></div>
-        <div class="mt-0.5 text-[10px] font-bold tracking-wide text-text-dim">
+        <div class="mt-0.5 text-xs font-semibold text-text-dim">
           {#if target != null}
             {$_('dashboard.session.soc_target', { values: { target } })}
           {/if}

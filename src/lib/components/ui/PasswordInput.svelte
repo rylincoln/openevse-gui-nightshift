@@ -1,6 +1,7 @@
 <!-- src/lib/components/ui/PasswordInput.svelte -->
 <script lang="ts">
   import { untrack } from 'svelte'
+  import { _ } from 'svelte-i18n'
   import Icon from '../../icons/Icon.svelte'
   import { isDummyPassword } from '../../config/validate'
 
@@ -10,6 +11,10 @@
     disabled?: boolean
     maxlength?: number
     revert?: number
+    /** For a <label for>, and for password managers (name, autocomplete). */
+    id?: string
+    name?: string
+    autocomplete?: HTMLInputElement['autocomplete']
     onchange?: (value: string) => void
   }
   let {
@@ -18,6 +23,9 @@
     disabled = false,
     maxlength = undefined,
     revert = 0,
+    id = undefined,
+    name = undefined,
+    autocomplete = undefined,
     onchange = () => {},
   }: Props = $props()
 
@@ -41,6 +49,9 @@
 <div class="relative">
   <input
     type={show ? 'text' : 'password'}
+    {id}
+    {name}
+    {autocomplete}
     placeholder={isDummyPassword(value) ? '••••••••••' : placeholder}
     {disabled}
     {maxlength}
@@ -49,12 +60,13 @@
     onfocus={() => (focused = true)}
     onblur={blur}
     class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 pr-10 text-sm
-           text-text placeholder:text-text-dim focus:border-accent focus:outline-none
+           text-text placeholder:text-text-dim focus:border-accent
            disabled:opacity-40"
   />
   <button
     type="button"
-    aria-label={show ? 'hide' : 'show'}
+    aria-label={$_('ui.show_password')}
+    aria-pressed={show}
     onclick={() => (show = !show)}
     class="absolute inset-y-0 right-0 grid w-10 place-items-center text-text-dim"
   >

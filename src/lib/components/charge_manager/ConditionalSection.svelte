@@ -1,10 +1,15 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n'
   import RuleCard from './RuleCard.svelte'
+  import WeekStrip from './WeekStrip.svelte'
   import type { Rule } from '../../charge_manager/rules'
+  import type { WeekDay } from '../../charge_manager/week'
 
   interface Props {
     rules?: Rule[]
+    // The week as the schedule runs it, and the charger's own "now"
+    week?: WeekDay[]
+    now?: { day: string; minutes: number } | null
     removingId?: string | null
     // firmware's currently-active schedule event id
     activeEventId?: number | null
@@ -16,6 +21,8 @@
   }
   let {
     rules = [],
+    week = [],
+    now = null,
     removingId = null,
     activeEventId = null,
     busy = false,
@@ -26,7 +33,7 @@
 
 <div class="mb-4">
   <div class="mb-2 flex items-baseline justify-between">
-    <h2 class="text-sm font-semibold uppercase tracking-wide text-text-dim">
+    <h2 class="section-title">
       {$_('charge_manager.conditional_section')}
     </h2>
   </div>
@@ -34,6 +41,9 @@
   {#if rules.length === 0}
     <p class="text-sm text-text-dim">{$_('charge_manager.conditional_empty')}</p>
   {:else}
+    {#if week.length}
+      <WeekStrip {week} {now} />
+    {/if}
     {#each rules as rule (rule.id)}
       <RuleCard
         {rule}

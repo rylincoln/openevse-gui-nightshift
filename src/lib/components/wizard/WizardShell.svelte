@@ -25,6 +25,8 @@
     // (the WiFi step: connecting joins the network and ends the session, so a
     // separate Finish button would be redundant and could strand the user).
     hideAdvance?: boolean
+    /** Label for the last step's button, when "Finish" alone undersells it. */
+    finishLabel?: string
     onPrev?: () => void
     onNext?: () => void
     onFinish?: () => void
@@ -36,6 +38,7 @@
     title = '',
     canAdvance = true,
     hideAdvance = false,
+    finishLabel = '',
     onPrev = () => {},
     onNext = () => {},
     onFinish = () => {},
@@ -98,7 +101,7 @@
     {#if !hideAdvance}
       {#if isLast}
         <div class="min-w-[120px]">
-          <Button label={$_('wizard.finish')} onclick={onFinish} disabled={!canAdvance} />
+          <Button label={finishLabel || $_('wizard.finish')} onclick={onFinish} disabled={!canAdvance} />
         </div>
       {:else}
         <button

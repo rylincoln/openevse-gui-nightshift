@@ -47,6 +47,23 @@ describe('Shaper page', () => {
     expect(httpAPI).toHaveBeenCalledWith('POST', '/config', JSON.stringify({ current_shaper_max_pwr: 9000 }))
   })
 
+  it('gives every number its unit', () => {
+    config_store.set({ current_shaper_enabled: true })
+    const { getByLabelText } = render(Shaper)
+    expect(getByLabelText('config.shaper.max_power')).toHaveAccessibleDescription('W')
+    expect(getByLabelText('config.shaper.min_pause')).toHaveAccessibleDescription('s')
+    expect(getByLabelText('config.shaper.max_interval')).toHaveAccessibleDescription(/^s /)
+    expect(getByLabelText('config.shaper.smoothing')).toHaveAccessibleDescription(/^s /)
+  })
+
+  it('takes the minimum pause in seconds, as the firmware stores it (default 300)', () => {
+    config_store.set({ current_shaper_enabled: true, current_shaper_min_pause_time: 300 })
+    const { getByLabelText } = render(Shaper)
+    const input = getByLabelText('config.shaper.min_pause')
+    expect(Number(input.getAttribute('max'))).toBeGreaterThanOrEqual(300)
+    expect(input).toHaveAttribute('placeholder', '300')
+  })
+
   it('surfaces the write-error alert on a failed save', async () => {
     httpAPI.mockResolvedValue('error')
     config_store.set({ current_shaper_enabled: true, current_shaper_max_pwr: 5000 })

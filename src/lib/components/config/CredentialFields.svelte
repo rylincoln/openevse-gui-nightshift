@@ -27,8 +27,10 @@
 
   interface Props {
     onsaved?: () => void
+    /** The wizard hides this and saves through commit() on Next instead. */
+    showSave?: boolean
   }
-  let { onsaved = () => {} }: Props = $props()
+  let { onsaved = () => {}, showSave = true }: Props = $props()
 
   const form = createConfigForm()
 
@@ -42,14 +44,24 @@
   let missingUser = $derived(pass.trim() !== '' && user.trim() === '')
 
   async function save(): Promise<void> {
-    if (saving) return
+    await commit()
+  }
+
+  /**
+   * Save whatever was typed. Resolves true when there is nothing left
+   * unsaved: the password was saved, or both fields are blank. A password
+   * with no username, or a failed save, resolves false.
+   */
+  export async function commit(): Promise<boolean> {
+    if (saving) return false
     // Inputs commit on blur; commit whatever's focused before we read the drafts.
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur()
     }
     const u = user.trim()
     const p = pass.trim()
-    if (p === '' || u === '') return // nothing to set / username still required
+    if (p === '') return true // nothing to set
+    if (u === '') return false // username still required; missingUser says so
     saving = true
     saved = false
     const ok = await form.saveFields({ www_username: u, www_password: p })
@@ -59,6 +71,7 @@
       pass = '' // don't keep the secret sitting in the field
       onsaved()
     }
+    return ok
   }
 </script>
 
@@ -88,9 +101,11 @@
     <p class="text-sm text-text-dim">{$_('config.http.creds_saved')}</p>
   {/if}
 
-  <Button
-    label={$_('config.http.set_credentials')}
-    onclick={save}
-    disabled={saving}
-  />
+  {#if showSave}
+    <Button
+      label={$_('config.http.set_credentials')}
+      onclick={save}
+      disabled={saving}
+    />
+  {/if}
 </div>

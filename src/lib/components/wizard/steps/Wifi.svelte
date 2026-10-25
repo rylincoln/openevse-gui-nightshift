@@ -27,8 +27,18 @@
     beforeJoin?: () => Promise<void>
     /** Reachable over Ethernet, so leaving the setup hotspot won't strand the browser. */
     ethConnected?: boolean
+    /** Already joined a WiFi network; the wizard offers to keep it. */
+    connected?: boolean
+    /** This browser is on the charger's setup hotspot, which joining turns off. */
+    onDeviceAp?: boolean
   }
-  let { onJoined = () => {}, beforeJoin = async () => {}, ethConnected = false }: Props = $props()
+  let {
+    onJoined = () => {},
+    beforeJoin = async () => {},
+    ethConnected = false,
+    connected = false,
+    onDeviceAp = false,
+  }: Props = $props()
 
   // Where to reach the charger once it leaves the setup hotspot. The DHCP IP
   // isn't known ahead of time, so we show the mDNS hostname (same as
@@ -107,13 +117,21 @@
 </script>
 
 <div class="space-y-4">
-  {#if $status_store?.ssid || $config_store?.ssid}
-    <!-- Already on a network: show it as a status row + a "change" path -->
+  {#if connected && ($status_store?.ssid || $config_store?.ssid)}
+    <!-- Already on a network: keep it (the wizard's footer button) or pick
+         another below. -->
     <div class="rounded-xl border border-border bg-surface-2 p-3 text-sm">
       <p class="text-text-dim">{$_('wizard.wifi.current')}</p>
       <p class="font-semibold text-text">
         {$status_store?.ssid || $config_store?.ssid}
       </p>
+    </div>
+  {:else if $config_store?.ssid}
+    <!-- Saved but not joined (wrong password, out of range): say so rather
+         than call it the current network. -->
+    <div class="rounded-xl border border-border bg-surface-2 p-3 text-sm">
+      <p class="text-text-dim">{$_('wizard.wifi.saved')}</p>
+      <p class="font-semibold text-text">{$config_store.ssid}</p>
     </div>
   {/if}
 
@@ -121,7 +139,7 @@
     <div class="rounded-xl border border-border bg-surface-2 p-3 text-sm text-text">
       <p>{$_('wizard.wifi.joined')}</p>
       {#if displayHost}
-        <p class="mt-3 text-xs uppercase tracking-wider text-text-dim">
+        <p class="mt-3 text-xs text-text-dim">
           {$_('wizard.wifi.reach_at')}
         </p>
         <p class="break-all text-sm font-semibold text-accent">http://{displayHost}</p>
@@ -140,18 +158,21 @@
     </div>
     <p class="text-sm text-text-dim">{$_('wizard.wifi.intro')}</p>
   {:else}
-    <!-- Heads-up before the AP hand-off: connecting ends this setup session. -->
-    <div class="rounded-xl border border-border bg-surface-2 p-3 text-sm">
-      <p class="font-semibold text-text">{$_('wizard.wifi.handoff_title')}</p>
-      <p class="mt-1 text-text-dim">{$_('wizard.wifi.handoff_body')}</p>
-      {#if displayHost}
-        <p class="mt-2 text-xs uppercase tracking-wider text-text-dim">
-          {$_('wizard.wifi.reach_at')}
-        </p>
-        <p class="break-all text-sm font-semibold text-accent">http://{displayHost}</p>
-      {/if}
-    </div>
-    <p class="text-sm text-text-dim">{$_('wizard.wifi.intro')}</p>
+    {#if onDeviceAp}
+      <!-- Heads-up before the AP hand-off: connecting ends this setup session.
+           Only on the hotspot: from the home network nothing is lost. -->
+      <div class="rounded-xl border border-border bg-surface-2 p-3 text-sm">
+        <p class="font-semibold text-text">{$_('wizard.wifi.handoff_title')}</p>
+        <p class="mt-1 text-text-dim">{$_('wizard.wifi.handoff_body')}</p>
+        {#if displayHost}
+          <p class="mt-2 text-xs text-text-dim">
+            {$_('wizard.wifi.reach_at')}
+          </p>
+          <p class="break-all text-sm font-semibold text-accent">http://{displayHost}</p>
+        {/if}
+      </div>
+    {/if}
+    <p class="text-sm text-text-dim">{$_(connected ? 'wizard.wifi.intro_switch' : 'wizard.wifi.intro')}</p>
 
     <div>
       <Button
@@ -191,7 +212,7 @@
                     value={wifiPass}
                     oninput={(e) => (wifiPass = e.currentTarget.value)}
                     class="flex-1 rounded-xl border border-border bg-surface-2 px-3 py-2
-                           text-sm text-text focus:border-accent focus:outline-none"
+                           text-sm text-text focus:border-accent"
                   />
                 {/if}
                 <div class="shrink-0">
@@ -227,7 +248,7 @@
             value={manualSsid}
             oninput={(e) => (manualSsid = e.currentTarget.value)}
             class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2
-                   text-sm text-text focus:border-accent focus:outline-none"
+                   text-sm text-text focus:border-accent"
           />
           <input
             type="password"
@@ -236,7 +257,7 @@
             value={wifiPass}
             oninput={(e) => (wifiPass = e.currentTarget.value)}
             class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2
-                   text-sm text-text focus:border-accent focus:outline-none"
+                   text-sm text-text focus:border-accent"
           />
           <Button
             label={joining ? $_('config.network.connecting_btn') : $_('config.network.connect')}

@@ -1,8 +1,11 @@
 <script lang="ts">
+  import { _ } from 'svelte-i18n'
   import { currentPath } from '../../router'
+  import { pageTitle } from '../../pageTitle'
   import { routes, NotFound, LEGACY_ROUTES } from '../../routes'
   import { status_store } from '../../stores/status'
   import { uistates_store } from '../../stores/uistates'
+  import { getStateDesc } from '../../utils'
   import Router from '../Router.svelte'
   import Header from './Header.svelte'
   import BottomNav from './BottomNav.svelte'
@@ -16,6 +19,11 @@
   let evseConnected = $derived(Boolean($status_store?.evse_connected ?? true))
   let wsConnected = $derived($uistates_store?.ws_connected ?? true)
   let error = $derived($uistates_store?.error ?? false)
+  let fault = $derived(error ? (getStateDesc($status_store?.state) ?? '') : '')
+
+  $effect(() => {
+    document.title = pageTitle($currentPath, deviceName, $_)
+  })
 
   // Without scroll restoration, navigating between long pages (e.g. Settings
   // index → Firmware) would land the user wherever the previous page was
@@ -31,7 +39,7 @@
 <div class="flex h-full flex-col sm:flex-row-reverse">
   <div class="flex min-h-0 min-w-0 flex-1 flex-col">
     <Header {deviceName} {wsConnected} {evseConnected} />
-    <ConnectionBanners {wsConnected} {evseConnected} {error} />
+    <ConnectionBanners {wsConnected} {evseConnected} {error} {fault} onDashboard={$currentPath === '/'} />
     <!-- overflow-x-hidden: nothing in the app scrolls horizontally, so clip any
          stray wide child (charts measuring before layout, long tokens) instead
          of letting `overflow-y-auto` promote overflow-x to a bottom scrollbar.

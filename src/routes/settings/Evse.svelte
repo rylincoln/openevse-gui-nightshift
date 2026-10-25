@@ -18,8 +18,25 @@
   const form = createConfigForm()
   const ss = form.saveState
 
-  // Relay Control card is collapsed by default.
-  let relaysOpen = $state(false)
+  // The maximum-current readout follows the thumb while it moves, then shows
+  // the stored value again once the store has the saved one (or the save failed).
+  let dragging = $state<number | null>(null)
+  $effect(() => {
+    void $config_store?.max_current_soft
+    void form.revert
+    dragging = null
+  })
+  let maxShown = $derived(dragging ?? $config_store?.max_current_soft)
+
+  // Some controllers report a hardware maximum of 0 until an installer sets it.
+  let hardMax = $derived($config_store?.max_current_hard)
+  let hardLabel = $derived(
+    hardMax == null ? '' : hardMax > 0 ? `${hardMax} A` : $_('config.evse.maxcurrent_hard_unset'),
+  )
+
+  // Settings made when the charger is installed live in one card, collapsed
+  // by default, so an owner doesn't change them by accident.
+  let installOpen = $state(false)
   let showRelays = $derived(
     $config_store?.relay_dc1 !== undefined ||
     $config_store?.relay_dc2 !== undefined ||
@@ -42,62 +59,161 @@
   <ConfigSection title={$_('config.evse.current')}>
     <FormField
       label={$_('config.evse.maxcurrent')}
-      description={`${$config_store?.max_current_soft ?? ''} A`}
+      value={maxShown != null ? `${maxShown} A` : ''}
+      description={$_('config.evse.maxcurrent_desc')}
       status={$ss.max_current_soft ?? 'idle'}
     >
       <Slider
         min={$config_store?.min_current_hard ?? 6}
         max={hardMaxCurrent($config_store, 32)}
         value={$config_store?.max_current_soft ?? 6}
+        showBubble={false}
+        format={(v) => `${v} A`}
+        oninput={(v) => (dragging = v)}
         onchange={(v) => form.saveField('max_current_soft', v)}
       />
     </FormField>
-    <ReadOnlyRow
-      label={$_('config.evse.maxcurrent_hard')}
-      value={$config_store?.max_current_hard != null
-        ? `${$config_store.max_current_hard} A`
-        : ''}
-    />
-    {#if $config_store?.voltage !== undefined}
+    <ReadOnlyRow label={$_('config.evse.maxcurrent_hard')} value={hardLabel} />
+  </ConfigSection>
+
+  <ConfigSection title={$_('config.evse.behaviour')}>
+    {#if $config_store?.is_threephase !== undefined}
+      <FormField label={$_('config.evse.threephase')} status={$ss.is_threephase ?? 'idle'}>
+        <Select
+          options={phaseOptions}
+          value={String(!!$config_store?.is_threephase)}
+          onchange={(v) => form.saveField('is_threephase', v === 'true')}
+        />
+      </FormField>
+    {/if}
+    <FormField label={$_('config.evse.service')} status={$ss.service ?? 'idle'}>
+      <Select
+        options={serviceOptions}
+        value={String($config_store?.service || 2)}
+        onchange={(v) => form.saveField('service', Number(v))}
+      />
+    </FormField>
+    <FormField label={$_('config.evse.pause_mode')} status={$ss.pause_uses_disabled ?? 'idle'}>
+      <Toggle
+        checked={!!$config_store?.pause_uses_disabled}
+        label={$_('config.evse.pause_mode')}
+        onchange={(v) => form.saveField('pause_uses_disabled', v)}
+      />
+    </FormField>
+    {#if $config_store?.front_button !== undefined}
       <FormField
-        label={$_('config.evse.voltage')}
-        description={$_('config.evse.voltage_desc')}
-        status={$ss.voltage ?? 'idle'}
+        label={$_('config.evse.front_button')}
+        description={$_('config.evse.front_button_desc')}
+        status={$ss.front_button ?? 'idle'}
       >
-        <div class="flex items-center gap-2">
-          <NumberInput
-            value={$config_store?.voltage ? $config_store.voltage / 100 : 0}
-            min={60}
-            max={300}
-            step={0.01}
-            revert={form.revert}
-            onchange={(v) => form.saveField('voltage', v ? Math.round(v * 100) : 0)}
-          />
-          <span class="text-sm text-text-dim">V</span>
-        </div>
+        <Toggle
+          checked={!!$config_store?.front_button}
+          label={$_('config.evse.front_button')}
+          onchange={(v) => form.saveField('front_button', v)}
+        />
+      </FormField>
+    {/if}
+    <FormField
+      label={$_('config.evse.start_window')}
+      description={$_('config.evse.start_window_desc')}
+      status={$ss.scheduler_start_window ?? 'idle'}
+    >
+      <NumberInput
+        value={$config_store?.scheduler_start_window ?? 0}
+        min={0}
+        max={3600}
+        unit="s"
+        revert={form.revert}
+        onchange={(v) => form.saveField('scheduler_start_window', v ?? 0)}
+      />
+    </FormField>
+    {#if $config_store?.led_brightness !== undefined}
+      <FormField
+        label={$_('config.evse.led_brightness')}
+        description={`${$config_store?.led_brightness ?? ''}`}
+        status={$ss.led_brightness ?? 'idle'}
+      >
+        <Slider
+          min={0}
+          max={255}
+          value={$config_store?.led_brightness ?? 0}
+          onchange={(v) => form.saveField('led_brightness', v)}
+        />
       </FormField>
     {/if}
   </ConfigSection>
 
-  {#if showRelays}
-    <!-- Relay Control — collapsible, collapsed by default -->
-    <Card class="mb-4 p-4">
+  <Card class="mb-4 p-4">
+    <h2 class="text-sm font-semibold text-text-dim">
       <button
         type="button"
-        onclick={() => (relaysOpen = !relaysOpen)}
-        aria-expanded={relaysOpen}
-        class="flex w-full items-center justify-between gap-3 text-left"
+        onclick={() => (installOpen = !installOpen)}
+        aria-expanded={installOpen}
+        class="tap-target flex w-full items-center justify-between gap-3 text-left"
       >
-        <h2 class="text-sm font-semibold text-text-dim">{$_('config.evse.relays')}</h2>
+        {$_('config.evse.installation')}
         <Icon
-          icon={relaysOpen ? 'mdi:chevron-up' : 'mdi:chevron-down'}
+          icon={installOpen ? 'mdi:chevron-up' : 'mdi:chevron-down'}
           size={20}
           class="shrink-0 text-text-dim"
         />
       </button>
+    </h2>
 
-      {#if relaysOpen}
-        <div class="mt-3">
+    {#if installOpen}
+      <div class="mt-3">
+        <p class="rounded-xl border border-warning/40 bg-warning/5 p-3 text-sm text-text" role="note">
+          {$_('config.evse.installation_warning')}
+        </p>
+        {#if $config_store?.voltage !== undefined}
+          <FormField
+            label={$_('config.evse.voltage')}
+            description={$_('config.evse.voltage_desc')}
+            status={$ss.voltage ?? 'idle'}
+          >
+            <NumberInput
+              value={$config_store?.voltage ? $config_store.voltage / 100 : 0}
+              min={60}
+              max={300}
+              step={0.01}
+              unit="V"
+              revert={form.revert}
+              onchange={(v) => form.saveField('voltage', v ? Math.round(v * 100) : 0)}
+            />
+          </FormField>
+        {/if}
+        {#if $config_store?.pp_auto !== undefined}
+          <FormField
+            label={$_('config.evse.pp_auto')}
+            description={$_('config.evse.pp_auto_desc')}
+            status={$ss.pp_auto ?? 'idle'}
+          >
+            <Toggle
+              checked={!!$config_store?.pp_auto}
+              label={$_('config.evse.pp_auto')}
+              onchange={(v) => form.saveField('pp_auto', v)}
+            />
+          </FormField>
+        {/if}
+
+        <h3 class="mt-3 text-xs font-semibold text-text-dim">{$_('config.evse.sensor')}</h3>
+        <FormField label={$_('config.evse.scale')} status={$ss.scale ?? 'idle'}>
+          <NumberInput
+            value={$config_store?.scale ?? 0}
+            revert={form.revert}
+            onchange={(v) => form.saveField('scale', v ?? 0)}
+          />
+        </FormField>
+        <FormField label={$_('config.evse.offset')} status={$ss.offset ?? 'idle'}>
+          <NumberInput
+            value={$config_store?.offset ?? 0}
+            revert={form.revert}
+            onchange={(v) => form.saveField('offset', v ?? 0)}
+          />
+        </FormField>
+
+        {#if showRelays}
+          <h3 class="mt-3 text-xs font-semibold text-text-dim">{$_('config.evse.relays')}</h3>
           {#if $config_store?.relay_dc1 !== undefined}
             <FormField label={$_('config.evse.relay_dc1')} status={$ss.relay_dc1 ?? 'idle'}>
               <Toggle
@@ -138,104 +254,8 @@
               />
             </FormField>
           {/if}
-        </div>
-      {/if}
-    </Card>
-  {/if}
-
-  <ConfigSection title={$_('config.evse.behaviour')}>
-    {#if $config_store?.is_threephase !== undefined}
-      <FormField label={$_('config.evse.threephase')} status={$ss.is_threephase ?? 'idle'}>
-        <Select
-          options={phaseOptions}
-          value={String(!!$config_store?.is_threephase)}
-          onchange={(v) => form.saveField('is_threephase', v === 'true')}
-        />
-      </FormField>
+        {/if}
+      </div>
     {/if}
-    <FormField label={$_('config.evse.service')} status={$ss.service ?? 'idle'}>
-      <Select
-        options={serviceOptions}
-        value={String($config_store?.service || 2)}
-        onchange={(v) => form.saveField('service', Number(v))}
-      />
-    </FormField>
-    {#if $config_store?.pp_auto !== undefined}
-      <FormField
-        label={$_('config.evse.pp_auto')}
-        description={$_('config.evse.pp_auto_desc')}
-        status={$ss.pp_auto ?? 'idle'}
-      >
-        <Toggle
-          checked={!!$config_store?.pp_auto}
-          label={$_('config.evse.pp_auto')}
-          onchange={(v) => form.saveField('pp_auto', v)}
-        />
-      </FormField>
-    {/if}
-    <FormField label={$_('config.evse.pause_mode')}>
-      <Toggle
-        checked={!!$config_store?.pause_uses_disabled}
-        label={$_('config.evse.pause_mode')}
-        onchange={(v) => form.saveField('pause_uses_disabled', v)}
-      />
-    </FormField>
-    {#if $config_store?.front_button !== undefined}
-      <FormField
-        label={$_('config.evse.front_button')}
-        description={$_('config.evse.front_button_desc')}
-        status={$ss.front_button ?? 'idle'}
-      >
-        <Toggle
-          checked={!!$config_store?.front_button}
-          label={$_('config.evse.front_button')}
-          onchange={(v) => form.saveField('front_button', v)}
-        />
-      </FormField>
-    {/if}
-    <FormField
-      label={$_('config.evse.start_window')}
-      description={$_('config.evse.start_window_desc')}
-      status={$ss.scheduler_start_window ?? 'idle'}
-    >
-      <NumberInput
-        value={$config_store?.scheduler_start_window ?? 0}
-        min={0}
-        max={3600}
-        revert={form.revert}
-        onchange={(v) => form.saveField('scheduler_start_window', v ?? 0)}
-      />
-    </FormField>
-    {#if $config_store?.led_brightness !== undefined}
-      <FormField
-        label={$_('config.evse.led_brightness')}
-        description={`${$config_store?.led_brightness ?? ''}`}
-        status={$ss.led_brightness ?? 'idle'}
-      >
-        <Slider
-          min={0}
-          max={255}
-          value={$config_store?.led_brightness ?? 0}
-          onchange={(v) => form.saveField('led_brightness', v)}
-        />
-      </FormField>
-    {/if}
-  </ConfigSection>
-
-  <ConfigSection title={$_('config.evse.sensor')}>
-    <FormField label={$_('config.evse.scale')} status={$ss.scale ?? 'idle'}>
-      <NumberInput
-        value={$config_store?.scale ?? 0}
-        revert={form.revert}
-        onchange={(v) => form.saveField('scale', v ?? 0)}
-      />
-    </FormField>
-    <FormField label={$_('config.evse.offset')} status={$ss.offset ?? 'idle'}>
-      <NumberInput
-        value={$config_store?.offset ?? 0}
-        revert={form.revert}
-        onchange={(v) => form.saveField('offset', v ?? 0)}
-      />
-    </FormField>
-  </ConfigSection>
+  </Card>
 </ConfigPage>

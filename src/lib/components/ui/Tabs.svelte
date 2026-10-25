@@ -6,49 +6,55 @@
   interface Props {
     tabs?: TabItem[]
     active?: number
-    // 'primary' (default) is the pill-style row used at page level;
-    // 'subtle' is an underlined row meant to read as a sub-navigation under a
-    // primary tab. The two are visually distinct at a glance.
+    // Both variants are underlined navigation, never filled, so a page tab
+    // can't be mistaken for a control that changes the charger. 'primary'
+    // (default) is the page-level row; 'subtle' is a smaller row meant to
+    // read as a sub-navigation under a primary tab.
     variant?: 'primary' | 'subtle'
     onchange?: (index: number) => void
   }
   let { tabs = [], active = 0, variant = 'primary', onchange = () => {} }: Props = $props()
+
+  let buttons = $state<HTMLButtonElement[]>([])
+
+  // One tab stop for the row; the arrow keys (wrapping), Home and End move
+  // between tabs and select them, as the ARIA tabs pattern describes.
+  function onkeydown(e: KeyboardEvent, i: number): void {
+    const last = tabs.length - 1
+    const next =
+      e.key === 'ArrowRight' ? (i === last ? 0 : i + 1)
+      : e.key === 'ArrowLeft' ? (i === 0 ? last : i - 1)
+      : e.key === 'Home' ? 0
+      : e.key === 'End' ? last
+      : null
+    if (next === null) return
+    e.preventDefault()
+    onchange(next)
+    buttons[next]?.focus()
+  }
 </script>
 
-{#if variant === 'subtle'}
-  <div class="flex gap-6 border-b border-border" role="tablist">
-    {#each tabs as tab, i}
-      <button
-        type="button"
-        role="tab"
-        aria-selected={i === active}
-        onclick={() => onchange(i)}
-        class="relative -mb-px border-b-2 py-2 text-sm font-semibold transition
-               {i === active ? 'border-accent text-text' : 'border-transparent text-text-dim hover:text-text'}"
-      >
-        {tab.label}
-        {#if tab.alert}
-          <span class="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-error align-middle"></span>
-        {/if}
-      </button>
-    {/each}
-  </div>
-{:else}
-  <div class="flex gap-1 rounded-xl bg-surface-2 p-1" role="tablist">
-    {#each tabs as tab, i}
-      <button
-        type="button"
-        role="tab"
-        aria-selected={i === active}
-        onclick={() => onchange(i)}
-        class="relative flex-1 rounded-lg py-2 text-xs font-semibold transition
-               {i === active ? 'bg-accent text-surface' : 'text-text-dim'}"
-      >
-        {tab.label}
-        {#if tab.alert}
-          <span class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-error"></span>
-        {/if}
-      </button>
-    {/each}
-  </div>
-{/if}
+<div
+  class="flex border-b border-border {variant === 'subtle' ? 'gap-5' : ''}"
+  role="tablist"
+>
+  {#each tabs as tab, i}
+    <button
+      bind:this={buttons[i]}
+      type="button"
+      role="tab"
+      aria-selected={i === active}
+      tabindex={i === active ? 0 : -1}
+      onclick={() => onchange(i)}
+      onkeydown={(e) => onkeydown(e, i)}
+      class="relative -mb-px border-b-2 font-semibold transition
+             {variant === 'subtle' ? 'tap-target py-1.5 text-xs' : 'min-h-11 flex-1 py-2.5 text-sm'}
+             {i === active ? 'border-accent text-text' : 'border-transparent text-text-dim hover:text-text'}"
+    >
+      {tab.label}
+      {#if tab.alert}
+        <span class="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-error align-middle"></span>
+      {/if}
+    </button>
+  {/each}
+</div>

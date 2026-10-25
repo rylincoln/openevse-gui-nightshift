@@ -146,6 +146,7 @@
         value={$config_store?.divert_min_charge_time ?? null}
         min={0}
         placeholder="600"
+        unit="s"
         revert={form.revert}
         onchange={(v) => saveTuningField('divert_min_charge_time', v)}
       />
@@ -159,6 +160,7 @@
         value={$config_store?.divert_attack_smoothing_time ?? null}
         min={0}
         max={600}
+        unit="s"
         revert={form.revert}
         onchange={(v) => saveTuningField('divert_attack_smoothing_time', v)}
       />
@@ -172,6 +174,7 @@
         value={$config_store?.divert_decay_smoothing_time ?? null}
         min={0}
         max={600}
+        unit="s"
         revert={form.revert}
         onchange={(v) => saveTuningField('divert_decay_smoothing_time', v)}
       />

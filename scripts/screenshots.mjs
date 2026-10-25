@@ -21,8 +21,11 @@ const outDir = join(root, 'docs', 'screenshots')
 // The Firmware page fetches its release list straight from api.github.com,
 // which the mock server doesn't proxy. Unauthenticated CI hits GitHub's rate
 // limit (403) — the app swallows it, but the harness flags any 4xx as a hard
-// failure. Intercept the call and serve a deterministic fixture instead.
-const GITHUB_RELEASES_GLOB = 'https://api.github.com/repos/OpenEVSE/ESP32_WiFi_V4.x/releases*'
+// failure. Intercept the call and serve a deterministic fixture instead. Any
+// OpenEVSE repo: the firmware repo has been renamed once already
+// (ESP32_WiFi_V4.x → openevse_esp32_firmware), and a stale name here let the
+// call through to the real API.
+const GITHUB_RELEASES_GLOB = 'https://api.github.com/repos/OpenEVSE/*/releases*'
 const githubReleasesBody = readFileSync(join(root, 'dev', 'fixtures', 'github-releases.json'), 'utf8')
 
 const onlyArg = process.argv.indexOf('--only')

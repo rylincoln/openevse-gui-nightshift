@@ -1,6 +1,6 @@
 // src/routes/settings/__tests__/Firmware.test.js
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, fireEvent } from '@testing-library/svelte'
+import { render, fireEvent, within } from '@testing-library/svelte'
 import { get } from 'svelte/store'
 
 vi.mock('svelte-i18n', () => {
@@ -31,23 +31,81 @@ describe('Firmware page', () => {
     expect(getByText('5.1.2')).toBeInTheDocument()
   })
 
-  it('restarts the gateway', async () => {
-    const { getByText } = render(Firmware)
+  it('restarts the WiFi module once confirmed', async () => {
+    const { getByText, getByRole } = render(Firmware)
     await fireEvent.click(getByText('config.firmware.restart_gateway'))
+    expect(httpAPI).not.toHaveBeenCalledWith('POST', '/restart', expect.anything())
+    const dialog = getByRole('alertdialog', { name: 'config.firmware.restart_gateway_title' })
+    expect(dialog).toHaveAccessibleDescription('config.firmware.restart_gateway_body')
+    await fireEvent.click(within(dialog).getByText('config.firmware.restart_confirm'))
     expect(httpAPI).toHaveBeenCalledWith('POST', '/restart', JSON.stringify({ device: 'gateway' }))
   })
 
+  it('warns that charging stops before restarting the controller', async () => {
+    const { getByText, getByRole } = render(Firmware)
+    await fireEvent.click(getByText('config.firmware.restart_evse'))
+    const dialog = getByRole('alertdialog', { name: 'config.firmware.restart_evse_title' })
+    expect(dialog).toHaveAccessibleDescription('config.firmware.restart_evse_body')
+    await fireEvent.click(within(dialog).getByText('config.firmware.restart_confirm'))
+    expect(httpAPI).toHaveBeenCalledWith('POST', '/restart', JSON.stringify({ device: 'evse' }))
+  })
+
+  it('does not restart when the confirmation is cancelled', async () => {
+    const { getByText, getByRole, queryByRole } = render(Firmware)
+    await fireEvent.click(getByText('config.firmware.restart_evse'))
+    await fireEvent.click(within(getByRole('alertdialog')).getByText('config.firmware.confirm_cancel'))
+    expect(queryByRole('alertdialog')).toBeNull()
+    expect(httpAPI).not.toHaveBeenCalledWith('POST', '/restart', expect.anything())
+  })
+
   it('asks for confirmation before a factory reset', async () => {
-    const { getByText, queryByText } = render(Firmware)
-    expect(queryByText('config.firmware.reset_confirm')).not.toBeInTheDocument()
+    const { getByText, getByRole, queryByRole } = render(Firmware)
+    expect(queryByRole('alertdialog')).toBeNull()
     await fireEvent.click(getByText('config.firmware.reset'))
-    expect(getByText('config.firmware.reset_confirm')).toBeInTheDocument()
+    const dialog = getByRole('alertdialog', { name: 'config.firmware.reset_title' })
+    expect(dialog).toHaveAccessibleDescription('config.firmware.reset_confirm')
+    expect(httpAPI).not.toHaveBeenCalledWith('GET', '/reset')
+    await fireEvent.click(within(dialog).getByText('config.firmware.reset'))
+    expect(httpAPI).toHaveBeenCalledWith('GET', '/reset')
+  })
+
+  it('puts the factory reset caption under its button, in the danger style', () => {
+    const { getByText } = render(Firmware)
+    const button = getByText('config.firmware.reset')
+    const caption = getByText('config.firmware.reset_desc')
+    expect(button.compareDocumentPosition(caption) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(button.className).toContain('text-error')
+  })
+
+  it('asks before restoring settings from a file, then says it worked', async () => {
+    httpAPI.mockResolvedValue({ msg: 'done' })
+    const { getByLabelText, getByRole, findByRole, findByText } = render(Firmware)
+    const input = getByLabelText('config.firmware.backup_import')
+    const file = new File(['{"emoncms_enabled":true}'], 'openevse-config.json', { type: 'application/json' })
+    await fireEvent.change(input, { target: { files: [file] } })
+    const dialog = await findByRole('alertdialog', { name: 'config.firmware.restore_title' })
+    expect(dialog).toHaveAccessibleDescription('config.firmware.restore_body')
+    expect(httpAPI).not.toHaveBeenCalledWith('POST', '/config', expect.anything())
+    await fireEvent.click(within(dialog).getByText('config.firmware.restore_confirm'))
+    expect(httpAPI).toHaveBeenCalledWith('POST', '/config', JSON.stringify({ emoncms_enabled: true }))
+    expect(await findByText('config.firmware.restore_done')).toBeInTheDocument()
+    expect(getByRole('status')).toHaveTextContent('config.firmware.restore_done')
+  })
+
+  it('says when the picked file is not a settings backup', async () => {
+    const { getByLabelText, findByText, queryByRole } = render(Firmware)
+    const file = new File(['not json'], 'notes.txt', { type: 'text/plain' })
+    await fireEvent.change(getByLabelText('config.firmware.backup_import'), { target: { files: [file] } })
+    expect(await findByText('config.firmware.restore_invalid')).toBeInTheDocument()
+    expect(queryByRole('alertdialog')).toBeNull()
+    expect(get(uistates_store).alertbox.visible).toBe(false)
   })
 
   it('shows an alert when restart-gateway returns an error', async () => {
     httpAPI.mockResolvedValue('error')
-    const { getByText } = render(Firmware)
+    const { getByText, getByRole } = render(Firmware)
     await fireEvent.click(getByText('config.firmware.restart_gateway'))
+    await fireEvent.click(within(getByRole('alertdialog')).getByText('config.firmware.restart_confirm'))
     await vi.waitFor(() => {
       expect(get(uistates_store).alertbox.visible).toBe(true)
     })

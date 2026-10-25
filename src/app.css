@@ -107,6 +107,91 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
+/* One focus ring for every control, in the accent. In the base layer, so a
+   component can still restyle its own. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* A range input that takes taps over a 44 px band but draws an 8 px track
+   and a 20 px accent thumb. The focus ring goes on the thumb. */
+@utility range-input {
+  width: 100%;
+  height: 2.75rem;
+  cursor: pointer;
+  appearance: none;
+  background: transparent;
+  &::-webkit-slider-runnable-track {
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: var(--surface-3);
+  }
+  &::-moz-range-track {
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: var(--surface-3);
+  }
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: -0.375rem;
+    border-radius: 9999px;
+    background: var(--accent);
+  }
+  &::-moz-range-thumb {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 0;
+    border-radius: 9999px;
+    background: var(--accent);
+  }
+  &:focus-visible {
+    outline: none;
+  }
+  &:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  &:focus-visible::-moz-range-thumb {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+/* One style for every section heading, from the Settings hub to Charge
+   Manager to a settings page: larger and stronger than a field label, in
+   sentence case. */
+@utility section-title {
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+/* A small control (a pill, a text link) keeps its look but takes taps over at
+   least 44 x 44 px, centred on it: an invisible ::after box, so layout and
+   neighbours don't move. The control must not clip overflow. */
+@utility tap-target {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
 /* Breath used by the dashboard PowerRing when the EVSE is paused or in
    a fault state. Combines opacity + a small scale so it's unmistakably
    alive even at small sizes. Whole-element so the ring + center read
@@ -124,11 +209,17 @@ body {
   .breathe { animation: none; transform: none; }
 }
 
-/* Charging shimmer: a slow accent gradient that drifts toward the charge edge.
-   Applied to the SOC-bar fill only while charging. Replaces the static fill
-   gradient (bg-gradient-to-r from-accent to-cyan-400) for the charging state. */
+/* Charging shimmer: a lighter band of the accent that drifts toward the
+   charge edge. Applied to the SOC-bar fill only while charging; otherwise the
+   fill is plain accent. */
 .soc-shimmer {
-  background-image: linear-gradient(90deg, var(--accent), #7dd3fc, #22d3ee, var(--accent));
+  background-color: var(--accent);
+  background-image: linear-gradient(
+    90deg,
+    var(--accent),
+    color-mix(in oklab, var(--accent) 65%, white),
+    var(--accent)
+  );
   background-size: 200% 100%;
   animation: soc-shimmer-flow 2.2s linear infinite;
   will-change: background-position;

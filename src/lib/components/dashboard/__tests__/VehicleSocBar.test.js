@@ -17,6 +17,29 @@ describe('VehicleSocBar', () => {
     expect(getByText('74%')).toBeInTheDocument()
   })
 
+  // Surface ink over the fill, text ink over the track: one fixed dark ink
+  // failed on the light theme's dark accent and on the dark theme's track.
+  it('splits the SOC label ink at the edge of the fill', () => {
+    const { getByText } = render(VehicleSocBar, { props: { ...base } })
+    const label = getByText('74%')
+    expect(label.className).toContain('bg-clip-text')
+    expect(label.getAttribute('style')).toMatch(/var\(--surface\) 74%, var\(--text\) 74%/)
+  })
+
+  // The range input is invisible over the bar, so the bar shows its focus.
+  it('rings the bar while its slider has keyboard focus', () => {
+    const { getByRole } = render(VehicleSocBar, { props: { ...base } })
+    expect(getByRole('slider').parentElement.className).toContain('has-[:focus-visible]:outline-2')
+  })
+
+  it('reads out the target in the unit it shows', () => {
+    const percent = render(VehicleSocBar, { props: { ...base } })
+    expect(percent.getByRole('slider').getAttribute('aria-valuetext')).toBe('80%')
+    percent.unmount()
+    const range = render(VehicleSocBar, { props: { ...base, unit: 'range', estMaxRange: 280 } })
+    expect(range.getByRole('slider').getAttribute('aria-valuetext')).toBe('224 units.km')
+  })
+
   it('shimmers the fill only while charging', () => {
     const charging = render(VehicleSocBar, { props: { ...base, charging: true } })
     expect(charging.container.querySelector('.soc-shimmer')).toBeTruthy()

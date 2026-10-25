@@ -6,6 +6,8 @@
 
   interface Props {
     label?: string
+    /** The field's current value, shown large at the end of the label row. */
+    value?: string
     description?: string
     status?: SaveStatus
     // `badge` is an optional snippet rendered immediately after the label — the
@@ -13,7 +15,7 @@
     badge?: Snippet
     children?: Snippet
   }
-  let { label = '', description = '', status = 'idle', badge, children }: Props = $props()
+  let { label = '', value = '', description = '', status = 'idle', badge, children }: Props = $props()
 
   const uid = $props.id()
   const labelId = `${uid}-label`
@@ -54,13 +56,18 @@
       <span id={labelId} class="text-sm text-text">{label}</span>
       {@render badge?.()}
     </span>
-    {#if status === 'saving'}
-      <Icon icon="mdi:loading" size={16} class="animate-spin text-text-dim" />
-    {:else if status === 'saved'}
-      <Icon icon="mdi:check" size={16} class="text-accent" />
-    {:else if status === 'error'}
-      <Icon icon="mdi:alert-circle-outline" size={16} class="text-error" />
-    {/if}
+    <span class="flex shrink-0 items-center gap-2">
+      {#if value}
+        <span class="text-lg font-semibold tabular-nums text-text">{value}</span>
+      {/if}
+      {#if status === 'saving'}
+        <Icon icon="mdi:loading" size={16} class="motion-safe:animate-spin text-text-dim" />
+      {:else if status === 'saved'}
+        <Icon icon="mdi:check" size={16} class="text-accent" />
+      {:else if status === 'error'}
+        <Icon icon="mdi:alert-circle-outline" size={16} class="text-error" />
+      {/if}
+    </span>
   </div>
   <div class="mt-1.5" {@attach link}>{@render children?.()}</div>
   {#if description}

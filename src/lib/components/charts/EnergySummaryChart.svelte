@@ -71,10 +71,22 @@
       ],
     }
   })
+
+  // The canvas says nothing to a screen reader; this says what it shows.
+  let summary = $derived.by(() => {
+    if (!rows.length) return ''
+    const top = rows.reduce((a, b) => (b.kwh > a.kwh ? b : a))
+    const total = rows.reduce((sum, r) => sum + r.kwh, 0)
+    const values = { total: total.toFixed(1), max: top.kwh.toFixed(1), label: top.label, n: rows.length }
+    return $_('monitoring.energy.summary_bars', { values })
+  })
 </script>
 
 {#if rows.length === 0}
   <div class="py-12 text-center text-sm text-text-dim">{$_('monitoring.energy.no_samples')}</div>
 {:else}
-  <UplotChart {opts} {data} fill />
+  <figure class="h-full">
+    <UplotChart {opts} {data} fill />
+    <figcaption class="sr-only">{summary}</figcaption>
+  </figure>
 {/if}

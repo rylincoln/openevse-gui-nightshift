@@ -2,12 +2,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render } from '@testing-library/svelte'
 
 vi.mock('svelte-i18n', () => {
-  const t = (k) => k
+  const t = (k, opts) => (opts?.values ? k + ':' + JSON.stringify(opts.values) : k)
   t.subscribe = (fn) => { fn(t); return () => {} }
-  return { _: t }
+  const locale = { subscribe: (fn) => { fn('en'); return () => {} } }
+  return { _: t, locale }
 })
 
-// Capture the opts uPlot is constructed with (uPlot itself is mocked out).
+// Capture the opts and data each uPlot panel is built with (uPlot is mocked out).
 const ctor = vi.fn()
 vi.mock('uplot', () => ({
   default: class MockUplot {
@@ -22,75 +23,84 @@ import EnergyLiveChart from '../EnergyLiveChart.svelte'
 import { config_store } from '../../../stores/config'
 
 const samplesWithSoc = [
-  { ts: 1, a: 10, t: 250, e: 0, s: 40 },
-  { ts: 2, a: 12, t: 260, e: 0, s: 42 },
+  { ts: 1, a: 10, t: 25, e: 0, s: 40 },
+  { ts: 2, a: 12, t: 30, e: 0, s: 42 },
 ]
+const noSoc = samplesWithSoc.map((s) => ({ ...s, s: -1 }))
 
-const lastOpts = () => ctor.mock.calls.at(-1)[0]
-const setViewport = (matches) => {
-  window.matchMedia = () => ({ matches, addEventListener() {}, removeEventListener() {} })
+// The last build of each panel, by its scale.
+const built = () => {
+  const out = {}
+  for (const [opts, data] of ctor.mock.calls) out[opts.series[1].scale] = { opts, data }
+  return out
 }
 
-describe('EnergyLiveChart SOC axis responsiveness', () => {
-  const realMatchMedia = window.matchMedia
-  beforeEach(() => ctor.mockClear())
-  afterEach(() => { window.matchMedia = realMatchMedia })
+beforeEach(() => ctor.mockClear())
+afterEach(() => config_store.set({}))
 
-  it('shows the SOC axis on wide screens', () => {
-    setViewport(false)
+describe('EnergyLiveChart panels', () => {
+  it('draws current, temperature and SOC as separate panels, one axis each', () => {
     render(EnergyLiveChart, { props: { samples: samplesWithSoc } })
-    const opts = lastOpts()
-    expect(opts.series.some((s) => s?.scale === 'soc')).toBe(true)
-    expect(opts.axes.some((a) => a?.scale === 'soc')).toBe(true)
+    const panels = built()
+    expect(Object.keys(panels)).toEqual(['a', 't', 'soc'])
+    for (const { opts } of Object.values(panels)) {
+      expect(opts.axes).toHaveLength(2)
+      expect(opts.series).toHaveLength(2)
+    }
   })
 
-  it('drops the SOC axis but keeps the line and scale on narrow screens', () => {
-    setViewport(true)
+  it('leaves the SOC panel out when no vehicle reports it', () => {
+    render(EnergyLiveChart, { props: { samples: noSoc } })
+    expect(Object.keys(built())).toEqual(['a', 't'])
+  })
+
+  it('prints the time only under the bottom panel', () => {
     render(EnergyLiveChart, { props: { samples: samplesWithSoc } })
-    const opts = lastOpts()
-    expect(opts.series.some((s) => s?.scale === 'soc')).toBe(true) // line kept
-    expect(opts.axes.some((a) => a?.scale === 'soc')).toBe(false) // axis dropped
-    expect(opts.scales.soc).toBeTruthy() // scale kept so the line still plots 0–100
+    const { a, soc } = built()
+    expect(a.opts.axes[0].values(null, [1, 2])).toEqual(['', ''])
+    expect(soc.opts.axes[0].values).toBeUndefined() // uPlot's own time labels
+  })
+
+  it('moves every panel’s cursor together', () => {
+    render(EnergyLiveChart, { props: { samples: samplesWithSoc } })
+    const keys = Object.values(built()).map(({ opts }) => opts.cursor.sync.key)
+    expect(new Set(keys).size).toBe(1)
+  })
+
+  it('reads out each measure at the latest sample beside its title', () => {
+    const { getByText } = render(EnergyLiveChart, { props: { samples: samplesWithSoc } })
+    expect(getByText('monitoring.energy.axis.current')).toBeInTheDocument()
+    expect(getByText('12 A')).toBeInTheDocument()
+    expect(getByText('42%')).toBeInTheDocument()
+  })
+
+  it('describes each measure for screen readers', () => {
+    const { getByRole } = render(EnergyLiveChart, { props: { samples: samplesWithSoc } })
+    expect(getByRole('figure')).toHaveTextContent(
+      'monitoring.energy.summary:{"measure":"monitoring.energy.axis.current","min":"10 A","max":"12 A","latest":"12 A"}',
+    )
   })
 })
 
 // The device always sends °C. Converting the samples but leaving the scale
-// bounds or the legend label in °C would be worse than not converting at all,
-// so all three are asserted together.
+// bounds or the title in °C would be worse than not converting at all, so
+// all three are asserted together.
 describe('EnergyLiveChart temperature unit', () => {
-  const realMatchMedia = window.matchMedia
-  const samples = [
-    { ts: 1, a: 10, t: 25, e: 0, s: -1 },
-    { ts: 2, a: 12, t: 30, e: 0, s: -1 },
-  ]
-
-  beforeEach(() => {
-    ctor.mockClear()
-    setViewport(false)
-  })
-  afterEach(() => {
-    window.matchMedia = realMatchMedia
-    config_store.set({})
-  })
-
   it('plots Celsius unchanged by default', () => {
-    config_store.set({})
-    render(EnergyLiveChart, { props: { samples } })
-    const opts = lastOpts()
-    const data = ctor.mock.calls.at(-1)[1]
-    expect(data[2]).toEqual([25, 30])
-    expect(opts.scales.t.range).toEqual([-20, 80])
-    expect(opts.series.find((s) => s?.scale === 't').label).toBe('units.celsius')
+    const { getByText } = render(EnergyLiveChart, { props: { samples: noSoc } })
+    const { t } = built()
+    expect(t.data[1]).toEqual([25, 30])
+    expect(t.opts.scales.t.range).toEqual([-20, 80])
+    expect(getByText('monitoring.energy.axis.temperature:{"unit":"units.celsius"}')).toBeInTheDocument()
   })
 
-  it('converts the series, the scale bounds and the label for Fahrenheit', () => {
+  it('converts the series, the scale bounds and the title for Fahrenheit', () => {
     config_store.set({ temp_unit: 'f' })
-    render(EnergyLiveChart, { props: { samples } })
-    const opts = lastOpts()
-    const data = ctor.mock.calls.at(-1)[1]
-    expect(data[2]).toEqual([77, 86])
-    expect(opts.scales.t.range).toEqual([-4, 176])
-    expect(opts.series.find((s) => s?.scale === 't').label).toBe('units.fahrenheit')
+    const { getByText } = render(EnergyLiveChart, { props: { samples: noSoc } })
+    const { t } = built()
+    expect(t.data[1]).toEqual([77, 86])
+    expect(t.opts.scales.t.range).toEqual([-4, 176])
+    expect(getByText('monitoring.energy.axis.temperature:{"unit":"units.fahrenheit"}')).toBeInTheDocument()
   })
 
   it('keeps the no-reading sentinel on the raw Celsius value', () => {
@@ -98,6 +108,6 @@ describe('EnergyLiveChart temperature unit', () => {
     // so testing after conversion would plot them as real data.
     config_store.set({ temp_unit: 'f' })
     render(EnergyLiveChart, { props: { samples: [{ ts: 1, a: 0, t: 0, e: 0, s: -1 }] } })
-    expect(ctor.mock.calls.at(-1)[1][2]).toEqual([null])
+    expect(built().t.data[1]).toEqual([null])
   })
 })

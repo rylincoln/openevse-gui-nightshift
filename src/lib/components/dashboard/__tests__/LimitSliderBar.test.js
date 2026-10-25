@@ -10,6 +10,20 @@ vi.mock('svelte-i18n', () => {
 import LimitSliderBar from '../LimitSliderBar.svelte'
 
 describe('LimitSliderBar', () => {
+  // The input runs in tick space; a screen reader heard "8", not "2 h".
+  it('reads out the value it shows, not the tick index', () => {
+    const { getByRole, container } = render(LimitSliderBar, { props: { kind: 'time', value: 120 } })
+    const shown = container.querySelector('[data-pill]').textContent.trim()
+    expect(getByRole('slider').getAttribute('aria-valuetext')).toBe(shown)
+    expect(getByRole('slider').getAttribute('aria-valuetext')).not.toBe(getByRole('slider').value)
+  })
+
+  // The range input is invisible over the bar, so the bar shows its focus.
+  it('rings the bar while its slider has keyboard focus', () => {
+    const { getByRole } = render(LimitSliderBar, { props: { kind: 'time', value: 0 } })
+    expect(getByRole('slider').parentElement.className).toContain('has-[:focus-visible]:outline-2')
+  })
+
   it('commits a time limit in minutes', async () => {
     const onchange = vi.fn()
     const { getByRole } = render(LimitSliderBar, { props: { kind: 'time', value: 0, onchange } })

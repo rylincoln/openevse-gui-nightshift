@@ -279,11 +279,7 @@
           label={$_('config.time.ntp_next_sync')}
           value={fmtCountdown(remainingMs)}
         />
-        <ReadOnlyRow
-          label={$_('config.time.ntp_next_retry')}
-          value="{$_('config.time.ntp_synchronized')} ✓"
-          tone="ok"
-        />
+        <ReadOnlyRow label={$_('config.time.ntp_next_retry')} value="—" />
       {:else if ntpStatus === 'retry'}
         <ReadOnlyRow label={$_('config.time.ntp_next_sync')} value="—" />
         <ReadOnlyRow

@@ -20,6 +20,12 @@ describe('formatDuration', () => {
     expect(formatDuration(7320)).toBe('2h 2m')
   })
 
+  it('formats day durations with hours', () => {
+    expect(formatDuration(86400)).toBe('1d 0h')
+    // an MQTT connection up for two years read "16908h 33m"
+    expect(formatDuration(16908 * 3600 + 33 * 60)).toBe('704d 12h')
+  })
+
   it('clamps negative input to zero', () => {
     expect(formatDuration(-5)).toBe('0s')
   })

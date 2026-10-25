@@ -2,6 +2,7 @@
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import IconButton from '../ui/IconButton.svelte'
+  import ConfirmDialog from '../ui/ConfirmDialog.svelte'
   import Icon from '../../icons/Icon.svelte'
   import type { Limit } from '../../api/device'
 
@@ -43,13 +44,16 @@
       ? formatLimitValue(limit)
       : featureDesc(featureKey)
   )
+
+  let feature = $derived($_('charge_manager.feature_' + featureKey))
+  let confirmRemove = $state(false)
 </script>
 
 <Card class="mb-3 p-4">
   <div class="flex items-start justify-between gap-2">
     <div class="min-w-0 flex-1">
       <div class="text-sm font-semibold text-text">
-        {$_('charge_manager.feature_' + featureKey)}
+        {feature}
       </div>
       <div class="mt-0.5 text-xs text-text-dim">{valueDesc}</div>
     </div>
@@ -58,23 +62,36 @@
       <IconButton
         icon="mdi:pencil-outline"
         size={18}
-        label={$_('charge_manager.rule_edit_title')}
+        label={$_('charge_manager.feature_edit_named', { values: { feature } })}
         disabled={busy}
         onclick={onedit}
       />
       {#if removing}
         <span class="grid place-items-center p-2 text-text-dim">
-          <Icon icon="mdi:loading" size={18} class="animate-spin" />
+          <Icon icon="mdi:loading" size={18} class="motion-safe:animate-spin" />
         </span>
       {:else}
         <IconButton
           icon="mdi:trash-can-outline"
           size={18}
-          label={$_('charge_manager.rule_delete')}
+          label={$_('charge_manager.feature_remove_named', { values: { feature } })}
           disabled={busy}
-          onclick={onremove}
+          onclick={() => (confirmRemove = true)}
         />
       {/if}
     </div>
   </div>
 </Card>
+
+<ConfirmDialog
+  visible={confirmRemove}
+  title={$_('charge_manager.feature_remove_title', { values: { feature } })}
+  body={$_('charge_manager.feature_remove_body')}
+  confirmLabel={$_('charge_manager.feature_remove_confirm')}
+  cancelLabel={$_('charge_manager.rule_cancel')}
+  onconfirm={() => {
+    confirmRemove = false
+    onremove()
+  }}
+  oncancel={() => (confirmRemove = false)}
+/>

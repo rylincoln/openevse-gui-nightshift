@@ -42,13 +42,15 @@
   let pct = $derived(max > min ? ((current - min) / (max - min)) * 100 : 0)
 </script>
 
-<!-- pt-12 lifts the value bubble well clear of the thumb so a fingertip
-     dragging on a touch screen doesn't cover the value (see -bottom caret).
-     Without the bubble the headroom collapses so the track sits tight. -->
-<div class="relative {showBubble ? 'pt-12' : ''}">
+<!-- pt-8 lifts the value bubble well clear of the thumb (the input's own
+     44 px band adds the rest) so a fingertip dragging on a touch screen
+     doesn't cover the value (see -bottom caret). Without the bubble the
+     headroom collapses. -->
+<div class="relative {showBubble ? 'pt-8' : ''}">
   <input
     type="range"
     aria-label={ariaLabel || undefined}
+    aria-valuetext={String(format(current))}
     {min}
     {max}
     {step}
@@ -56,8 +58,7 @@
     {disabled}
     oninput={handleInput}
     onchange={handleChange}
-    class="peer h-2 w-full cursor-pointer appearance-none rounded-full bg-surface-3
-           accent-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-40"
+    class="peer range-input"
   />
   {#if showBubble}
     <!-- Sits ~2rem above the thumb (top-0 within the pt-12 headroom) and points

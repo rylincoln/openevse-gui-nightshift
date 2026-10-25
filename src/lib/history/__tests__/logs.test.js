@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   pageRange, logTypeIcon, logTypeTone, logStateInfo, logEnergyKwh, logTempC,
-  logPilotAmps, logReason,
+  logPilotAmps, logReason, logFigures, logTypeNoteworthy,
 } from '../logs'
 
 describe('pageRange', () => {
@@ -26,6 +26,37 @@ describe('logTypeIcon / logTypeTone', () => {
   it('falls back for an unknown type', () => {
     expect(logTypeIcon('whatever')).toBe('mdi:circle-small')
     expect(logTypeTone('whatever')).toBe('muted')
+  })
+})
+
+// "Information" is the routine kind; naming it on every row was noise.
+describe('logTypeNoteworthy', () => {
+  it('names warnings, notifications and unknown kinds, not routine information', () => {
+    expect(logTypeNoteworthy('warning')).toBe(true)
+    expect(logTypeNoteworthy('notification')).toBe(true)
+    expect(logTypeNoteworthy('whatever')).toBe(true)
+    expect(logTypeNoteworthy('information')).toBe(false)
+    expect(logTypeNoteworthy('')).toBe(false)
+  })
+})
+
+// A stuck-relay row used to read "0.0 kWh · 41.2 °C": numbers that say
+// nothing about that event. A row carries the figures that belong to it.
+describe('logFigures', () => {
+  it('shows energy and temperature while charging', () => {
+    expect(logFigures({ evseState: 3, energy: 7400 })).toEqual({ energy: true, temp: true })
+  })
+  it('shows neither on a fault row with no session energy', () => {
+    expect(logFigures({ evseState: 8, energy: 0, temperature: 41.2 })).toEqual({ energy: false, temp: false })
+  })
+  it('keeps the session total on the row that ends a session', () => {
+    expect(logFigures({ evseState: 2, energy: 7400, temperature: 30 })).toEqual({ energy: true, temp: false })
+  })
+  it('shows the temperature on an over-temperature fault', () => {
+    expect(logFigures({ evseState: 10, energy: 0, temperature: 71 })).toEqual({ energy: false, temp: true })
+  })
+  it('shows nothing for an entry with no fields', () => {
+    expect(logFigures(undefined)).toEqual({ energy: false, temp: false })
   })
 })
 

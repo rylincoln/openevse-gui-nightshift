@@ -5,7 +5,6 @@ describe('monitoring i18n keys', () => {
   it('has the monitoring block', () => {
     expect(en.monitoring.tab.data).toBeTypeOf('string')
     expect(en.monitoring.tab.health).toBeTypeOf('string')
-    expect(en.monitoring.tab.manager).toBeTypeOf('string')
     expect(en.monitoring.group.energy).toBeTypeOf('string')
     expect(en.monitoring.energy.session).toBeTypeOf('string')
     expect(en.monitoring.sensor.pilot).toBeTypeOf('string')
@@ -15,7 +14,6 @@ describe('monitoring i18n keys', () => {
     expect(en.monitoring.safety.switches).toBeTypeOf('string')
     expect(en.monitoring.health.relay.title).toBeTypeOf('string')
     expect(en.monitoring.health.relay.reset_button).toBeTypeOf('string')
-    expect(en.monitoring.manager.empty).toBeTypeOf('string')
   })
   it('has units and clients blocks', () => {
     expect(en.units.kwh).toBeTypeOf('string')

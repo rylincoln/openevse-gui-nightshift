@@ -101,6 +101,16 @@ describe('Time page', () => {
       expect(queryByText(/config\.time\.ntp_dns_ok/)).toBeNull()
     })
 
+    it('leaves "next retry" empty while synchronised, instead of repeating the status', async () => {
+      httpAPI.mockImplementation((method, url) =>
+        Promise.resolve(url === '/time' ? timeStatus : { msg: 'done' }))
+      config_store.set({ sntp_enabled: true, sntp_hostname: 'pool.ntp.org', time_zone: 'UTC|UTC0' })
+      const { findByText } = render(Time)
+      const row = (await findByText('config.time.ntp_next_retry')).parentElement
+      expect(row).toHaveTextContent('—')
+      expect(row).not.toHaveTextContent('config.time.ntp_synchronized')
+    })
+
     it('says when DHCP offered nothing and the configured host is in use', async () => {
       httpAPI.mockImplementation((method, url) =>
         Promise.resolve(url === '/time'

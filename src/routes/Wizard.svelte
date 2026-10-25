@@ -50,6 +50,15 @@
   // instead of trapping the user into picking a network they don't want.
   let ethConnected = $derived($status_store?.eth_connected === 1)
 
+  // Likewise a charger that has already joined a WiFi network (set up before,
+  // or re-running the wizard) can keep it: the step offers "Keep this network
+  // and finish" rather than making the owner join it again.
+  let wifiConnected = $derived($status_store?.wifi_client_connected === 1)
+  let canFinishWithoutJoin = $derived(ethConnected || wifiConnected)
+
+  // Next on the password step saves what was typed (see Security.svelte).
+  let security = $state<ReturnType<typeof Security>>()
+
   // Escape hatch: a charger may be genuinely absent (bench-flashing a module,
   // a dead serial link the user will fix later) yet the person still needs to
   // finish WiFi/time setup. Rather than trap them, we let a deliberate triple
@@ -65,8 +74,9 @@
     bypassTaps = 0
     if (step > 0) step -= 1
   }
-  function goNext() {
+  async function goNext() {
     if (commsBlocked && ++bypassTaps < BYPASS_TAPS) return
+    if (STEPS[step] === 'security' && security && !(await security.commit())) return
     if (step < TOTAL - 1) step += 1
     bypassTaps = 0
   }
@@ -104,12 +114,17 @@
     finishDialog = false
   }
 
-  // "Finish" path for the Ethernet case: no network hand-off happens (the
-  // device was never on its own softAP if it's already reachable over the
-  // wire), so we can write wizard_passed and go straight to the dashboard.
-  async function finishWithoutWifi() {
+  // "Finish" without joining: the charger is already reachable over Ethernet
+  // or on a WiFi network. If this browser is on the setup hotspot, which the
+  // charger turns off once it is connected, say where to reconnect; otherwise
+  // go straight to the dashboard.
+  async function finishWithoutJoin() {
     await markComplete()
-    navigate('/')
+    if (isOnDeviceAp()) {
+      finishDialog = true
+    } else {
+      navigate('/')
+    }
   }
 </script>
 
@@ -117,10 +132,11 @@
   {step}
   total={TOTAL}
   title={$_(titleKey)}
-  hideAdvance={STEPS[step] === 'wifi' && !ethConnected}
+  hideAdvance={STEPS[step] === 'wifi' && !canFinishWithoutJoin}
+  finishLabel={wifiConnected && !ethConnected ? $_('wizard.wifi.keep') : ''}
   onPrev={goPrev}
   onNext={goNext}
-  onFinish={finishWithoutWifi}
+  onFinish={finishWithoutJoin}
 >
   {#if step === 0}
     <Welcome />
@@ -129,11 +145,17 @@
   {:else if step === 2}
     <TimeStep />
   {:else if step === 3}
-    <Security />
+    <Security bind:this={security} />
   {:else if step === 4}
     <FirmwareInfo />
   {:else if step === 5}
-    <Wifi beforeJoin={markComplete} onJoined={onWifiJoined} {ethConnected} />
+    <Wifi
+      beforeJoin={markComplete}
+      onJoined={onWifiJoined}
+      {ethConnected}
+      connected={wifiConnected}
+      onDeviceAp={isOnDeviceAp()}
+    />
   {/if}
 </WizardShell>
 

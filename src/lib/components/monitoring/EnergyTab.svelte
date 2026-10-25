@@ -84,7 +84,7 @@
     <div class="flex items-center justify-between gap-2 text-xs text-text-dim">
       <button
         type="button"
-        class="shrink-0 rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text transition
+        class="tap-target shrink-0 rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text transition
                disabled:cursor-not-allowed disabled:opacity-40
                hover:not-disabled:bg-surface-2"
         disabled={$energy_store.loading.raw || $energy_store.raw.noOlder || !$energy_store.raw.samples.length}
@@ -102,7 +102,7 @@
       <div class="flex shrink-0 gap-1.5">
         <button
           type="button"
-          class="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text transition
+          class="tap-target rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text transition
                  disabled:opacity-0 disabled:cursor-default
                  hover:not-disabled:bg-surface-2"
           disabled={$energy_store.loading.raw || !$energy_store.raw.historical}
@@ -112,7 +112,7 @@
         </button>
         <button
           type="button"
-          class="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text transition
+          class="tap-target rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text transition
                  disabled:opacity-0 disabled:cursor-default
                  hover:not-disabled:bg-surface-2"
           disabled={$energy_store.loading.raw || !$energy_store.raw.historical}

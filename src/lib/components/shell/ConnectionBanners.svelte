@@ -5,8 +5,12 @@
     wsConnected?: boolean
     evseConnected?: boolean
     error?: boolean
+    /** The fault's name, shown in the banner. */
+    fault?: string
+    /** The dashboard's status line already says what to do; link there from elsewhere. */
+    onDashboard?: boolean
   }
-  let { wsConnected = true, evseConnected = true, error = false }: Props = $props()
+  let { wsConnected = true, evseConnected = true, error = false, fault = '', onDashboard = false }: Props = $props()
 </script>
 
 {#if !wsConnected}
@@ -21,6 +25,9 @@
 {/if}
 {#if error}
   <div role="alert" class="bg-error/15 px-4 py-2 text-sm text-error">
-    {$_('connection.error')}
+    {$_('connection.fault', { values: { fault } })}
+    {#if !onDashboard}
+      <a href="#/" class="ml-1 font-semibold underline">{$_('connection.fault_link')}</a>
+    {/if}
   </div>
 {/if}

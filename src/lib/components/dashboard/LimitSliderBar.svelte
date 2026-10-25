@@ -113,7 +113,7 @@
 <div>
   <!-- header: remaining / hint on the left; the card's pills (when provided)
        take the right edge, otherwise the scale max shows there. -->
-  <div class="mb-3 flex items-center justify-between gap-2 text-xs">
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs">
     <span class="min-w-0 truncate text-text">
       {#if active && remaining}
         {remaining} {$_('dashboard.limit.left')}
@@ -124,19 +124,21 @@
     {#if headerEnd}
       {@render headerEnd()}
     {:else}
-      <span class="shrink-0 text-[10px] text-text-dim">{fmt(stops[maxTick])}</span>
+      <span class="shrink-0 text-[11px] text-text-dim">{fmt(stops[maxTick])}</span>
     {/if}
   </div>
 
   <!-- bar block — same geometry family as VehicleSocBar -->
   <div class="relative h-[72px]">
-    <div class="absolute inset-x-0 top-[28px] h-[34px]">
+    <!-- The range input is invisible over the bar, so the bar shows its focus. -->
+    <div class="absolute inset-x-0 top-[28px] h-[34px] rounded-full has-[:focus-visible]:outline-2
+                has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
       <div class="absolute inset-0 rounded-full bg-surface-3"></div>
       <div
         data-fill
         class="absolute inset-y-0 left-0 rounded-l-full {charging && active
           ? 'soc-shimmer'
-          : 'bg-gradient-to-r from-accent to-cyan-400'}"
+          : 'bg-accent'}"
         style="width: {fillPct}%"
       ></div>
       <input
@@ -147,6 +149,7 @@
         value={current}
         {disabled}
         aria-label={$_(kind === 'time' ? 'dashboard.limit.type_time' : 'dashboard.limit.type_energy')}
+        aria-valuetext={fmt(stops[current])}
         oninput={handleInput}
         onchange={handleChange}
         class="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"

@@ -8,7 +8,8 @@
  * Format a non-negative duration (in seconds) as a compact label:
  *   < 60s   -> "Ns"
  *   < 1h    -> "Mm Ss"
- *   >= 1h   -> "Hh Mm"
+ *   < 1d    -> "Hh Mm"
+ *   >= 1d   -> "Dd Hh"
  * Negative inputs are clamped to 0.
  * @param seconds
  * @returns
@@ -17,7 +18,8 @@ export function formatDuration(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds))
   if (s < 60) return `${s}s`
   if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`
-  return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`
+  if (s < 86400) return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`
+  return `${Math.floor(s / 86400)}d ${Math.floor((s % 86400) / 3600)}h`
 }
 
 /**

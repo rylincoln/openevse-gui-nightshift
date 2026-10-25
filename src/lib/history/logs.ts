@@ -32,6 +32,11 @@ export function logTypeTone(type: string): LogTone {
   return 'muted'
 }
 
+/** Whether a row names its event type: every kind but routine information. */
+export function logTypeNoteworthy(type: string): boolean {
+  return !!type && type !== 'information'
+}
+
 /** An mdi icon name + tone for a log row's state (`logStateInfo`'s return). */
 export interface LogStateInfo {
   icon: string
@@ -68,6 +73,26 @@ export function logEnergyKwh(entry: LogEntry | undefined): number {
 /** Entry temperature in °C (1 dp); 0 when absent. */
 export function logTempC(entry: LogEntry | undefined): number {
   return round1(entry?.temperature ?? 0)
+}
+
+/** Which figures a log row carries (`logFigures`'s return). */
+export interface LogFigures {
+  energy: boolean
+  temp: boolean
+}
+
+/**
+ * The figures that belong to an entry: session energy once the session has
+ * delivered any (so the row that ends a session keeps its total), and the
+ * temperature while charging or on an over-temperature fault (state 10). A
+ * stuck-relay row used to read "0.0 kWh · 41.2 °C", which says nothing about it.
+ */
+export function logFigures(entry: LogEntry | undefined): LogFigures {
+  const state = entry?.evseState
+  return {
+    energy: logEnergyKwh(entry) > 0,
+    temp: state === 3 || state === 10,
+  }
 }
 
 /** The advertised pilot current in whole amps, or null when absent/non-finite. */
@@ -190,7 +215,9 @@ export interface LogRowModel {
   typeTone: LogTone
   typeLabel: string
   timeText: string
-  energyKwh: number
+  /** null: the row doesn't carry it (see `logFigures`). */
+  energyKwh: number | null
+  /** null: the row doesn't carry it (see `logFigures`). */
   temp: number | null
   tempUnit: string
   costText: string | null

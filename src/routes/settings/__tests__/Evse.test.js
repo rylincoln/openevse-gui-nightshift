@@ -104,21 +104,36 @@ describe('EVSE page', () => {
     expect(httpAPI).toHaveBeenCalledWith('POST', '/config', JSON.stringify({ service: 2 }))
   })
 
-  it('moves PP auto-ampacity directly under the service-level control', () => {
-    config_store.set({ ...BASE, pp_auto: false })
-    const { getByText } = render(Evse)
-    const service = getByText('config.evse.service')
-    const pp = getByText('config.evse.pp_auto')
-    // service appears before pp_auto in document order
-    expect(service.compareDocumentPosition(pp) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  it('shows the maximum current as a large readout that follows the slider as it moves', async () => {
+    config_store.set({ ...BASE })
+    const { getByRole, getByText } = render(Evse)
+    expect(getByText('24 A')).toBeInTheDocument()
+    await fireEvent.input(getByRole('slider'), { target: { value: '30' } })
+    expect(getByText('30 A')).toBeInTheDocument()
+    expect(getByRole('slider')).toHaveAttribute('aria-valuetext', '30 A')
   })
 
-  it('makes the relay control card collapsible and collapsed by default', async () => {
-    config_store.set({ ...BASE, relay_ac: true, zero_cross: false })
-    const { getByText, queryByLabelText } = render(Evse)
-    expect(queryByLabelText('config.evse.relay_ac')).toBeNull()
-    await fireEvent.click(getByText('config.evse.relays'))
-    expect(queryByLabelText('config.evse.relay_ac')).toBeInTheDocument()
+  it('says the hardware maximum is not set when the controller reports 0', () => {
+    config_store.set({ ...BASE, max_current_hard: 0 })
+    const { getByText, queryByText } = render(Evse)
+    expect(getByText('config.evse.maxcurrent_hard_unset')).toBeInTheDocument()
+    expect(queryByText('0 A')).toBeNull()
+  })
+
+  // Voltage, PP auto-ampacity, current sensor calibration and relays are set
+  // when the charger is installed; an owner shouldn't meet them by accident.
+  it('keeps installation settings in one collapsed section, behind a warning', async () => {
+    config_store.set({ ...BASE, voltage: 24000, pp_auto: false, relay_ac: true })
+    const { getByRole, getByText, queryByLabelText, getByLabelText } = render(Evse)
+    const fields = ['voltage', 'pp_auto', 'scale', 'offset', 'relay_ac']
+    for (const k of fields) expect(queryByLabelText('config.evse.' + k)).toBeNull()
+    const toggle = getByRole('button', { name: 'config.evse.installation' })
+    expect(toggle.className).toMatch(/\b(?:tap-target|min-h-11|range-input)\b/)
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await fireEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(getByText('config.evse.installation_warning')).toBeInTheDocument()
+    for (const k of fields) expect(getByLabelText('config.evse.' + k)).toBeInTheDocument()
   })
 
   it('shows the alert box when a save fails', async () => {
@@ -145,7 +160,8 @@ describe('EVSE page', () => {
   // through to the device (the same fallback the voltage field already used).
   it('saves 0 for scale/offset/scheduler_start_window when the field is cleared', async () => {
     config_store.set({ ...BASE })
-    const { getAllByRole } = render(Evse)
+    const { getAllByRole, getByRole } = render(Evse)
+    await fireEvent.click(getByRole('button', { name: 'config.evse.installation' }))
     const numbers = getAllByRole('spinbutton')
     // order: scheduler_start_window, scale, offset
     for (const [i, key] of ['scheduler_start_window', 'scale', 'offset'].entries()) {

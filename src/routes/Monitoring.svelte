@@ -99,9 +99,7 @@
     {:else if activeId === 'data'}
       <MetricsTab {groups} />
     {:else}
-      <div class="lg:mx-auto lg:w-full lg:max-w-3xl">
-        <HealthTab data={safety} relay={relayHealth} />
-      </div>
+      <HealthTab data={safety} relay={relayHealth} />
     {/if}
   </div>
 </section>

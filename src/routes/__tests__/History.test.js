@@ -41,6 +41,23 @@ describe('History', () => {
     })
   })
 
+  it('gives each row only its own figures, the type only when it matters, and the year', async () => {
+    httpAPI.mockImplementation((method, path) =>
+      path === '/logs' ? Promise.resolve({ min: 1, max: 1 }) : Promise.resolve(LOGS),
+    )
+    const { getByText, getAllByText, queryByText } = render(History)
+    await vi.waitFor(() => expect(getByText('logs-states.error-relay')).toBeInTheDocument())
+    // the charging row's 7.4 kWh and 28.5 °C; the stuck-relay row has neither
+    expect(getAllByText(/kWh/)).toHaveLength(1)
+    expect(getAllByText(/units\.celsius/)).toHaveLength(1)
+    expect(queryByText(/41\.2/)).not.toBeInTheDocument()
+    expect(getByText('history.types.warning')).toBeInTheDocument()
+    expect(queryByText('history.types.information')).not.toBeInTheDocument()
+    expect(getAllByText(/2026/)).toHaveLength(2)
+    // a row without a tag names no user, rather than ending in a dash
+    expect(queryByText('—')).not.toBeInTheDocument()
+  })
+
   it('shows the error card when the index call fails', async () => {
     httpAPI.mockResolvedValue('error')
     const { getByText } = render(History)

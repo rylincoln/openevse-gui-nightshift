@@ -7,11 +7,22 @@
     amps?: number
     min?: number
     max?: number
+    /** Display name of the client setting the rate, when it isn't the owner. */
     claimedBy?: string
+    /** Who is capping the current below this rate, as a sentence. */
+    capText?: string
     disabled?: boolean
     onchange?: (value: number) => void
   }
-  let { amps = 6, min = 6, max = 48, claimedBy = '', disabled = false, onchange = () => {} }: Props = $props()
+  let {
+    amps = 6,
+    min = 6,
+    max = 48,
+    claimedBy = '',
+    capText = '',
+    disabled = false,
+    onchange = () => {},
+  }: Props = $props()
 
   let open = $state(false)
   // Live value while the slider is being dragged (touch gives no hover
@@ -28,35 +39,45 @@
   }
 </script>
 
-<div class="relative inline-block text-center">
+<div class="relative inline-block text-right">
   <button
     type="button"
-    aria-label={$_('dashboard.rate.aria')}
     {disabled}
+    aria-haspopup="dialog"
+    aria-expanded={open}
     onclick={toggle}
-    class="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[13px] font-bold text-text
+    class="flex min-h-11 flex-col items-end justify-center rounded-xl border border-border bg-surface-2 px-3 py-1
            disabled:cursor-not-allowed"
     class:opacity-40={disabled}
   >
-    <span>{shown} A</span> <span aria-hidden="true">▾</span>
+    <span class="text-[11px] font-medium leading-tight text-text-dim">{$_('dashboard.rate.label')}</span>
+    <span class="whitespace-nowrap text-[15px] font-bold leading-tight text-text"
+      >{shown} A <span aria-hidden="true" class="text-xs">▾</span></span
+    >
   </button>
 
-  <Popover {open} align="right" onclose={() => (open = false)}>
-    <div class="w-56 rounded-xl border border-border bg-surface-2 p-3 shadow-xl">
-      <div class="mb-1 text-sm font-bold text-accent">{shown} A</div>
+  <Popover {open} align="right" label={$_('dashboard.rate.label')} onclose={() => (open = false)}>
+    <div class="w-64 rounded-xl border border-border bg-surface-2 p-3 text-left shadow-xl">
+      <div class="mb-2 flex items-baseline justify-between">
+        <span class="text-sm font-bold text-text">{$_('dashboard.rate.label')}</span>
+        <span class="text-sm font-bold text-accent">{shown} A</span>
+      </div>
       <Slider
         {min}
         {max}
         step={1}
         value={amps}
-        ariaLabel={$_('dashboard.rate.aria')}
+        ariaLabel={$_('dashboard.rate.label')}
+        format={(v) => `${v} A`}
+        showBubble={false}
         oninput={(v) => (liveAmps = v)}
         {onchange}
       />
       {#if claimedBy}
-        <div class="mt-1 text-[9px] text-text-dim">
-          {$_('dashboard.rate.claimed', { values: { client: claimedBy } })}
-        </div>
+        <p class="mt-2 text-xs text-text-dim">{$_('dashboard.rate.claimed', { values: { client: claimedBy } })}</p>
+      {/if}
+      {#if capText}
+        <p class="mt-1 text-xs font-medium text-warning">{capText}</p>
       {/if}
     </div>
   </Popover>

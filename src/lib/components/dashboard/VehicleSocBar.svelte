@@ -103,7 +103,7 @@
   <!-- header: info line left, the card's pills (when provided) right. The
        "to full" note shares the line only where there's room; on phones it
        moves to a caption under the bar instead of colliding with the pills. -->
-  <div class="mb-3 flex items-center justify-between gap-2">
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
     <span class="min-w-0 truncate text-xs text-text">
       <!-- ml-1, not a leading space: Svelte collapses the whitespace away -->
       {progress}{#if toFull}<span class="ml-1 max-sm:hidden">· {$_('dashboard.vehicle.to_full', { values: { time: toFull } })}</span>{/if}
@@ -113,12 +113,14 @@
 
   <!-- bar block — percent geometry; labels via fmt() -->
   <div class="relative h-[72px]">
-    <div class="absolute inset-x-0 top-[28px] h-[34px]">
+    <!-- The range input is invisible over the bar, so the bar shows its focus. -->
+    <div class="absolute inset-x-0 top-[28px] h-[34px] rounded-full has-[:focus-visible]:outline-2
+                has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
       <div class="absolute inset-0 rounded-full bg-surface-3"></div>
       <div
         class="absolute inset-y-0 left-0 rounded-l-full {charging
           ? 'soc-shimmer'
-          : 'bg-gradient-to-r from-accent to-cyan-400'}"
+          : 'bg-accent'}"
         style="width: {seg.fillPct}%"
       ></div>
       {#if seg.zoneEndPct > seg.fillPct}
@@ -127,7 +129,13 @@
           style="left: {seg.fillPct}%; width: {seg.zoneEndPct - seg.fillPct}%"
         ></div>
       {/if}
-      <div class="absolute left-3 top-1/2 -translate-y-1/2 text-[15px] font-bold text-[#04121d]">
+      <!-- The label spans the bar so its ink can change at the fill's edge:
+           surface ink over the fill, text ink over the track. -->
+      <div
+        class="pointer-events-none absolute inset-0 flex items-center bg-clip-text pl-3
+               text-[15px] font-bold text-transparent"
+        style="background-image: linear-gradient(90deg, var(--surface) {seg.fillPct}%, var(--text) {seg.fillPct}%)"
+      >
         {fmt(soc)}
       </div>
       <input
@@ -138,6 +146,7 @@
         value={current}
         {disabled}
         aria-label={$_('dashboard.vehicle.target_aria')}
+        aria-valuetext={fmt(current)}
         oninput={handleInput}
         onchange={handleChange}
         class="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
@@ -161,7 +170,7 @@
       ></div>
       <div
         role="tooltip"
-        class="pointer-events-none absolute top-[74px] z-10 max-w-[300px] whitespace-normal rounded-md border border-amber-400 bg-surface px-2 py-1 text-[10px] font-semibold leading-snug text-amber-400 opacity-0 shadow-lg transition-opacity duration-150 peer-hover:opacity-100"
+        class="pointer-events-none absolute top-[74px] z-10 max-w-[300px] whitespace-normal rounded-md border border-warning bg-surface px-2 py-1 text-[11px] font-semibold leading-snug text-warning opacity-0 shadow-lg transition-opacity duration-150 peer-hover:opacity-100"
         style="left: {vehicleLimit}%; transform: translateX(-{vehicleLimit}%)"
       >
         {$_('dashboard.vehicle.vehicle_limit_tip', { values: { value: fmt(vehicleLimit) } })}
@@ -187,7 +196,7 @@
 
   {#if toFull}
     <!-- phone slot for the "to full" note (the header shows it from sm: up) -->
-    <div class="mt-1 text-[10px] text-text-dim sm:hidden">
+    <div class="mt-1 text-[11px] text-text-dim sm:hidden">
       {$_('dashboard.vehicle.to_full', { values: { time: toFull } })}
     </div>
   {/if}

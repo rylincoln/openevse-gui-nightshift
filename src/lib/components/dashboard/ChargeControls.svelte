@@ -2,6 +2,7 @@
   import { _ } from 'svelte-i18n'
   import { controlSegments } from '../../dashboard/controls'
   import type { ControlSegment } from '../../dashboard/controls'
+  import { radioKeys } from '../../radioKeys'
 
   interface Props {
     segment?: ControlSegment
@@ -37,16 +38,17 @@
       {$_('dashboard.controls.locked_by', { values: { owner: lockLabel } })}
     </div>
   {:else}
-    <div role="radiogroup" aria-label={$_('dashboard.mode.aria')}
+    <div role="radiogroup" aria-label={$_('dashboard.mode.aria')} {@attach radioKeys}
          class="flex gap-1 rounded-xl border border-border bg-surface-2 p-1">
       {#each segments as seg}
         <button
           type="button"
           role="radio"
           aria-checked={segment === seg}
+          tabindex={segment === seg ? 0 : -1}
           {disabled}
           onclick={() => onsegment(seg)}
-          class="flex-1 rounded-lg py-2.5 text-[13px] font-semibold transition
+          class="min-h-11 flex-1 rounded-lg py-2.5 text-[13px] font-semibold transition
                  disabled:cursor-not-allowed disabled:opacity-40
                  {segment === seg
                    ? 'bg-accent text-surface shadow-[var(--accent-glow)]'

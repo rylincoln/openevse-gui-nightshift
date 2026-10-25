@@ -18,6 +18,24 @@ async function pick(getByText, dim) {
 }
 
 describe('BoostCard', () => {
+  it('lists its targets in the same order as the charge limit control', async () => {
+    const { getByText, getAllByRole } = render(BoostCard, { props: { ...base } })
+    await fireEvent.click(getByText('dashboard.boost.label'))
+    const names = getAllByRole('radio').map((r) => r.getAttribute('aria-label') || r.textContent.trim())
+    expect(names).toEqual([
+      'dashboard.boost.type_soc',
+      'dashboard.boost.type_range',
+      'dashboard.boost.type_time',
+      'dashboard.boost.type_energy',
+    ])
+  })
+
+  it('reads out the target with its unit', async () => {
+    const { getByRole, getByText } = render(BoostCard, { props: { ...base } })
+    await pick(getByText, 'soc')
+    expect(getByRole('slider').getAttribute('aria-valuetext')).toMatch(/units\.percent$/)
+  })
+
   it('stays collapsed behind a single Boost button until tapped', async () => {
     const { getByText, queryByRole } = render(BoostCard, { props: { ...base } })
     expect(getByText('dashboard.boost.label')).toBeInTheDocument()

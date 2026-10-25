@@ -28,7 +28,8 @@
   import DefaultStateCard from '../lib/components/charge_manager/DefaultStateCard.svelte'
   import DefaultStateSettingsModal from '../lib/components/charge_manager/DefaultStateSettingsModal.svelte'
   import RuleModal from '../lib/components/charge_manager/RuleModal.svelte'
-  import ManagerTab from '../lib/components/monitoring/ManagerTab.svelte'
+  import ClaimsList from '../lib/components/charge_manager/ClaimsList.svelte'
+  import { weekPlan, nowInWeek } from '../lib/charge_manager/week'
   import type { Config, LimitType } from '../lib/api/device'
 
   // `_prevAction` is read only here (never round-tripped through Rule's own
@@ -38,8 +39,22 @@
 
   // ── Derived from stores ───────────────────────────────────────────────────
   let rules          = $derived(timersToRules(Array.isArray($schedule_store) ? $schedule_store : []))
+  let week           = $derived(weekPlan(Array.isArray($schedule_store) ? $schedule_store : []))
+  // The charger's clock for the week strip's "now" marker: the plan's offset,
+  // moved on by the minute since the plan arrived.
+  let planAt = $state(Date.now())
+  let tick = $state(Date.now())
+  $effect(() => {
+    void $plan_store
+    planAt = Date.now()
+  })
+  $effect(() => {
+    const id = setInterval(() => (tick = Date.now()), 60000)
+    return () => clearInterval(id)
+  })
+  let now = $derived(nowInWeek($plan_store || undefined, Math.max(0, tick - planAt)))
   // Map each client id to its actual runtime claim priority (from /claims), so
-  // the Claims Manager shows the real priority (e.g. timer shaper = 1100).
+  // the claims list is ordered by the real priority (e.g. timer shaper = 1100).
   let priorityByClient: Record<number, number> = $derived(
     Array.isArray($claims_store)
       ? Object.fromEntries($claims_store.map((c) => [c.client, c.priority]))
@@ -136,6 +151,7 @@
   let pickerOpen   = $state(false)
   let editorOpen   = $state(false)
   let editingRule  = $state<EditableRule | null>(null)
+  let editingIsNew = $state(false)                 // opened from Add rule
   let settingsOpen = $state(false)   // Default State settings page
 
   // ── Action mapping ────────────────────────────────────────────────────────
@@ -150,6 +166,7 @@
   // ── Modal open ────────────────────────────────────────────────────────────
   /** Picker selected a key — open modal pre-configured. */
   function openPickerResult(key: string): void {
+    editingIsNew = true
     if (key === 'schedule') {
       editingRule = {
         id: null, alwaysOn: false, action: 'charge',
@@ -173,6 +190,7 @@
 
   /** Edit icon on a GlobalFeatureCard. */
   function openGlobalEdit(key: string): void {
+    editingIsNew = false
     const action = featureKeyToAction(key)
     editingRule = {
       id: 'global_' + key, alwaysOn: true, action,
@@ -187,6 +205,7 @@
 
   /** Edit icon on a RuleCard. */
   function openRuleEdit(rule: Rule): void {
+    editingIsNew = false
     editingRule = rule
     editorOpen = true
   }
@@ -410,68 +429,74 @@
   }
 </script>
 
-<section class="p-4 lg:mx-auto lg:max-w-3xl">
-  <!-- Title row with Add button -->
-  <div class="mb-5 flex items-center justify-between">
-    <h1 class="text-lg font-semibold text-text">{$_('screen.charge_manager')}</h1>
-    <button
-      type="button"
-      disabled={busy}
-      onclick={() => (pickerOpen = true)}
-      class="rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-surface
-             transition hover:opacity-90 disabled:opacity-40"
-    >
-      + {$_('charge_manager.global_add')}
-    </button>
-  </div>
+<section class="p-4 lg:mx-auto lg:w-full lg:max-w-5xl">
+  <div class="lg:max-w-3xl">
+    <!-- Title row with Add button -->
+    <div class="mb-5 flex items-center justify-between">
+      <h1 class="text-lg font-semibold text-text">{$_('screen.charge_manager')}</h1>
+      <!-- Not disabled while a save is in flight: picking only opens a dialog,
+           and the saves themselves are guarded by `busy`. -->
+      <button
+        type="button"
+        onclick={() => (pickerOpen = true)}
+        class="min-h-11 rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-surface
+               transition hover:opacity-90"
+      >
+        + {$_('charge_manager.global_add')}
+      </button>
+    </div>
 
-  <div class="mb-2">
-    <h2 class="text-sm font-semibold uppercase tracking-wide text-text-dim">
-      {$_('charge_manager.station_defaults')}
-    </h2>
-  </div>
+    <div class="mb-2">
+      <h2 class="section-title">
+        {$_('charge_manager.station_defaults')}
+      </h2>
+    </div>
 
-  <DefaultStateCard
-    current={defaultCurrent}
-    {minCurrent}
-    {maxCurrent}
-    {busy}
-    {heartbeatSupported}
-    heartbeatActive={heartbeatEnabled}
-    {bootLockSupported}
-    {bootLock}
-    onCurrentChange={saveDefaultCurrent}
-    onEdit={() => (settingsOpen = true)}
-  />
+    <DefaultStateCard
+      current={defaultCurrent}
+      {minCurrent}
+      {maxCurrent}
+      {busy}
+      {heartbeatSupported}
+      heartbeatActive={heartbeatEnabled}
+      {bootLockSupported}
+      {bootLock}
+      onCurrentChange={saveDefaultCurrent}
+      onEdit={() => (settingsOpen = true)}
+    />
 
-  <GlobalSection
-    enabledFeatures={enabledGlobalFeatures}
-    {limit}
-    {busy}
-    {removingKey}
-    {tempProtection}
-    tempUnit={$config_store?.temp_unit ?? 'c'}
-    onedit={openGlobalEdit}
-    onremove={removeGlobalFeature}
-    onThrottleChange={saveTempThrottle}
-    onPanicChange={saveTempPanic}
-  />
+    <GlobalSection
+      enabledFeatures={enabledGlobalFeatures}
+      {limit}
+      {busy}
+      {removingKey}
+      {tempProtection}
+      tempUnit={$config_store?.temp_unit ?? 'c'}
+      onedit={openGlobalEdit}
+      onremove={removeGlobalFeature}
+      onThrottleChange={saveTempThrottle}
+      onPanicChange={saveTempPanic}
+    />
 
-  <ConditionalSection
-    {rules}
-    removingId={removingId}
-    {activeEventId}
-    {busy}
-    onedit={openRuleEdit}
-    ondelete={deleteRule}
-  />
+    <ConditionalSection
+      {rules}
+      {week}
+      {now}
+      removingId={removingId}
+      {activeEventId}
+      {busy}
+      onedit={openRuleEdit}
+      ondelete={deleteRule}
+    />
 
-  <!-- Claims manager (mirror of Monitoring → Manager) -->
-  <div class="mt-6">
-    <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-text-dim">
-      {$_('charge_manager.claims_manager')}
-    </h2>
-    <ManagerTab rows={claims} />
+    <!-- Who decides each setting right now -->
+    <div class="mt-6">
+      <h2 class="section-title">
+        {$_('charge_manager.claims_manager')}
+      </h2>
+      <p class="mb-2 mt-1 text-xs text-text-dim">{$_('charge_manager.claims_desc')}</p>
+      <ClaimsList rows={claims} />
+    </div>
   </div>
 </section>
 
@@ -486,6 +511,7 @@
 <RuleModal
   open={editorOpen}
   rule={editingRule}
+  isNew={editingIsNew}
   {busy}
   {socAvailable}
   {rangeAvailable}

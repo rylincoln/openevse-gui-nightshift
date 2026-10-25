@@ -3,60 +3,56 @@
   import ProgressRing from '../ui/ProgressRing.svelte'
   import type { DisplayState } from '../../dashboard/state'
 
-  // Matches svelte-i18n's InterpolationValues (minus its FormatXMLElementFn
-  // branch, which nothing here ever passes) — every reason/detail value is a
-  // plain interpolation primitive (a time string, a count, a formatted limit).
-  type I18nValues = Record<string, string | number | boolean | Date | null | undefined>
-
+  // The ring is the glanceable half of the hero: kW while charging, otherwise
+  // the state's word. Why it is in that state is the status line's job.
   interface Props {
     display?: DisplayState
     fill?: number
     kw?: string
     maxKw?: string
-    reasonKey?: string
-    reasonValues?: I18nValues
-    // optional emphasized second line under the reason (e.g. the timer's resume time)
-    reasonDetail?: { key: string; values: I18nValues } | null
-    faultText?: string
   }
-  let {
-    display = 'starting',
-    fill = 0,
-    kw = '0.0',
-    maxKw = '',
-    reasonKey = '',
-    reasonValues = {},
-    // optional emphasized second line under the reason (e.g. the timer's resume time)
-    reasonDetail = null,
-    faultText = '',
-  }: Props = $props()
+  let { display = 'starting', fill = 0, kw = '0.0', maxKw = '' }: Props = $props()
 
-  // Ring colour tracks the charge state: accent while charging/idle,
-  // amber when paused (connected but not charging), red on a fault,
-  // a soft sleepy blue while sleeping, muted grey when manually off.
+  // Ring colour tracks the charge state: accent while charging or connected,
+  // green when ready, red on a fault, a soft blue while paused, muted grey
+  // when manually off. Connected is the car's choice, not a warning.
   let color = $derived(
     display === 'error'
       ? 'var(--error)'
-      : display === 'connected'
-        ? 'var(--warning)'
-        : display === 'sleeping'
-          ? 'var(--sleep)'
-          : display === 'off'
-            ? 'var(--text-dim)'
-            : display === 'idle'
-              ? 'var(--success)' // ready: a true green, distinct from the teal accent
-              : 'var(--accent)',
+      : display === 'sleeping'
+        ? 'var(--sleep)'
+        : display === 'off'
+          ? 'var(--text-dim)'
+          : display === 'idle'
+            ? 'var(--success)' // ready: a true green, distinct from the teal accent
+            : 'var(--accent)',
   )
-  // While charging the ring shows charge progress; in the ready / paused /
-  // fault / sleeping / off states it becomes a solid colour-coded indicator ring.
+  // The status line's headline for each non-charging state.
+  const WORD: Record<Exclude<DisplayState, 'charging'>, string> = {
+    starting: 'dashboard.line.starting',
+    idle: 'dashboard.line.ready',
+    connected: 'dashboard.line.connected',
+    sleeping: 'dashboard.line.paused',
+    off: 'dashboard.line.off',
+    error: 'dashboard.line.fault',
+  }
+  const WORD_COLOR: Record<Exclude<DisplayState, 'charging'>, string> = {
+    starting: 'text-text-dim',
+    idle: 'text-success',
+    connected: 'text-accent',
+    sleeping: 'text-sleep',
+    off: 'text-text-dim',
+    error: 'text-error',
+  }
+  // While charging the ring shows charge progress; in the ready / connected /
+  // fault / paused / off states it becomes a solid colour-coded indicator ring.
   let ringFill = $derived(
     display === 'charging'
       ? fill
       : ['idle', 'connected', 'error', 'sleeping', 'off'].includes(display) ? 1 : 0,
   )
-  // Breathe in ready (armed and waiting), passive (paused) and fault states.
-  // Sleeping gets a light breath (it's also waiting on something). Off is a
-  // deliberate stop — a static ring reinforces that nothing is happening.
+  // Breathe while waiting on something: ready, connected, fault and paused.
+  // Off is a deliberate stop — a static ring reinforces that nothing is happening.
   let pulse = $derived(['idle', 'connected', 'error', 'sleeping'].includes(display))
 </script>
 
@@ -76,79 +72,13 @@
           {/if}
         </div>
       </div>
-    {:else if display === 'idle'}
-      <div class="relative h-full w-full">
-        <!-- "Ready": centered both axes within the ring (matches Paused/Sleeping) -->
-        <div class="absolute inset-0 grid place-items-center">
-          <div class="text-[22px] font-extrabold leading-none text-success">{$_('dashboard.ring.ready')}</div>
-        </div>
-        <!-- sub-line: stacked just below the centered word -->
-        <div class="absolute inset-x-0 top-1/2 flex flex-col items-center pt-6">
-          <div class="px-6 text-center text-[11px] leading-tight text-text-dim">
-            {$_('dashboard.ring.ready_sub')}
-          </div>
-        </div>
-      </div>
-    {:else if display === 'connected'}
-      <div class="relative h-full w-full">
-        <!-- "Paused": centered both axes within the ring -->
-        <div class="absolute inset-0 grid place-items-center">
-          <div class="text-[22px] font-extrabold leading-none text-warning">
-            {$_('dashboard.ring.paused')}
-          </div>
-        </div>
-        <!-- reason: stacked just below the centered word -->
-        {#if reasonKey}
-          <div class="absolute inset-x-0 top-1/2 flex flex-col items-center pt-6">
-            <div class="px-7 text-center text-[11px] leading-tight text-text-dim">
-              {$_(reasonKey, { values: reasonValues })}
-            </div>
-            {#if reasonDetail}
-              <div class="mt-0.5 text-center text-xs font-semibold leading-tight text-text">
-                {$_(reasonDetail.key, { values: reasonDetail.values })}
-              </div>
-            {/if}
-          </div>
-        {/if}
-      </div>
-    {:else if display === 'sleeping'}
-      <div class="relative h-full w-full">
-        <!-- "Sleeping": centered both axes within the ring -->
-        <div class="absolute inset-0 grid place-items-center">
-          <div class="text-[22px] font-extrabold leading-none text-sleep">
-            {$_('dashboard.ring.sleeping')}
-          </div>
-        </div>
-        <!-- reason (e.g. "Waiting · 00:00") sits just below the label -->
-        {#if reasonKey}
-          <div class="absolute inset-x-0 top-1/2 flex flex-col items-center pt-6">
-            <div class="px-7 text-center text-[11px] leading-tight text-text-dim">
-              {$_(reasonKey, { values: reasonValues })}
-            </div>
-            {#if reasonDetail}
-              <div class="mt-0.5 text-center text-xs font-semibold leading-tight text-text">
-                {$_(reasonDetail.key, { values: reasonDetail.values })}
-              </div>
-            {/if}
-          </div>
-        {/if}
-      </div>
-    {:else if display === 'off'}
-      <div class="text-[22px] font-extrabold leading-none text-text-dim">
-        {$_('dashboard.ring.off')}
-      </div>
-    {:else if display === 'error'}
-      <div class="flex flex-col items-center">
-        <div class="text-4xl leading-none text-error">⚠</div>
-        <div class="mt-1 text-xl font-extrabold tracking-wide text-error">
-          {$_('dashboard.ring.fault')}
-        </div>
-        {#if faultText}
-          <div class="mt-1 px-5 text-center text-[11px] text-text-dim">{faultText}</div>
-        {/if}
-      </div>
     {:else}
-      <div class="text-lg font-extrabold text-text-dim">{$_('dashboard.ring.starting')}</div>
+      <div class="flex flex-col items-center px-6 text-center">
+        {#if display === 'error'}
+          <div aria-hidden="true" class="text-4xl leading-none text-error">⚠</div>
+        {/if}
+        <div class="text-[22px] font-extrabold leading-none {WORD_COLOR[display]}">{$_(WORD[display])}</div>
+      </div>
     {/if}
   </ProgressRing>
 </div>

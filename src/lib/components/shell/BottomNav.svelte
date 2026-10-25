@@ -57,21 +57,21 @@
       href="#{item.href}"
       aria-label={$_(item.key)}
       aria-current={isActive(item, path) ? 'page' : undefined}
-      class="flex flex-1 flex-col items-center justify-center gap-1 text-[10px]
-             sm:flex-none sm:py-4
+      class="flex flex-1 flex-col items-center justify-start gap-0.5 pt-1.5 text-[11px]
+             sm:flex-none sm:justify-center sm:gap-1 sm:py-4
              lg:flex-row lg:justify-start lg:gap-3 lg:px-5 lg:py-3 lg:text-sm
              {isActive(item, path) ? 'text-accent' : 'text-text-dim'}"
     >
       <Icon icon={item.icon} size={22} />
-      <!-- Only the tablet rail (sm..lg) reserves label height: it is widened
-           (w-24) so English/most labels fit on one line, but a long translation
-           like fr "Gestionnaire de charge" still wraps to two lines, so every
-           item reserves two lines to keep a wrap from knocking its icon off the
-           shared baseline. Scoped to sm:max-lg so mobile (short bottom bar) and
-           lg (icon-beside-text row) keep their natural single-line flow. -->
+      <!-- Labels may wrap to two lines ("Charge Manager" on a phone, longer
+           translations on the tablet rail), so the phone bar hangs every item
+           from the same top offset and the tablet rail reserves two lines:
+           either way a wrap can't knock its icon off the shared baseline. lg
+           (icon beside text) keeps its single-line flow. -->
       <span
-        class="sm:max-lg:flex sm:max-lg:h-[26px] sm:max-lg:items-start sm:max-lg:justify-center
-               sm:max-lg:overflow-hidden sm:max-lg:text-center sm:max-lg:leading-tight"
+        class="text-center leading-[1.1]
+               sm:max-lg:flex sm:max-lg:h-[26px] sm:max-lg:items-start sm:max-lg:justify-center
+               sm:max-lg:overflow-hidden sm:max-lg:leading-tight lg:text-left lg:leading-normal"
         >{$_(item.key)}</span
       >
     </a>

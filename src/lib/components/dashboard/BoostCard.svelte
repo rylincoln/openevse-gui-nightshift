@@ -8,7 +8,9 @@
   import { tick } from 'svelte'
   import { _ } from 'svelte-i18n'
   import Button from '../ui/Button.svelte'
+  import { boostTarget, fmtDur } from '../../dashboard/boost'
   import type { Boost, LimitType } from '../../api/device'
+  import { radioKeys } from '../../radioKeys'
 
   interface Props {
     // live boost {type, value, remaining, started} or null
@@ -45,11 +47,13 @@
   const rangeUnit = $derived($_(rangeMiles ? 'units.miles' : 'units.km'))
 
   // ── dimension selection ────────────────────────────────────────────────
+  // Same order as the charge limit control's pills, so a target sits in the
+  // same place in both.
   let dims = $derived([
-    { id: 'time' as LimitType, labelKey: 'dashboard.boost.type_time' },
-    { id: 'energy' as LimitType, labelKey: 'dashboard.boost.type_energy' },
     ...(hasSoc ? [{ id: 'soc' as LimitType, labelKey: 'dashboard.boost.type_soc' }] : []),
     ...(canRange ? [{ id: 'range' as LimitType, labelKey: 'dashboard.boost.type_range' }] : []),
+    { id: 'time' as LimitType, labelKey: 'dashboard.boost.type_time' },
+    { id: 'energy' as LimitType, labelKey: 'dashboard.boost.type_energy' },
   ])
   let userPick = $state<LimitType>('time')
   let selected = $derived(dims.some((d) => d.id === userPick) ? userPick : 'time')
@@ -127,14 +131,6 @@
     }
   })
 
-  function fmtDur(sec: number): string {
-    sec = Math.max(0, Math.round(sec))
-    const h = Math.floor(sec / 3600)
-    const m = Math.floor((sec % 3600) / 60)
-    const s = sec % 60
-    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-    return `${m}:${String(s).padStart(2, '0')}`
-  }
   function fmtMins(min: number): string {
     const h = Math.floor(min / 60)
     const m = min % 60
@@ -187,15 +183,7 @@
     base ? Math.max(0, base.remaining - Math.floor((now - base.at) / 1000)) : (active?.remaining ?? 0),
   )
 
-  let targetText = $derived.by(() => {
-    if (!active) return ''
-    if (active.type === 'time') return $_('dashboard.boost.for', { values: { value: fmtDur(active.value) } })
-    if (active.type === 'energy')
-      return $_('dashboard.boost.add', { values: { value: `${(active.value / 1000).toFixed(1)} ${$_('units.kwh')}` } })
-    if (active.type === 'soc')
-      return $_('dashboard.boost.until', { values: { value: `${active.value}${$_('units.percent')}` } })
-    return $_('dashboard.boost.until', { values: { value: `${active.value} ${rangeUnit}` } })
-  })
+  let targetText = $derived(boostTarget(active, $_, rangeUnit))
   let remainingText = $derived.by(() => {
     if (!active) return ''
     const left = $_('dashboard.limit.left')
@@ -241,6 +229,7 @@
         <div
           role="radiogroup"
           aria-label={$_('dashboard.boost.pills_aria')}
+          {@attach radioKeys}
           class="flex shrink-0 flex-wrap justify-end gap-1.5"
         >
           {#each dims as dim}
@@ -248,9 +237,10 @@
               type="button"
               role="radio"
               aria-checked={selected === dim.id}
+              tabindex={selected === dim.id ? 0 : -1}
               {disabled}
               onclick={() => (userPick = dim.id)}
-              class="rounded-full border px-3 py-1 text-[11px] font-semibold transition
+              class="tap-target rounded-full border px-3 py-1 text-[11px] font-semibold transition
                      disabled:cursor-not-allowed disabled:opacity-40
                      {selected === dim.id ? 'border-accent text-accent' : 'border-border text-text-dim'}"
             >
@@ -268,6 +258,7 @@
         value={cfg.get()}
         {disabled}
         aria-label={$_(`dashboard.boost.type_${selected}`)}
+        aria-valuetext={valueLabel}
         oninput={onSlide}
         class="w-full cursor-pointer accent-accent disabled:cursor-not-allowed"
       />

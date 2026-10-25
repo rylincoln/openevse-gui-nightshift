@@ -8,8 +8,8 @@
   let {
     stateIcon, stateTone = 'muted', stateDesc = '',
     typeIcon, typeTone = 'muted', typeLabel = '',
-    timeText = '', energyKwh = 0,
-    temp = 0, tempUnit = 'units.celsius',
+    timeText = '', energyKwh = null,
+    temp = null, tempUnit = 'units.celsius',
     costText = null,
     userText = null,
     pilotAmps = null,
@@ -35,9 +35,11 @@
   <div class="min-w-0 flex-1">
     <div class="truncate text-sm font-semibold {periodic ? 'text-text-dim' : 'text-text'}">{stateDesc}</div>
     <div class="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-text-dim">
-      <Icon icon={typeIcon} size={13} class={toneClass[typeTone]} />
-      <span>{typeLabel}</span>
-      <span aria-hidden="true">·</span>
+      {#if typeLabel}
+        <Icon icon={typeIcon} size={13} class={toneClass[typeTone]} />
+        <span>{typeLabel}</span>
+        <span aria-hidden="true">·</span>
+      {/if}
       <span>{timeText}</span>
       {#if userText}
         <span aria-hidden="true">·</span>
@@ -55,13 +57,17 @@
     {/if}
   </div>
   <div class="shrink-0 text-right">
-    <div class="text-sm font-bold text-text">
-      {energyKwh.toFixed(1)}<span class="ml-1 text-xs font-normal text-text-dim">kWh</span>
-    </div>
+    {#if energyKwh != null}
+      <div class="text-sm font-bold text-text">
+        {energyKwh.toFixed(1)}<span class="ml-1 text-xs font-normal text-text-dim">kWh</span>
+      </div>
+    {/if}
     {#if costText}
       <div class="text-xs text-accent">{costText}</div>
     {/if}
-    <div class="text-xs text-text-dim">{temp == null ? '—' : Number(temp).toFixed(1)} {$_(tempUnit)}</div>
+    {#if temp != null}
+      <div class="text-xs text-text-dim">{Number(temp).toFixed(1)} {$_(tempUnit)}</div>
+    {/if}
     {#if pilotAmps != null}
       <div class="text-xs text-text-dim">{pilotAmps} A</div>
     {/if}

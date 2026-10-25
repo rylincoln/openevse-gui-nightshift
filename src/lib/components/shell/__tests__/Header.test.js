@@ -30,6 +30,22 @@ describe('Header', () => {
     expect(getByText('Garage EVSE')).toBeInTheDocument()
   })
 
+  // A bare span's aria-label isn't in the accessibility tree; an image's is.
+  it('exposes the connection dot as an image with its state as the name', () => {
+    const { getByRole } = render(Header, { props: { wsConnected: true, evseConnected: true } })
+    expect(getByRole('img', { name: 'connection.connected' })).toBeInTheDocument()
+  })
+
+  // The toggle says what it will do, in the user's language.
+  it('names the theme toggle by the theme it switches to', async () => {
+    const { theme } = await import('../../../stores/theme')
+    theme.setTheme('light')
+    const { getByRole } = render(Header, { props: {} })
+    expect(getByRole('button', { name: 'header.theme_dark' })).toBeInTheDocument()
+    await fireEvent.click(getByRole('button', { name: 'header.theme_dark' }))
+    expect(getByRole('button', { name: 'header.theme_light' })).toBeInTheDocument()
+  })
+
   it('labels the dot as connected when both links are up', () => {
     const { getByLabelText } = render(Header, {
       props: { deviceName: 'X', wsConnected: true, evseConnected: true },

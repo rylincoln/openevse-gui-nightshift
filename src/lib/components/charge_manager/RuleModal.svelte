@@ -19,6 +19,8 @@
   interface Props {
     open?: boolean
     rule?: Rule | null
+    /** Opened from Add rule rather than an existing rule's edit button. */
+    isNew?: boolean
     busy?: boolean
     socAvailable?: boolean
     rangeAvailable?: boolean
@@ -42,6 +44,7 @@
   let {
     open = false,
     rule = null,
+    isNew = false,
     busy = false,
     socAvailable = false,
     rangeAvailable = false,
@@ -59,6 +62,15 @@
     onclose = () => {},
     onsave = () => {},
   }: Props = $props()
+
+  const uid = $props.id()
+  const ids = {
+    dayError: `${uid}-day-error`,
+    timeError: `${uid}-time-error`,
+    limitError: `${uid}-limit-error`,
+    action: `${uid}-action`,
+    limit: `${uid}-limit`,
+  }
 
   // ── Form state ────────────────────────────────────────────────────────────
   let alwaysOn    = $state(true)
@@ -153,7 +165,7 @@
 
 <Modal visible={open} closable={!busy} {onclose}>
   <h2 class="mb-5 text-base font-semibold text-text">
-    {rule ? $_('charge_manager.rule_edit_title') : $_('charge_manager.rule_new_title')}
+    {isNew || !rule ? $_('charge_manager.rule_new_title') : $_('charge_manager.rule_edit_title')}
   </h2>
 
   <!-- Always On checkbox -->
@@ -169,16 +181,21 @@
     </div>
   </label>
 
-  <!-- Schedule section (greyed when Always On) -->
-  <div class={alwaysOn ? 'pointer-events-none opacity-40' : ''}>
-    <DayPicker {flags} onchange={handleDaysChange} />
+  <!-- Schedule section: greyed and out of reach (inert) when Always On -->
+  <div inert={alwaysOn} class={alwaysOn ? 'opacity-40' : ''}>
+    <DayPicker
+      {flags}
+      label={$_('charge_manager.rule_days')}
+      describedby={showDayError ? ids.dayError : undefined}
+      onchange={handleDaysChange}
+    />
     {#if showDayError}
-      <p class="mt-2 text-xs text-error">{$_('charge_manager.rule_error_no_day')}</p>
+      <p id={ids.dayError} role="alert" class="mt-2 text-xs text-error">{$_('charge_manager.rule_error_no_day')}</p>
     {/if}
 
     <!-- Start time -->
     <label class="mt-4 block">
-      <span class="mb-1 block text-[10px] uppercase tracking-wide text-text-dim">
+      <span class="mb-1 block text-xs text-text-dim">
         {$_('charge_manager.rule_start_time')}
       </span>
       <input
@@ -201,7 +218,7 @@
 
     {#if hasStopTime}
       <label class="mt-2 block">
-        <span class="mb-1 block text-[10px] uppercase tracking-wide text-text-dim">
+        <span class="mb-1 block text-xs text-text-dim">
           {$_('charge_manager.rule_stop_time')}
           {#if nextDay}
             <span class="ml-1 text-warning">{$_('charge_manager.rule_stop_next_day')}</span>
@@ -211,11 +228,13 @@
           type="time"
           bind:value={stopTime}
           oninput={() => (showTimeError = false)}
+          aria-invalid={showTimeError}
+          aria-describedby={showTimeError ? ids.timeError : undefined}
           class={SELECT_CLASS}
         />
       </label>
       {#if showTimeError}
-        <p class="mt-2 text-xs text-error">{$_('charge_manager.rule_error_same_time')}</p>
+        <p id={ids.timeError} role="alert" class="mt-2 text-xs text-error">{$_('charge_manager.rule_error_same_time')}</p>
       {/if}
     {/if}
   </div>
@@ -223,10 +242,10 @@
   <!-- Action dropdown (hidden when Always On — limit is the only relevant setting) -->
   {#if showAction}
     <div class="mt-5">
-      <span class="mb-1 block text-[10px] uppercase tracking-wide text-text-dim">
+      <label for={ids.action} class="mb-1 block text-xs text-text-dim">
         {$_('charge_manager.rule_action')}
-      </span>
-      <select bind:value={action} class={SELECT_CLASS}>
+      </label>
+      <select id={ids.action} bind:value={action} class={SELECT_CLASS}>
         <option value="charge">{$_('charge_manager.rule_action_charge')}</option>
         <option value="eco_divert">{$_('charge_manager.rule_action_eco_divert')}</option>
         <option value="shaper">{$_('charge_manager.rule_action_shaper')}</option>
@@ -279,7 +298,7 @@
   <!-- Charge current (only for charge action) -->
   {#if showChargeCurrent}
     <div class="mt-4">
-      <div class="mb-1 flex items-baseline justify-between text-[10px] uppercase tracking-wide text-text-dim">
+      <div class="mb-1 flex items-baseline justify-between text-xs text-text-dim">
         <span>{$_('charge_manager.feature_charge_current')}</span>
         <span class="font-semibold normal-case text-text">{chargeCurrent} A</span>
       </div>
@@ -292,7 +311,7 @@
         ariaLabel={$_('charge_manager.feature_charge_current')}
         onchange={(v) => (chargeCurrent = v)}
       />
-      <div class="mt-1 flex justify-between text-[10px] text-text-dim">
+      <div class="mt-1 flex justify-between text-[11px] text-text-dim">
         <span>{minCurrent} A</span>
         <span>{maxCurrent} A</span>
       </div>
@@ -302,10 +321,13 @@
   <!-- Limit dropdown -->
   {#if showLimit}
     <div class="mt-4">
-      <span class="mb-1 block text-[10px] uppercase tracking-wide text-text-dim">
+      <label for={ids.limit} class="mb-1 block text-xs text-text-dim">
         {$_('charge_manager.rule_limit')}
-      </span>
+      </label>
       <select
+        id={ids.limit}
+        aria-invalid={showLimitError}
+        aria-describedby={showLimitError ? ids.limitError : undefined}
         bind:value={limitType}
         onchange={() => { if (limitType === 'none') limitValue = 0; showLimitError = false }}
         class={SELECT_CLASS}
@@ -323,7 +345,7 @@
 
       {#if vehicleLimit}
         <div class="mt-3">
-          <div class="mb-1 flex items-baseline justify-between text-[10px] uppercase tracking-wide text-text-dim">
+          <div class="mb-1 flex items-baseline justify-between text-xs text-text-dim">
             <span>{$_(limitType === 'soc' ? 'charge_manager.rule_limit_soc' : 'charge_manager.rule_limit_range')}</span>
             <span class="font-semibold normal-case text-text">{limitValue}{vehicleLimit.unit}</span>
           </div>
@@ -336,7 +358,7 @@
             ariaLabel={$_(limitType === 'soc' ? 'charge_manager.rule_limit_soc' : 'charge_manager.rule_limit_range')}
             onchange={(v) => { limitValue = v; showLimitError = false }}
           />
-          <div class="mt-1 flex justify-between text-[10px] text-text-dim">
+          <div class="mt-1 flex justify-between text-[11px] text-text-dim">
             <span>{vehicleLimit.min}{vehicleLimit.unit}</span>
             <span>{vehicleLimit.max}{vehicleLimit.unit}</span>
           </div>
@@ -353,7 +375,7 @@
         </div>
       {/if}
       {#if showLimitError}
-        <p class="mt-2 text-xs text-error">{$_('charge_manager.rule_error_no_limit')}</p>
+        <p id={ids.limitError} role="alert" class="mt-2 text-xs text-error">{$_('charge_manager.rule_error_no_limit')}</p>
       {/if}
     </div>
   {/if}

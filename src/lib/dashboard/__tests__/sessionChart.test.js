@@ -98,52 +98,43 @@ describe('fmtSessionTime', () => {
   })
 })
 
-import { buildSessionOpts, limitLinePlugin, liveDotPlugin } from '../sessionChart'
+import { buildSocOpts, buildKwOpts } from '../sessionChart'
 
-const theme = { accent: '#3cc6bd', charging: '#3cc6bd', warning: '#e7a948', axisText: '#6b7585', grid: '#1c2230' }
+const theme = { accent: '#3cc6bd', axisText: '#6b7585', grid: '#1c2230', surface: '#1a1f2b' }
 
-describe('buildSessionOpts', () => {
-  it('defines soc (0-100) and kw (0-kwMax) scales plus a hidden-x scale', () => {
-    const o = buildSessionOpts({ theme, target: 80, kwMax: 8 })
+// The session is two panels on one time axis, never one plot with two
+// y-axes: state of charge on top, power below.
+describe('buildSocOpts', () => {
+  const o = buildSocOpts({ theme, target: 80, targetLabel: 'Target 80%', height: 120, syncKey: 's' })
+  it('plots SOC alone, 0–100, on one axis', () => {
     expect(o.scales.soc.range).toEqual([0, 100])
-    expect(o.scales.kw.range).toEqual([0, 8])
-    expect(o.scales.x.time).toBe(false)
-  })
-  it('renders SOC as bars and kW as a line series', () => {
-    const o = buildSessionOpts({ theme, target: 80, kwMax: 8 })
-    // [x, soc, kw]
-    expect(typeof o.series[1].paths).toBe('function') // bars path builder
+    expect(o.axes).toHaveLength(2)
+    expect(o.series).toHaveLength(2)
     expect(o.series[1].scale).toBe('soc')
-    expect(o.series[2].scale).toBe('kw')
-    expect(o.series[2].paths).toBeUndefined() // default line
   })
-  it('includes the limit-line and live-dot plugins', () => {
-    const o = buildSessionOpts({ theme, target: 80, kwMax: 8 })
+  it('marks the target and the latest reading', () => {
     expect(o.plugins).toHaveLength(2)
-    expect(typeof o.plugins[0].hooks.draw).toBe('function')
-    expect(typeof o.plugins[1].hooks.draw).toBe('function')
   })
-  it('labels the soc (left) and kW (right) value axes', () => {
-    const o = buildSessionOpts({ theme, target: 80, kwMax: 8 })
-    // axes: [x, soc, kw]
-    expect(o.axes[1].label).toBe('SOC %')
-    expect(o.axes[2].label).toBe('kW')
+  it('leaves the time labels to the panel below', () => {
+    expect(o.axes[0].values(null, [60, 120])).toEqual(['', ''])
   })
-})
-
-describe('limitLinePlugin', () => {
-  it('no-ops in draw when target is not finite', () => {
-    const p = limitLinePlugin(null, '#e7a948')
-    // a fake uPlot whose ctx would throw if touched
-    const u = { valToPos: () => { throw new Error('should not be called') }, ctx: {}, bbox: {} }
-    expect(() => p.hooks.draw(u)).not.toThrow()
+  it('leaves the % to the panel title, so "100" fits the fixed axis width', () => {
+    expect(o.axes[1].values).toBeUndefined()
+  })
+  it('shares its cursor with the power panel', () => {
+    const k = buildKwOpts({ theme, kwMax: 8, height: 80, syncKey: 's' })
+    expect(o.cursor.sync.key).toBe(k.cursor.sync.key)
   })
 })
 
-describe('liveDotPlugin', () => {
-  it('no-ops in draw when there is no finite kW point', () => {
-    const p = liveDotPlugin('#e7a948')
-    const u = { data: [[], [], []], valToPos: () => { throw new Error('should not be called') }, ctx: {} }
-    expect(() => p.hooks.draw(u)).not.toThrow()
+describe('buildKwOpts', () => {
+  const o = buildKwOpts({ theme, kwMax: 8, height: 80, syncKey: 's' })
+  it('plots kW alone, from zero to the headroom ceiling', () => {
+    expect(o.scales.kw.range).toEqual([0, 8])
+    expect(o.axes).toHaveLength(2)
+    expect(o.series[1].scale).toBe('kw')
+  })
+  it('prints the session time under itself', () => {
+    expect(o.axes[0].values(null, [0, 1500])).toEqual(['0', '25m'])
   })
 })

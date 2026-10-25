@@ -8,16 +8,15 @@ export interface ClaimsTargetProperties {
   state: string | null
   charge_current: number | null
   auto_release: boolean | null
-  /** Not part of the real device payload (dev/fixtures/claims_target.json); a
-   * legacy field from the store's seed model, still optionally read by
-   * src/routes/settings/LoadSharing.svelte. */
+  /** The winning current cap, in amps. Present only while a client (the load
+   * shaper, load sharing) caps the current. */
   max_current?: number | null
 }
 
 export interface ClaimsTargetClaims {
   state: number | null
   charge_current: number | null
-  /** Legacy seed-model field; the device payload does not send this. */
+  /** The client setting the current cap; present only while one does. */
   max_current?: number | null
   auto_release?: boolean | null
 }

@@ -27,7 +27,7 @@
 </script>
 
 {#if view.state === 'sharing'}
-  <p class="mt-2 text-center text-[10px] text-text-dim">
+  <p class="mt-2 text-center text-[11px] text-text-dim">
     {#if view.role === 'member'}
       {$_('dashboard.loadsharing.line_member', {
         values: { controller: view.controller || $_('config.loadsharing.unknown'), amps: view.pilot, max: view.localMax },
@@ -49,9 +49,9 @@
     class="mt-2 rounded-xl border px-3 py-2 {view.state === 'failsafe' ? 'border-error/40 bg-error/5' : 'border-border bg-surface-2'}"
   >
     <div class="flex items-center justify-between gap-2">
-      <span class="text-[10px] font-semibold tracking-wide text-text-dim uppercase">{$_('dashboard.loadsharing.title')}</span>
+      <span class="text-xs font-semibold text-text-dim">{$_('dashboard.loadsharing.title')}</span>
       <span
-        class="rounded-full px-2 py-0.5 text-[10px] font-semibold {view.state === 'failsafe'
+        class="rounded-full px-2 py-0.5 text-[11px] font-semibold {view.state === 'failsafe'
           ? 'bg-error/15 text-error'
           : 'bg-warning/15 text-warning'}"
       >
@@ -94,7 +94,7 @@
           })}
         {/if}
       </p>
-      <p class="mt-1 text-right text-[10px]">
+      <p class="mt-1 text-right text-[11px]">
         <a class="text-text-dim underline hover:text-text" href="#/settings/loadsharing">
           {$_('dashboard.loadsharing.settings')}
         </a>

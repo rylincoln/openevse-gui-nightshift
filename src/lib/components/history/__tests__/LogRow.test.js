@@ -28,6 +28,19 @@ describe('LogRow', () => {
     expect(getByText(/28\.5/)).toBeInTheDocument()
     expect(getByText(/units\.celsius/)).toBeInTheDocument()
   })
+  it('leaves out the energy and temperature a row does not carry', () => {
+    const { queryByText } = render(LogRow, { props: { ...props, energyKwh: null, temp: null } })
+    expect(queryByText(/kWh/)).not.toBeInTheDocument()
+    expect(queryByText(/units\.celsius/)).not.toBeInTheDocument()
+  })
+  it('leaves out the type when there is no label for it', () => {
+    const { queryByText, getByText, container } = render(LogRow, { props: { ...props, typeLabel: '' } })
+    expect(queryByText('Information')).not.toBeInTheDocument()
+    expect(getByText('05/21 18:30')).toBeInTheDocument()
+    // no type icon, and no separator before the time
+    expect(container.querySelector('iconify-icon[icon="mdi:information-outline"]')).toBeNull()
+    expect(queryByText('·')).not.toBeInTheDocument()
+  })
   it('renders fahrenheit when the unit prop says so', () => {
     const { getByText } = render(LogRow, {
       props: { ...props, temp: 83.3, tempUnit: 'units.fahrenheit' },

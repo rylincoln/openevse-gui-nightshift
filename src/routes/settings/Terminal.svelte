@@ -536,7 +536,7 @@
         }
       }}
       class="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 font-mono text-sm
-             text-text focus:border-accent focus:outline-none"
+             text-text focus:border-accent"
     />
     <div class="mt-2 flex gap-2">
       <Button label={$_('config.terminal.send')} disabled={sending} onclick={send} />
@@ -689,23 +689,23 @@
         </table>
       </div>
 
-      <h3 class="mt-4 mb-1 text-xs font-semibold uppercase tracking-wide text-text-dim">{$_('config.terminal.stacks')}</h3>
+      <h3 class="mt-4 mb-1 text-xs font-semibold text-text-dim">{$_('config.terminal.stacks')}</h3>
       <ReadOnlyRow label={$_('config.terminal.stack_loop')} value={stackValue(mem.stack_loop_min)} tone={stackTone(mem.stack_loop_min)} />
       <ReadOnlyRow label={$_('config.terminal.stack_events')} value={stackValue(mem.stack_events_min)} tone={stackTone(mem.stack_events_min)} />
 
-      <h3 class="mt-4 mb-1 text-xs font-semibold uppercase tracking-wide text-text-dim">{$_('config.terminal.websockets')}</h3>
+      <h3 class="mt-4 mb-1 text-xs font-semibold text-text-dim">{$_('config.terminal.websockets')}</h3>
       <ReadOnlyRow label={$_('config.terminal.ws_conns')} value={mem.ws_conns} />
       <ReadOnlyRow label={$_('config.terminal.ws_send_max')} value={formatBytes(mem.ws_send_max)} />
       <ReadOnlyRow label={$_('config.terminal.ws_reaped')} value={mem.ws_reaped} tone={wsReapedTone} />
 
       {#if lvglSupported}
-        <h3 class="mt-4 mb-1 text-xs font-semibold uppercase tracking-wide text-text-dim">{$_('config.terminal.lvgl_pool')}</h3>
+        <h3 class="mt-4 mb-1 text-xs font-semibold text-text-dim">{$_('config.terminal.lvgl_pool')}</h3>
         <ReadOnlyRow label={$_('config.terminal.lv_used')} value={pct(mem.lv_used_max)} />
         <ReadOnlyRow label={$_('config.terminal.lv_frag')} value={pct(mem.lv_frag_max)} />
       {/if}
 
       {#if $config_store?.labs_enabled && probes.length}
-        <h3 class="mt-4 mb-1 text-xs font-semibold uppercase tracking-wide text-text-dim">{$_('config.terminal.probes')}</h3>
+        <h3 class="mt-4 mb-1 text-xs font-semibold text-text-dim">{$_('config.terminal.probes')}</h3>
         <p class="mb-1 text-xs text-text-dim">{$_('config.terminal.probes_desc')}</p>
         {#each probes as p (p.i)}
           <ReadOnlyRow
@@ -747,14 +747,14 @@
       {/if}
 
       {#if backtrace}
-        <h3 class="mt-3 mb-1 text-xs font-semibold uppercase tracking-wide text-text-dim">{$_('config.terminal.crash.backtrace')}</h3>
+        <h3 class="mt-3 mb-1 text-xs font-semibold text-text-dim">{$_('config.terminal.crash.backtrace')}</h3>
         <div class="overflow-x-auto rounded-xl bg-surface-3 p-3 font-mono text-xs text-text">{backtrace}</div>
       {:else if noUnwind}
         <p class="mt-3 text-xs text-text-dim">{$_('config.terminal.crash.no_unwind')}</p>
       {/if}
 
       {#if crash.elf_sha256}
-        <h3 class="mt-3 mb-1 text-xs font-semibold uppercase tracking-wide text-text-dim">{$_('config.terminal.crash.elf')}</h3>
+        <h3 class="mt-3 mb-1 text-xs font-semibold text-text-dim">{$_('config.terminal.crash.elf')}</h3>
         <p class="mb-1 text-xs text-text-dim">{$_('config.terminal.crash.elf_detail')}</p>
         <div class="overflow-x-auto rounded-xl bg-surface-3 p-2 font-mono text-xs text-text-dim break-all">{crash.elf_sha256}</div>
       {/if}
