@@ -7,6 +7,7 @@
   import type { ConfigState } from '../../lib/stores/config'
   import { status_store } from '../../lib/stores/status'
   import { showWriteError } from '../../lib/alerts'
+  import { createConfigForm } from '../../lib/config/configForm.svelte'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
   import FormField from '../../lib/components/config/FormField.svelte'
@@ -34,8 +35,9 @@
 
   // Stored on the device (not browser localStorage) so the switch survives
   // reloads and applies to every browser/hostname that opens this charger.
+  const form = createConfigForm()
   async function setLabs(on: boolean): Promise<void> {
-    if (!(await config_store.saveParam('labs_enabled', !!on))) showWriteError()
+    await form.saveField('labs_enabled', !!on)
   }
 
   // What the Labs switch reveals; `href` links to it once Labs is on.

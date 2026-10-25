@@ -13,6 +13,7 @@
   import { config_store } from '../lib/stores/config'
   import { status_store } from '../lib/stores/status'
   import { navigate } from '../lib/router'
+  import { createConfigForm } from '../lib/config/configForm.svelte'
   import WizardShell from '../lib/components/wizard/WizardShell.svelte'
   import FinishDialog from '../lib/components/wizard/FinishDialog.svelte'
   import Welcome from '../lib/components/wizard/steps/Welcome.svelte'
@@ -93,12 +94,14 @@
     return $status_store?.ipaddress === '192.168.4.1'
   }
 
+  const form = createConfigForm()
+
   // Persist the "setup done" flag. Called by the WiFi step BEFORE it joins the
   // network — the join drops the softAP, so wizard_passed must be written while
   // the device is still reachable, or the wizard would reappear next boot.
   async function markComplete() {
     if (!$config_store?.wizard_passed) {
-      await config_store.saveParam('wizard_passed', true)
+      await form.saveField('wizard_passed', true)
     }
   }
 

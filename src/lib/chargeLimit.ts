@@ -40,6 +40,10 @@ export interface ChargeLimitCharger {
   setLimit(limit: Limit): Promise<boolean>
   /** DELETE /limit */
   clearLimit(): Promise<boolean>
+}
+
+/** The Default limit is config, so changing it writes config too. */
+export interface DefaultLimitCharger extends ChargeLimitCharger {
   /** POST /config */
   saveConfig(data: Partial<Config>): Promise<boolean>
 }
@@ -118,7 +122,7 @@ export async function setKnob(
 /** Set the Default limit: type and value in one config write, which the firmware applies at once. */
 export async function setDefaultLimit(
   target: { type: LimitType; value: number },
-  charger: ChargeLimitCharger,
+  charger: DefaultLimitCharger,
 ): Promise<boolean> {
   if (target.type === 'none' || !(target.value > 0)) return false
   return charger.saveConfig({ limit_default_type: target.type, limit_default_value: target.value })
@@ -128,7 +132,7 @@ export async function setDefaultLimit(
  * Clear the Default limit: the config first, so the firmware will not apply
  * it again, then the limit it applied. Never the other way round.
  */
-export async function clearDefaultLimit(charger: ChargeLimitCharger): Promise<boolean> {
+export async function clearDefaultLimit(charger: DefaultLimitCharger): Promise<boolean> {
   if (!(await charger.saveConfig({ limit_default_type: 'none' }))) return false
   return charger.clearLimit()
 }

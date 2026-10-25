@@ -8,6 +8,7 @@
   import { status_store } from '../../lib/stores/status'
   import { httpAPI, pauseRequests, resumeRequests } from '../../lib/api/httpAPI'
   import { showWriteError } from '../../lib/alerts'
+  import { createConfigForm } from '../../lib/config/configForm.svelte'
   import { sanitizeConfig } from '../../lib/config/backup'
   import { JSONTryParse } from '../../lib/utils'
   import ConfigPage from '../../lib/components/config/ConfigPage.svelte'
@@ -241,13 +242,13 @@
     pendingRestore = { name: file.name, data: parsed as Partial<Config> }
   }
 
+  // A refused restore raises the write-failure alert.
+  const form = createConfigForm()
   async function restoreConfig(): Promise<void> {
     const backup = pendingRestore
     pendingRestore = null
     if (!backup) return
-    const ok = await config_store.upload(backup.data)
-    if (ok) restoreResult = { ok: true, name: backup.name }
-    else showWriteError()
+    if (await form.saveFields(backup.data)) restoreResult = { ok: true, name: backup.name }
   }
 </script>
 

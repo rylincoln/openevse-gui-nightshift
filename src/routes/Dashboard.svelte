@@ -215,7 +215,6 @@
   const limitCharger: ChargeLimitCharger = {
     setLimit: (l) => limit_store.upload(l),
     clearLimit: () => limit_store.remove(),
-    saveConfig: (data) => config_store.upload(data),
   }
   // The charge mode's charger seam.
   const charger: ChargeModeCharger = {

@@ -11,8 +11,8 @@ export interface ConfigState extends Config {
 
 export interface ConfigStore extends Writable<ConfigState | undefined> {
   download(): Promise<boolean>
+  /** POST /config. Pages write through createConfigForm (config/configForm.svelte.ts), not this. */
   upload(data: Partial<Config>): Promise<boolean>
-  saveParam<K extends keyof Config>(name: K, val: Config[K]): Promise<boolean>
 }
 
 function createConfigStore(): ConfigStore {
@@ -48,17 +48,6 @@ function createConfigStore(): ConfigStore {
     return accepted(await httpAPI<WriteResponse>('POST', '/config', JSON.stringify(data)))
   }
 
-  async function saveParam<K extends keyof Config>(name: K, val: Config[K]): Promise<boolean> {
-    const data = { [name]: val } as Partial<Config>
-    if (await config_store.upload(data)) {
-      // After a successful param save we should refresh (lightweight: update current object)
-      update((current) => withDerived({ ...current, [name]: val } as ConfigState))
-      return true
-    } else {
-      return false
-    }
-  }
-
   // Wrapped set/update so external callers always get derived property maintained
   function setWithDerived(value: ConfigState | undefined): void {
     set(value ? withDerived(value) : value)
@@ -78,7 +67,6 @@ function createConfigStore(): ConfigStore {
     update: updateWithDerived,
     download,
     upload,
-    saveParam,
   }
 }
 
