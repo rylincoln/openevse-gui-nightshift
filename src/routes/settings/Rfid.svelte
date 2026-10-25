@@ -15,6 +15,7 @@
   import ConfigSection from '../../lib/components/config/ConfigSection.svelte'
   import Button from '../../lib/components/ui/Button.svelte'
   import IconButton from '../../lib/components/ui/IconButton.svelte'
+  import ConfirmDialog from '../../lib/components/ui/ConfirmDialog.svelte'
   import RfidUserModal from '../../lib/components/config/RfidUserModal.svelte'
 
   const form = createConfigForm()
@@ -70,7 +71,9 @@
   function remove(tag: string): void {
     saveTags(removeTag(tags, tag))
   }
+  let confirmRemoveAll = $state(false)
   function removeAll(): void {
+    confirmRemoveAll = false
     saveTags([])
   }
 
@@ -183,11 +186,21 @@
           </div>
         {/each}
         <div class="mt-2">
-          <Button label={$_('config.rfid.remove_all')} variant="ghost" onclick={removeAll} />
+          <Button label={$_('config.rfid.remove_all')} variant="danger" onclick={() => (confirmRemoveAll = true)} />
         </div>
       </ConfigSection>
     {/if}
 </ConfigPage>
+
+<ConfirmDialog
+  visible={confirmRemoveAll}
+  title={$_('config.rfid.remove_all_title')}
+  body={$_('config.rfid.remove_all_body')}
+  confirmLabel={$_('config.rfid.remove_all_confirm')}
+  cancelLabel={$_('config.rfid.cancel')}
+  onconfirm={removeAll}
+  oncancel={() => (confirmRemoveAll = false)}
+/>
 
 {#if labsOn}
   <RfidUserModal

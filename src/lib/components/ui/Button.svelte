@@ -22,6 +22,8 @@
   const variants = {
     primary: 'bg-accent text-surface',
     ghost: 'bg-transparent text-text border border-border',
+    // Erases, removes or interrupts something; pair it with a ConfirmDialog.
+    danger: 'bg-transparent text-error border border-error',
   }
 </script>
 

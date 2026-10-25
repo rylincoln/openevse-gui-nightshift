@@ -2,6 +2,7 @@
   import { _ } from 'svelte-i18n'
   import Card from '../ui/Card.svelte'
   import Button from '../ui/Button.svelte'
+  import ConfirmDialog from '../ui/ConfirmDialog.svelte'
   import { getStateDesc } from '../../utils'
   import { serialQueue } from '../../queue'
   import { httpAPI } from '../../api/httpAPI'
@@ -30,10 +31,14 @@
     return row.key === 'fault' ? $_(getStateDesc(row.state) ?? '') : row.count
   }
 
+  // The reset waiting on its confirmation, if any.
+  let pendingReset = $state<'faults' | 'relay' | null>(null)
+
   let resetting = $state(false)
   let resetDone = $state(false)
 
   async function resetFaultCounters(): Promise<void> {
+    pendingReset = null
     if (resetting) return
     resetting = true
     resetDone = false
@@ -78,6 +83,7 @@
   let resetRelayDone = $state(false)
 
   async function resetRelayHealth(): Promise<void> {
+    pendingReset = null
     if (resettingRelay) return
     resettingRelay = true
     resetRelayDone = false
@@ -143,21 +149,44 @@
         : resetDone
           ? $_('config.safety.reset_done')
           : $_('config.safety.reset_faults')}
-      variant={resetDone ? 'ghost' : 'primary'}
+      variant="danger"
       disabled={resetting}
-      onclick={resetFaultCounters}
+      onclick={() => (pendingReset = 'faults')}
     />
     {#if relay}
-      <Button
-        label={resettingRelay
-          ? $_('monitoring.health.relay.resetting')
-          : resetRelayDone
-            ? $_('monitoring.health.relay.reset_done')
-            : $_('monitoring.health.relay.reset_button')}
-        variant={resetRelayDone ? 'ghost' : 'primary'}
-        disabled={resettingRelay}
-        onclick={resetRelayHealth}
-      />
+      <div>
+        <Button
+          label={resettingRelay
+            ? $_('monitoring.health.relay.resetting')
+            : resetRelayDone
+              ? $_('monitoring.health.relay.reset_done')
+              : $_('monitoring.health.relay.reset_button')}
+          variant="danger"
+          disabled={resettingRelay}
+          onclick={() => (pendingReset = 'relay')}
+        />
+        <p class="mt-1 text-xs text-text-dim">{$_('monitoring.health.relay.reset_hint')}</p>
+      </div>
     {/if}
   </div>
 </Card>
+
+<ConfirmDialog
+  visible={pendingReset === 'faults'}
+  title={$_('config.safety.reset_faults_title')}
+  body={$_('config.safety.reset_faults_body')}
+  confirmLabel={$_('config.safety.reset_faults_confirm')}
+  cancelLabel={$_('config.firmware.confirm_cancel')}
+  onconfirm={resetFaultCounters}
+  oncancel={() => (pendingReset = null)}
+/>
+
+<ConfirmDialog
+  visible={pendingReset === 'relay'}
+  title={$_('monitoring.health.relay.reset_title')}
+  body={$_('monitoring.health.relay.reset_body')}
+  confirmLabel={$_('monitoring.health.relay.reset_confirm')}
+  cancelLabel={$_('config.firmware.confirm_cancel')}
+  onconfirm={resetRelayHealth}
+  oncancel={() => (pendingReset = null)}
+/>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, fireEvent } from '@testing-library/svelte'
+import { render, fireEvent, within } from '@testing-library/svelte'
 
 vi.mock('svelte-i18n', () => {
   const t = (k) => k
@@ -43,10 +43,14 @@ describe('HealthTab', () => {
     expect(getByText('monitoring.safety.fault')).toBeInTheDocument()
   })
 
-  it('resets the fault counters via $FC when the reset button is clicked', async () => {
+  it('asks before resetting the fault counters, then sends $FC', async () => {
     httpAPI.mockClear()
-    const { getByText } = render(HealthTab, { props: { data: { errors: [], infos: [] } } })
+    const { getByText, getByRole } = render(HealthTab, { props: { data: { errors: [], infos: [] } } })
     await fireEvent.click(getByText('config.safety.reset_faults'))
+    const dialog = getByRole('alertdialog', { name: 'config.safety.reset_faults_title' })
+    expect(dialog).toHaveAccessibleDescription('config.safety.reset_faults_body')
+    expect(httpAPI).not.toHaveBeenCalled()
+    await fireEvent.click(within(dialog).getByText('config.safety.reset_faults_confirm'))
     await vi.waitFor(() => {
       const call = httpAPI.mock.calls.find(
         ([m, u]) => m === 'GET' && String(u).includes('$FC'),
@@ -81,11 +85,15 @@ describe('HealthTab', () => {
     expect(getByText('monitoring.health.relay.not_available')).toBeInTheDocument()
   })
 
-  it('resets relay health via $FH when the reset button is clicked', async () => {
+  it('asks before resetting relay health, then sends $FH', async () => {
     httpAPI.mockClear()
     const relay = [{ key: 'life_pct', value: 100, severity: 'ok' }]
-    const { getByText } = render(HealthTab, { props: { data: { errors: [], infos: [] }, relay } })
+    const { getByText, getByRole } = render(HealthTab, { props: { data: { errors: [], infos: [] }, relay } })
     await fireEvent.click(getByText('monitoring.health.relay.reset_button'))
+    const dialog = getByRole('alertdialog', { name: 'monitoring.health.relay.reset_title' })
+    expect(dialog).toHaveAccessibleDescription('monitoring.health.relay.reset_body')
+    expect(httpAPI).not.toHaveBeenCalled()
+    await fireEvent.click(within(dialog).getByText('monitoring.health.relay.reset_confirm'))
     await vi.waitFor(() => {
       const call = httpAPI.mock.calls.find(
         ([m, u]) => m === 'GET' && String(u).includes('$FH'),
@@ -93,6 +101,14 @@ describe('HealthTab', () => {
       expect(call).toBeTruthy()
     })
   })
+  it('styles both resets as destructive and says when to reset the relay', () => {
+    const relay = [{ key: 'life_pct', value: 100, severity: 'ok' }]
+    const { getByText } = render(HealthTab, { props: { data: { errors: [], infos: [] }, relay } })
+    expect(getByText('config.safety.reset_faults').className).toContain('text-error')
+    expect(getByText('monitoring.health.relay.reset_button').className).toContain('text-error')
+    expect(getByText('monitoring.health.relay.reset_hint')).toBeInTheDocument()
+  })
+
   it('groups both reset buttons in the Maintenance section at the bottom', () => {
     const relay = [{ key: 'life_pct', value: 100, severity: 'ok' }]
     const { getByText, container } = render(HealthTab, { props: { data: { errors: [], infos: [] }, relay } })

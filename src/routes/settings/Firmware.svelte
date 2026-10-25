@@ -18,6 +18,7 @@
   import Button from '../../lib/components/ui/Button.svelte'
   import ProgressBar from '../../lib/components/ui/ProgressBar.svelte'
   import Modal from '../../lib/components/ui/Modal.svelte'
+  import ConfirmDialog from '../../lib/components/ui/ConfirmDialog.svelte'
   import type { Config, WriteResponse } from '../../lib/api/device'
 
   interface Channel {
@@ -32,6 +33,11 @@
 
   let busy = $state(false)
   let confirmReset = $state(false)
+  // The restart waiting on its confirmation, if any.
+  let pendingRestart = $state<'evse' | 'gateway' | null>(null)
+  // A parsed backup file waiting on its confirmation, then how it went.
+  let pendingRestore = $state<{ name: string; data: Partial<Config> } | null>(null)
+  let restoreResult = $state<{ ok: boolean; name: string } | null>(null)
   let firmwareFile = $state<File | null>(null)
   let uploading = $state(false)
   // The currently-pending install confirmation, or null if no dialog is open.
@@ -159,8 +165,10 @@
     }
   }
 
-  async function restart(device: 'evse' | 'gateway'): Promise<void> {
-    if (busy) return
+  async function restart(): Promise<void> {
+    const device = pendingRestart
+    pendingRestart = null
+    if (!device || busy) return
     busy = true
     try {
       const res = await serialQueue.add(() =>
@@ -220,19 +228,31 @@
     URL.revokeObjectURL(a.href)
   }
 
-  async function restoreConfig(e: Event): Promise<void> {
-    const file = (e.currentTarget as HTMLInputElement).files?.[0]
+  // Picking a file only reads it: the settings are replaced once the owner
+  // confirms. Clearing the input lets the same file be picked again.
+  async function pickBackup(e: Event): Promise<void> {
+    const input = e.currentTarget as HTMLInputElement
+    const file = input.files?.[0]
+    input.value = ''
+    restoreResult = null
     if (!file) return
-    const text = await file.text()
-    const parsed = JSONTryParse(text)
-    if (!parsed || typeof parsed !== 'object') {
-      showWriteError()
+    const parsed = JSONTryParse(await file.text())
+    if (!parsed) {
+      restoreResult = { ok: false, name: file.name }
       return
     }
     // File-upload boundary: the JSON came from disk, not the device, so its
     // shape is genuinely unknown until upload() round-trips it.
-    const ok = await serialQueue.add(() => config_store.upload(parsed as Partial<Config>))
-    if (!ok) showWriteError()
+    pendingRestore = { name: file.name, data: parsed as Partial<Config> }
+  }
+
+  async function restoreConfig(): Promise<void> {
+    const backup = pendingRestore
+    pendingRestore = null
+    if (!backup) return
+    const ok = await serialQueue.add(() => config_store.upload(backup.data))
+    if (ok) restoreResult = { ok: true, name: backup.name }
+    else showWriteError()
   }
 </script>
 
@@ -381,33 +401,70 @@
         type="file"
         accept=".json,.txt"
         aria-label={$_('config.firmware.backup_import')}
-        onchange={restoreConfig}
+        onchange={pickBackup}
         class="block w-full text-sm text-text-dim file:mr-3 file:rounded-lg file:border-0
                file:bg-surface-3 file:px-3 file:py-1.5 file:text-text"
       />
+      <p role="status" class="mt-2 text-xs empty:hidden {restoreResult?.ok ? 'text-success' : 'text-error'}">
+        {#if restoreResult}
+          {restoreResult.ok
+            ? $_('config.firmware.restore_done')
+            : $_('config.firmware.restore_invalid', { values: { file: restoreResult.name } })}
+        {/if}
+      </p>
     </FormField>
   </ConfigSection>
 
   <ConfigSection title={$_('config.firmware.maintenance')}>
     <div class="py-2">
-      <Button label={$_('config.firmware.restart_evse')} variant="ghost" disabled={busy} onclick={() => restart('evse')} />
+      <Button
+        label={$_('config.firmware.restart_evse')}
+        variant="ghost"
+        disabled={busy}
+        onclick={() => (pendingRestart = 'evse')}
+      />
     </div>
     <div class="py-2">
-      <Button label={$_('config.firmware.restart_gateway')} variant="ghost" disabled={busy} onclick={() => restart('gateway')} />
+      <Button
+        label={$_('config.firmware.restart_gateway')}
+        variant="ghost"
+        disabled={busy}
+        onclick={() => (pendingRestart = 'gateway')}
+      />
     </div>
     <div class="py-2">
-      <p class="mb-1 text-xs text-text-dim">{$_('config.firmware.reset_desc')}</p>
-      {#if confirmReset}
-        <div class="rounded-xl border border-error/40 bg-surface-2 p-3">
-          <p class="mb-2 text-sm text-error">{$_('config.firmware.reset_confirm')}</p>
-          <div class="flex gap-2">
-            <Button label={$_('config.firmware.reset')} onclick={factoryReset} />
-            <Button label={$_('config.certificates.cancel')} variant="ghost" onclick={() => (confirmReset = false)} />
-          </div>
-        </div>
-      {:else}
-        <Button label={$_('config.firmware.reset')} variant="ghost" onclick={() => (confirmReset = true)} />
-      {/if}
+      <Button label={$_('config.firmware.reset')} variant="danger" onclick={() => (confirmReset = true)} />
+      <p class="mt-1 text-xs text-text-dim">{$_('config.firmware.reset_desc')}</p>
     </div>
   </ConfigSection>
 </ConfigPage>
+
+<ConfirmDialog
+  visible={pendingRestart !== null}
+  title={$_(`config.firmware.restart_${pendingRestart ?? 'evse'}_title`)}
+  body={$_(`config.firmware.restart_${pendingRestart ?? 'evse'}_body`)}
+  confirmLabel={$_('config.firmware.restart_confirm')}
+  cancelLabel={$_('config.firmware.confirm_cancel')}
+  onconfirm={restart}
+  oncancel={() => (pendingRestart = null)}
+/>
+
+<ConfirmDialog
+  visible={pendingRestore !== null}
+  title={$_('config.firmware.restore_title', { values: { file: pendingRestore?.name ?? '' } })}
+  body={$_('config.firmware.restore_body')}
+  confirmLabel={$_('config.firmware.restore_confirm')}
+  cancelLabel={$_('config.firmware.confirm_cancel')}
+  onconfirm={restoreConfig}
+  oncancel={() => (pendingRestore = null)}
+/>
+
+<ConfirmDialog
+  visible={confirmReset}
+  title={$_('config.firmware.reset_title')}
+  body={$_('config.firmware.reset_confirm')}
+  confirmLabel={$_('config.firmware.reset')}
+  cancelLabel={$_('config.firmware.confirm_cancel')}
+  onconfirm={factoryReset}
+  oncancel={() => (confirmReset = false)}
+/>

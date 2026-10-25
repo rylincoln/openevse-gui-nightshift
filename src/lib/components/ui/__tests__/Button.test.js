@@ -19,4 +19,10 @@ describe('Button', () => {
     const { getByRole } = render(Button, { props: { label: 'X', disabled: true } })
     expect(getByRole('button')).toBeDisabled()
   })
+
+  it('marks a destructive action in the error colour', () => {
+    const { getByRole } = render(Button, { props: { label: 'Erase', variant: 'danger' } })
+    expect(getByRole('button').className).toContain('text-error')
+    expect(getByRole('button').className).toContain('border-error')
+  })
 })

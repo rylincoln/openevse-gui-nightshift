@@ -1,7 +1,7 @@
 // src/routes/settings/__tests__/Rfid.test.js
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { get } from 'svelte/store'
-import { render, fireEvent } from '@testing-library/svelte'
+import { render, fireEvent, within } from '@testing-library/svelte'
 
 vi.mock('svelte-i18n', () => {
   const t = (k) => k
@@ -66,6 +66,19 @@ describe('RFID page', () => {
     const { getByText } = render(Rfid)
     expect(getByText('AA11')).toBeInTheDocument()
     expect(getByText('BB22')).toBeInTheDocument()
+  })
+
+  it('asks before removing every card, then clears the list', async () => {
+    config_store.set({ rfid_enabled: true, rfid_storage: 'AA11,BB22' })
+    const { getByText, getByRole } = render(Rfid)
+    const removeAll = getByText('config.rfid.remove_all')
+    expect(removeAll.className).toContain('text-error')
+    await fireEvent.click(removeAll)
+    const dialog = getByRole('alertdialog', { name: 'config.rfid.remove_all_title' })
+    expect(dialog).toHaveAccessibleDescription('config.rfid.remove_all_body')
+    expect(httpAPI).not.toHaveBeenCalled()
+    await fireEvent.click(within(dialog).getByText('config.rfid.remove_all_confirm'))
+    expect(httpAPI).toHaveBeenCalledWith('POST', '/config', JSON.stringify({ rfid_storage: '' }))
   })
 
   it('calls the scan endpoint when Scan is clicked', async () => {
