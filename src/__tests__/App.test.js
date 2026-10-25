@@ -22,7 +22,7 @@ describe('App', () => {
     render(App)
     // httpAPI is mocked to fail, so the first store download fails. The
     // loader has to go: left up, it covers the alert, the only way out.
-    const dialog = await screen.findByRole('dialog')
+    const dialog = await screen.findByRole('alertdialog')
     expect(dialog).toHaveTextContent('connection.load_failed')
     expect(dialog).toHaveTextContent('connection.load_failed_body')
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
