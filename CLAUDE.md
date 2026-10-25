@@ -79,10 +79,14 @@ Every `src/routes/settings/*.svelte` follows one pattern
   `revert` counter that bumps on failure so controlled inputs resync to the
   store's confirmed value. Pass `revert={form.revert}` to every input.
   `saveField(name, value)` is typed against `Config`, so a wrong key is a
-  check error.
-- Save is per field on change; the write is `config_store.upload` → `POST /config`,
-  success is `msg: "done" | "no change"`. Failure calls `showWriteError()`
-  (`src/lib/alerts.ts`) — the one global write-failure alert; reuse it.
+  check error. `saveField(name, null)` (a cleared NumberInput) writes the
+  field's fallback from `CLEARED`, or nothing.
+- Save is per field on change; the form calls `config_store.upload` → `POST /config`,
+  success is `msg: "done" | "no change"`, and on failure calls `showWriteError()`
+  (`src/lib/alerts.ts`) — the one global write-failure alert.
+- **Every config write goes through the form**, outside settings too (Charge
+  Manager, the wizard, Terminal, Firmware restore). `src/__tests__/config-writes.test.js`
+  fails if anything else calls `config_store.upload`.
 - Layout: `ConfigPage > ConfigSection > FormField > ui primitive`
   (`src/lib/components/config/`, `src/lib/components/ui/`).
 - Modules that use runes outside a component are named `*.svelte.ts`.
