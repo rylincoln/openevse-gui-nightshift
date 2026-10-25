@@ -31,6 +31,20 @@
   })
 </script>
 
+<!-- The one write-failure alert (showWriteError), for setup as much as for
+     the app: both write to the charger. -->
+{#snippet alerts()}
+  <AlertBox
+    visible={$uistates_store.alertbox.visible}
+    title={$uistates_store.alertbox.title}
+    body={$uistates_store.alertbox.body}
+    button={$uistates_store.alertbox.button}
+    closable={$uistates_store.alertbox.closable}
+    action={$uistates_store.alertbox.action}
+    onclose={() => ($uistates_store.alertbox.visible = false)}
+  />
+{/snippet}
+
 {#if $isLoading}
   <!-- Wait for the i18n catalog before rendering anything that uses $_ -->
   <Loader {progress} />
@@ -64,17 +78,10 @@
   <Wizard />
   <WebSocket />
   <DataManager />
+  {@render alerts()}
 {:else}
   <AppShell />
   <WebSocket />
   <DataManager />
-  <AlertBox
-    visible={$uistates_store.alertbox.visible}
-    title={$uistates_store.alertbox.title}
-    body={$uistates_store.alertbox.body}
-    button={$uistates_store.alertbox.button}
-    closable={$uistates_store.alertbox.closable}
-    action={$uistates_store.alertbox.action}
-    onclose={() => ($uistates_store.alertbox.visible = false)}
-  />
+  {@render alerts()}
 {/if}
